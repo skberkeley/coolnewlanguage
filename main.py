@@ -1,16 +1,18 @@
-from coolNewLanguage.src.Tool import Tool
-from coolNewLanguage.src.modules.TextModule import TextModule
+from coolNewLanguage.src.component.text_component import TextComponent
+from coolNewLanguage.src.page.page import Page
+from coolNewLanguage.src.tool import Tool
 
 
 def main():
     tool = Tool(
-        TextModule("This is a text module"),
-        TextModule("This is another text module"),
-        tool_name="my_first_tool",
+        "my_first_tool",
+        Page(
+            "my_first_tool home page",
+            TextComponent("This is some text")
+        ),
     )
-    tool.render()
     tool.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

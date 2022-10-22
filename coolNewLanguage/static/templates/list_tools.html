@@ -1,0 +1,14 @@
+<html lang="en">
+    <head>
+        <title>List of running tools</title>
+    </head>
+    <body>
+        {% for tool in tool_list %}
+            <p>
+                <a href="{{ tool.url }}">
+                    {{ tool.tool_name }}
+                </a>
+            </p>
+        {% endfor %}
+    </body>
+</html>
