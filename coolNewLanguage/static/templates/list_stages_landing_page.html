@@ -1,0 +1,14 @@
+<html lang="en">
+    <head>
+        <title>List of stages</title>
+    </head>
+    <body>
+        {% for stage in stages %}
+            <p>
+                <a href="{{ stage.url }}">
+                    {{ stage.name }}
+                </a>
+            </p>
+        {% endfor %}
+    </body>
+</html>
