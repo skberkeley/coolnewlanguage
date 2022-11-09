@@ -1,22 +1,21 @@
 import urllib.parse
-from typing import List
 
 from aiohttp import web
 
 from coolNewLanguage.src import util
-from coolNewLanguage.src.component.component import Component
+from coolNewLanguage.src.stage.config import Config
 from coolNewLanguage.src.stage.process import Process
 from coolNewLanguage.src.stage.results import Results
 
 
 class Stage:
-    def __init__(self, name: str, config: List[Component], process: Process | None, results: Results | None):
+    def __init__(self, name: str, config: Config, process: Process | None, results: Results | None):
         if not isinstance(name, str):
             raise TypeError("name of a stage should be a string")
         self.name = name
 
-        if not all([isinstance(c, Component) for c in config]):
-            raise TypeError("config of a stage should be a list of Components")
+        if not isinstance(config, Config):
+            raise TypeError("config of a stage should be of type Config")
         self.config = config
 
         if not isinstance(process, Process) and process is not None:
@@ -34,8 +33,25 @@ class Stage:
         Paint the html template for the config of this stage
         :return: A string containing the jinja2 template for the config
         """
-        template_list = ['<html>', '<head>', '<title>', self.name, '</title>', '</head>', '<body>']
-        stack = ['</html>', '</body>']
+        form_action = '/'
+        if self.process:
+            # update form_action
+            pass
+        form_method = "post"
+        if form_action == '/':
+            form_method = "get"
+
+        template_list = [
+            '<html>',
+            '<head>',
+            '<title>',
+            self.name,
+            '</title>',
+            '</head>',
+            '<body>',
+            f'<form action="{form_action}" method="{form_method}">'
+        ]
+        stack = ['</html>', '</body>', '</form>']
 
         for component in self.config:
             template_list.append(component.paint())
