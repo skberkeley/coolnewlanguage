@@ -1,18 +1,17 @@
-from coolNewLanguage.src.component.text_component import TextComponent
-from coolNewLanguage.src.stage.config import Config
-from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.component.user_input_component import UserInputComponent
+from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.tool import Tool
 
 
 def main():
-    upload_stage = Stage(
-        name='Upload Stage',
-        config=Config([TextComponent("Hello World")], submit_text="Go back"),
-        process=None,
-        results=None
-    )
-    my_tool = Tool(tool_name='my_first_tool', stages=[upload_stage])
-    my_tool.run()
+    tool = Tool('adder')
+
+    def adder_stage():
+        user_input = UserInputComponent(str, label="Enter something:")
+        LambdaProcessor(lambda: print(user_input))
+
+    tool.add_stage('add_stage', adder_stage)
+    tool.run()
 
 
 if __name__ == '__main__':

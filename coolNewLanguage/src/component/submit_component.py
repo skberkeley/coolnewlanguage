@@ -1,4 +1,5 @@
 from coolNewLanguage.src.component.component import Component
+from coolNewLanguage.src.stage.config import Config
 
 
 class SubmitComponent(Component):
@@ -6,6 +7,10 @@ class SubmitComponent(Component):
         if not isinstance(submit_text, str):
             raise TypeError("submit text of a SubmitComponent should be a string")
         self.submit_text = submit_text
+
+        super().__init__()
+
+        Config.submit_component_added = True
 
     def paint(self) -> str:
         """
