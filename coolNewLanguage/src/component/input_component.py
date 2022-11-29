@@ -18,4 +18,14 @@ class InputComponent(Component):
     def __str__(self):
         if self.value is None:
             raise ValueError("Current value not available")
+
         return str(self.value)
+
+    def __add__(self, other):
+        if self.value is None:
+            raise ValueError("Current value not available")
+
+        if isinstance(other, InputComponent):
+            return self.expected_type(self.value) + other.expected_type(other.value)
+
+        return self.expected_type(self.value) + other

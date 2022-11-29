@@ -7,8 +7,9 @@ def main():
     tool = Tool('adder')
 
     def adder_stage():
-        user_input = UserInputComponent(str, label="Enter something:")
-        LambdaProcessor(lambda: print(user_input))
+        num_a = UserInputComponent(float, label="Enter a number:")
+        num_b = UserInputComponent(float, label="Enter another number:")
+        LambdaProcessor(lambda: print(num_a + num_b))
 
     tool.add_stage('add_stage', adder_stage)
     tool.run()
