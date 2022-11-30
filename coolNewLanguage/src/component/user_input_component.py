@@ -2,6 +2,9 @@ from coolNewLanguage.src.component.input_component import InputComponent
 
 
 class UserInputComponent(InputComponent):
+    """
+    An input component which captures some input which the user types
+    """
     def __init__(self, expected_type: type, label: str = ""):
         # assign these first so that we can paint if needed
         if not isinstance(label, str):

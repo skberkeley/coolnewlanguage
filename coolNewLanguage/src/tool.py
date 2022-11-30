@@ -13,7 +13,16 @@ from coolNewLanguage.src.web_app import WebApp
 
 
 class Tool:
+    """
+    A data processing tool
+    """
     def __init__(self, tool_name: str, url: str = ''):
+        """
+        Initialize this tool
+        Starts the web_app which forms the back end of this tool
+        :param tool_name: The name of this tool
+        :param url: The url for this tool, to be used in the future for situations with multiple tools
+        """
         if not isinstance(tool_name, str):
             raise TypeError("Expected a string for Tool name")
         self.tool_name = tool_name
@@ -31,6 +40,14 @@ class Tool:
         aiohttp_jinja2.setup(self.web_app.app, loader=jinja2.FileSystemLoader('coolNewLanguage/static/templates'))
 
     def add_stage(self, stage_name: str, stage_func: Callable):
+        """
+        Add a stage to this tool
+        Pre-render the stage's Config by running stage_func, and having each Component paint itself and append to
+        a template list
+        :param stage_name: The name of this stage
+        :param stage_func: The function used to define this stage
+        :return:
+        """
         stage_url = urllib.parse.quote(stage_name)
         form_action = f'/{stage_url}/post'
         form_method = "post"
@@ -48,12 +65,14 @@ class Tool:
         stack = ['</html>', '</body>', '</form>']
         Config.submit_component_added = False
         Config.building_template = True
+        # num_components is used for id's in the HTML template
         Component.num_components = 0
 
+        # call the stage_func, so that each component adds to Config.template_list
         stage_func()
 
         if not Config.submit_component_added:
-            SubmitComponent("Go back")
+            SubmitComponent("Submit")
 
         while stack:
             Config.template_list.append(stack.pop())
@@ -65,9 +84,13 @@ class Tool:
         new_stage = Stage(stage_name, template, stage_func)
         self.stages.append(new_stage)
 
+        # reset num_components
+        Component.num_components = 0
+
     def run(self):
         """
         Run this tool using aiohttp
+        Add a landing page route, and the requisite stages for each stage
         :return:
         """
         routes = [web.get('/', self.landing_page)]
@@ -85,6 +108,12 @@ class Tool:
         web.run_app(self.web_app.app, port=8000)
 
     async def landing_page(self, request: web.Request) -> web.Response:
+        """
+        The landing page handler for this tool
+        Returns a template with links to each stage
+        :param request:
+        :return:
+        """
         return aiohttp_jinja2.render_template(
             template_name='list_stages_landing_page.html',
             request=request,
