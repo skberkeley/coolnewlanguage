@@ -15,6 +15,12 @@ from coolNewLanguage.src.web_app import WebApp
 class Tool:
     """
     A data processing tool
+
+    Attributes:
+    tool_name : str
+    stages : list[Stage]
+    url : str
+    web_app : WebApp
     """
     def __init__(self, tool_name: str, url: str = ''):
         """

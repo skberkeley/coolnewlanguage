@@ -10,7 +10,11 @@ def main():
     def adder_stage():
         num_a = UserInputComponent(float, label="Enter a number:")
         num_b = UserInputComponent(float, label="Enter another number:")
-        processor = LambdaProcessor(lambda: num_a + num_b)
+
+        def add():
+            return num_a + num_b
+        # processor = LambdaProcessor(lambda: num_a + num_b)
+        processor = LambdaProcessor(add)
         result = processor.result
         show_results(result, label="Sum is: ")
 

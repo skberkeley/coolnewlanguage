@@ -85,9 +85,9 @@ class Stage:
         Stage.handling_post = False
         Component.num_components = 0
 
-        if Stage.results_template_list:
+        if Stage.results_template is not None:
             template = Stage.results_template
-            Stage.results_template_list = None
+            Stage.results_template = None
 
             return web.Response(body=template, content_type=util.AIOHTTP_HTML)
         else:
