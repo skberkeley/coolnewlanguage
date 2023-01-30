@@ -3,7 +3,7 @@ from typing import Callable
 
 from aiohttp import web
 
-from coolNewLanguage.src import util
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.component import Component
 
 
@@ -59,9 +59,9 @@ class Stage:
         :param request:
         :return:
         """
-        jinja_template = util.JINJA_ENV.from_string(self.template)
+        jinja_template = consts.JINJA_ENV.from_string(self.template)
         rendered_template = jinja_template.render()
-        return web.Response(body=rendered_template, content_type=util.AIOHTTP_HTML)
+        return web.Response(body=rendered_template, content_type=consts.AIOHTTP_HTML)
 
     async def post_handler(self, request: web.Request) -> web.Response:
         """
@@ -89,6 +89,6 @@ class Stage:
             template = Stage.results_template
             Stage.results_template = None
 
-            return web.Response(body=template, content_type=util.AIOHTTP_HTML)
+            return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
         else:
             raise web.HTTPFound('/')

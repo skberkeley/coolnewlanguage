@@ -3,10 +3,12 @@ from typing import Callable
 
 import aiohttp_jinja2
 import jinja2
+import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src.component.component import Component
 from coolNewLanguage.src.component.submit_component import SubmitComponent
+from coolNewLanguage.src.consts import DATA_DIR
 from coolNewLanguage.src.stage.config import Config
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.web_app import WebApp
@@ -45,6 +47,10 @@ class Tool:
         self.web_app = WebApp()
         aiohttp_jinja2.setup(self.web_app.app, loader=jinja2.FileSystemLoader('coolNewLanguage/static/templates'))
 
+        db_path = DATA_DIR.joinpath(f'{self.url}.db')
+        self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
+        self.db_metadata_obj = sqlalchemy.MetaData()
+
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
         Add a stage to this tool
@@ -66,7 +72,7 @@ class Tool:
             '</title>',
             '</head>',
             '<body>',
-            f'<form action="{form_action}" method="{form_method}">'
+            f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
         ]
         stack = ['</html>', '</body>', '</form>']
         Config.submit_component_added = False

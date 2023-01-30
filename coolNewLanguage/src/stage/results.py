@@ -1,4 +1,4 @@
-from coolNewLanguage.src import util
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.stage.stage import Stage
 
 
@@ -49,5 +49,5 @@ def show_results(result, label: str = ''):
     ]
 
     raw_template = ''.join(template_list)
-    jinja_template = util.JINJA_ENV.from_string(raw_template)
+    jinja_template = consts.JINJA_ENV.from_string(raw_template)
     Stage.results_template = jinja_template.render()
