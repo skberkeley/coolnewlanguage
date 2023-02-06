@@ -2,10 +2,15 @@ from coolNewLanguage.src.component.component import Component
 
 
 class TextComponent(Component):
+    """
+    A component used to render some text within a Config
+    """
     def __init__(self, text: str):
         if not isinstance(text, str):
             raise TypeError("Expected a string for this TextComponent")
         self.text = text
+
+        super().__init__()
 
     def paint(self) -> str:
         """
@@ -13,3 +18,10 @@ class TextComponent(Component):
         :return:
         """
         return f'<p>{self.text}</p>'
+
+    def __str__(self):
+        """
+        Returns the text this TextComponent is being used to render
+        :return:
+        """
+        return self.text
