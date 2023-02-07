@@ -17,7 +17,7 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
     :param csv_file: The csv file to use as the data source
     :param tool: The tool whose database the data will be inserted into
     :param has_header: Whether the passed csv file has a header or not
-    :return: 
+    :return: The created table
     """
     if not isinstance(table_name, UserInputComponent):
         raise TypeError("Expected a User Input for table name")
@@ -47,6 +47,8 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
     with tool.db_engine.connect() as conn:
         conn.execute(insert_stmt)
         conn.commit()
+
+    table.engine = tool.db_engine
 
     return table
 
