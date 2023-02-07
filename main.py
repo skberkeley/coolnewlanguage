@@ -1,6 +1,8 @@
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
+from coolNewLanguage.src.component.text_component import TextComponent
+from coolNewLanguage.src.component.table_selector import *
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
 
@@ -26,6 +28,22 @@ def main():
         LambdaProcessor(create_table)
 
     tool.add_stage('upload_stage', upload_stage)
+
+    def table_selector_demo_stage():
+        TextComponent("Pick a table:")
+        columns = [
+            ColumnSelector(label=f"Select column {str(i)}...") 
+            for i in range(3)
+        ]
+
+        table = TableSelector(tool=tool, columns=columns)
+
+        def done():
+            columns_str = ', '.join([str(column) for column in columns])
+            print("Got table", table, "and columns", columns_str)
+        LambdaProcessor(done)
+    tool.add_stage('table_selector_demo', table_selector_demo_stage)
+
     tool.run()
 
 

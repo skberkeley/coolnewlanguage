@@ -45,7 +45,11 @@ class Tool:
             self.url = url
 
         self.web_app = WebApp()
-        aiohttp_jinja2.setup(self.web_app.app, loader=jinja2.FileSystemLoader('coolNewLanguage/static/templates'))
+        self.web_app.add_static_file_handler('/static', 'coolNewLanguage/web/static')
+        loader = jinja2.FileSystemLoader('coolNewLanguage/web/templates')
+        self.jinja_environment = jinja2.Environment(loader=loader)
+        aiohttp_jinja2.setup(self.web_app.app, loader=loader)
+
 
         db_path = DATA_DIR.joinpath(f'{self.url}.db')
         self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
@@ -67,6 +71,8 @@ class Tool:
         Config.template_list = [
             '<html>',
             '<head>',
+            '<script src="/static/support.js">',
+            '</script>',
             '<title>',
             stage_name,
             '</title>',
