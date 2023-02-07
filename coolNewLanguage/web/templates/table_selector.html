@@ -1,0 +1,32 @@
+<p>{{arg}}</p>
+
+<div hidden id="{{ component.component_id }}_table_column_map">
+    {{ table_column_map_json }}
+</div>
+<select required="required"
+        id="{{ component.component_id }}" name="{{ component.component_id }}"
+        onchange="
+            table_selector_update_column_selectors(
+                '{{ component.component_id }}',
+                [
+                    {% for column in column_selectors %}
+                        '{{ column.component_id }}', 
+                    {% endfor %}
+                ]
+            )"
+>
+        <option disabled selected hidden value="">{{ component.label }}</option>
+    {% for table in tables %}
+        <option value="{{ table }}">{{ table }}</option>
+    {% endfor %}
+</select>
+
+{% for column in column_selectors %}
+    <select required="required" 
+            id="{{ column.component_id }}" name="{{ column.component_id }}" 
+            hidden="true">
+        <option disabled selected hidden value="">{{ column.label }}</option>
+    </select>
+{% endfor %}
+
+</br>
