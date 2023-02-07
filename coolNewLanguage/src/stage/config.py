@@ -17,7 +17,11 @@ class Config:
         building_template:
             Whether we're currently constructing a Config or not
             False when handling a post request
+
+        tool_under_construction: Tool
+            The Tool whose config is currently being constructed
     """
     template_list = []
     submit_component_added = False
     building_template = False
+    tool_under_construction: 'Tool' = None

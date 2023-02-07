@@ -50,7 +50,6 @@ class Tool:
         self.jinja_environment = jinja2.Environment(loader=loader)
         aiohttp_jinja2.setup(self.web_app.app, loader=loader)
 
-
         db_path = DATA_DIR.joinpath(f'{self.url}.db')
         self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
         self.db_metadata_obj = sqlalchemy.MetaData()
@@ -83,6 +82,7 @@ class Tool:
         stack = ['</html>', '</body>', '</form>']
         Config.submit_component_added = False
         Config.building_template = True
+        Config.tool_under_construction = self
         # num_components is used for id's in the HTML template
         Component.num_components = 0
 
@@ -95,6 +95,7 @@ class Tool:
         while stack:
             Config.template_list.append(stack.pop())
 
+        Config.tool_under_construction = None
         Config.building_template = False
 
         template = ''.join(Config.template_list)

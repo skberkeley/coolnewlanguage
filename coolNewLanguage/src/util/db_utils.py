@@ -9,6 +9,7 @@ from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_cs
     sqlalchemy_insert_into_table_from_csv_file
 from typing import List
 
+
 def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadComponent, tool: Tool, has_header: bool = True) -> sqlalchemy.Table:
     """
     Create a table in the database of the tool, using the csv file as the source for the data
@@ -49,12 +50,14 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
 
     return table
 
-def get_tables(tool:Tool) -> List[str]:
+
+def get_tables(tool: Tool) -> List[str]:
     engine = tool.db_engine
     insp = sqlalchemy.inspect(engine)
     return insp.get_table_names()
 
-def get_table_columns(tool:Tool, table:str) -> List[str]:
+
+def get_table_columns(tool: Tool, table: str) -> List[str]:
     engine = tool.db_engine
     insp = sqlalchemy.inspect(engine)
     return [str(col["name"]) for col in insp.get_columns(table_name=table)]

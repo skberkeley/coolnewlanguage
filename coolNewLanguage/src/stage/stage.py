@@ -34,7 +34,7 @@ class Stage:
 
     def __init__(self, name: str, template: str, stage_func: Callable):
         """
-        Initialzie this stage. The stage url is generated from the passed name
+        Initialize this stage. The stage url is generated from the passed name
         :param name: This stage's name
         :param template: The pre-rendered template for this stage's Config
         :param stage_func: The function used to define this stage
