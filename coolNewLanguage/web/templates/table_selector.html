@@ -15,7 +15,7 @@
                 ]
             )"
 >
-        <option disabled selected hidden value="">Select table...</option>
+        <option disabled selected hidden value="">{{ component.label }}</option>
     {% for table in tables %}
         <option value="{{ table }}">{{ table }}</option>
     {% endfor %}

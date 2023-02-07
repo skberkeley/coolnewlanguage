@@ -7,6 +7,12 @@ from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
 
 
+def two_column_select(tool:Tool, label:str):
+    c_a = ColumnSelector(label=f"{label} Column 1")
+    c_b = ColumnSelector(label=f"{label} Column 2")
+    table = TableSelector(tool, label=label, columns=[c_a, c_b])
+    return table, c_a, c_b 
+
 def main():
     """engine = sqlalchemy.create_engine('sqlite:///test.db', echo=True)
     metadata = sqlalchemy.MetaData()
@@ -44,6 +50,15 @@ def main():
         LambdaProcessor(done)
     tool.add_stage('table_selector_demo', table_selector_demo_stage)
 
+    def two_select_stage():
+        TextComponent("Select two tables and two columns each to corelate on:")
+        t1, c1_1, c1_2 = two_column_select(tool, label="Table 1")
+        t2, c2_1, c2_2 = two_column_select(tool, label="Table 2")
+
+        def done():
+            print("Got tables", t1, t2)
+        LambdaProcessor(done)
+    tool.add_stage("two_select_stage", two_select_stage)
     tool.run()
 
 
