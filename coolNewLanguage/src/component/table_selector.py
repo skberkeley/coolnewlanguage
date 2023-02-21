@@ -14,7 +14,9 @@ class ColumnSelectorComponent(InputComponent):
         if label and not isinstance(label, str):
             raise TypeError("Expected label to be a string")
         self.label = label if label else "Select column..."
-        super().__init__(expected_type=str)
+        self.emulated_id:Optional[int] = None
+        self.emulated_column:Optional[str] = None
+        return super().__init__(expected_type=str)
 
     def _register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
         if self.table_selector:
@@ -26,6 +28,24 @@ class ColumnSelectorComponent(InputComponent):
         # Column selectors are not painted by this object, they are owned and
         # painted by their respective TableSelector
         return ""
+
+    def set(self, value):
+        print("assign request", value)
+        assign_column_value(
+            tool=Process.running_tool,
+            table_name=self.table_selector.value,
+            column_name=self.emulated_column,
+            column_id=self.emulated_id,
+            value=value
+        )
+
+    def __lshift__(self, other):
+        self.set(other)
+
+    def __ilshift__(self, other):
+        self.set(other)
+        # By returning self, we can avoid destroying on assignment
+        return self
 
 
 class TableSelectorComponent(InputComponent):
@@ -44,10 +64,12 @@ class TableSelectorComponent(InputComponent):
             if any([not isinstance(x, ColumnSelectorComponent) for x in columns]):
                 raise TypeError("All column elements must be ColumnSelector")
 
-        self.tool = process.running_tool
+        self.tool = Config.tool_under_construction
         self.label = label if label else "Select table..."
         self.template = self.tool.jinja_environment.get_template("table_selector.html")
         self.column_selectors: List[ColumnSelectorComponent] = columns if columns else []
+        for column in self.column_selectors:
+            column._register_on_table_selector(self)
         super().__init__(expected_type=str)
 
     def paint(self) -> str:

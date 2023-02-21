@@ -1,8 +1,11 @@
 import csv
 import io
-
+from typing import *
 import sqlalchemy
 
+DB_INTERNAL_COLUMN_ID_NAME = "__hls_internal_id"
+def filter_to_user_columns(columns:List[str]) -> List[str]:
+    return list(filter(lambda s: s != DB_INTERNAL_COLUMN_ID_NAME, columns))
 
 def sqlalchemy_table_from_csv_file(table_name: str, csv_file: io.IOBase, sqlalch_metadata: sqlalchemy.MetaData, has_header: bool = True) -> sqlalchemy.Table:
     """
@@ -29,15 +32,17 @@ def sqlalchemy_table_from_csv_file(table_name: str, csv_file: io.IOBase, sqlalch
     reader = csv.reader(csv_file, dialect)
 
     header = reader.__next__()
+    cols = [
+        sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)
+    ]
     if has_header:
-        cols = []
         for i, col_name in enumerate(header):
             if col_name == '':
                 cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
             else:
                 cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
     else:
-        cols = [sqlalchemy.Column(f'Col {i}', sqlalchemy.String) for i in range(len(header))]
+        cols += [sqlalchemy.Column(f'Col {i}', sqlalchemy.String) for i in range(len(header))]
 
     return sqlalchemy.Table(table_name, sqlalch_metadata, *cols)
 
@@ -68,7 +73,7 @@ def sqlalchemy_insert_into_table_from_csv_file(table: sqlalchemy.Table, csv_file
     if has_header:
         reader.__next__()
     # for each row in the csv, construct the appropriate record
-    col_names = table.columns.keys()
+    col_names = filter_to_user_columns(table.columns.keys())
     for row in reader:
         if len(row) < len(col_names):
             record = {col_names[i]: elem for i, elem in enumerate(row)}

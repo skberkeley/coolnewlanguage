@@ -6,8 +6,8 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
-    sqlalchemy_insert_into_table_from_csv_file
+from coolNewLanguage.src.util.sql_alch_csv_utils import *
+from coolNewLanguage.src.component.table_selector import *
 from typing import List
 
 
@@ -58,8 +58,41 @@ def get_tables(tool: Tool) -> List[str]:
     insp = sqlalchemy.inspect(engine)
     return insp.get_table_names()
 
-
 def get_table_columns(tool: Tool, table: str) -> List[str]:
     engine = tool.db_engine
     insp = sqlalchemy.inspect(engine)
-    return [str(col["name"]) for col in insp.get_columns(table_name=table)]
+    columns = [str(col["name"]) for col in insp.get_columns(table_name=table)]
+    return filter_to_user_columns(columns)
+
+def get_table(tool:Tool, table_name:str) -> sqlalchemy.Table:
+    engine = tool.db_engine
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(engine)
+    return sqlalchemy.Table(table_name, metadata)
+
+def iterate_column(tool: Tool, table_name:str, column_name:str) -> Tuple[int, any]:
+    engine = tool.db_engine
+    table = get_table(tool, table_name)
+    id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+    target_column = table.c[column_name]
+
+    query = sqlalchemy.select(id_column, target_column)
+    with engine.connect() as conn:
+        yield from conn.execute(query)
+        # results = conn.execute(query).fetchall()
+        # print(results)
+
+def assign_column_value(tool:Tool, table_name:str, column_name:str, column_id:int, value):
+    engine = tool.db_engine
+    table = get_table(tool, table_name)
+    id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+    target_column = table.c[column_name]
+
+    stmt = sqlalchemy.update(table).where(id_column == column_id).values({
+        target_column : value
+    })
+
+    with engine.connect() as conn:
+        result = conn.execute(stmt)
+        conn.commit()
+        print("updated", result.rowcount)

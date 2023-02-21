@@ -50,11 +50,11 @@ def show_results(result, label: str = ''):
 
     template_list.append('<div>')
 
-    match result:
-        case sqlalchemy.Table():
-            template_list += result_template_of_sql_alch_table(result)
-        case _:
-            template_list.append(str(result))
+    t = type(result)
+    if (t == sqlalchemy.Table):
+        template_list += result_template_of_sql_alch_table(result)
+    else:
+        template_list.append(str(result))
 
     template_list += [
         '</div>',

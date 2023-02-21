@@ -43,6 +43,9 @@ class InputComponent(Component):
             raise ValueError("Current value not available")
 
         return str(self.value)
+    
+    def __int__(self):
+        return int(self.__str__())
 
     def __add__(self, other):
         """

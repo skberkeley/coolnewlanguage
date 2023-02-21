@@ -1,16 +1,18 @@
+from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
+from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
-from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.table_selector import *
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
+from coolNewLanguage.src.processor.column_xproduct_processor import *
 
 
 def two_column_select(label: str):
     c_a = ColumnSelectorComponent(label=f"{label} Column 1")
     c_b = ColumnSelectorComponent(label=f"{label} Column 2")
     table = TableSelectorComponent(label=label, columns=[c_a, c_b])
-    return table, c_a, c_b
+    return table, c_a, c_b 
 
 
 def main():
@@ -30,10 +32,8 @@ def main():
         csv_file = FileUploadComponent('csv', label="Upload the csv:")
 
         def create_table():
-            return create_table_from_csv(table_name, csv_file)
-        processor = LambdaProcessor(create_table)
-        result = processor.result
-        show_results(result, label="Uploaded dataset:")
+            return create_table_from_csv(table_name, csv_file, tool)
+        LambdaProcessor(create_table)
 
     tool.add_stage('upload_stage', upload_stage)
 
@@ -61,6 +61,27 @@ def main():
             print("Got tables", t1, t2)
         LambdaProcessor(done)
     tool.add_stage("two_select_stage", two_select_stage)
+
+    def add_one():
+        TextComponent("This tool adds one to each element of the selected column")
+        column = ColumnSelectorComponent()
+        table = TableSelectorComponent(columns=[column])
+
+        def go_add():
+            #nonlocal column
+            #column <<= int(column) + 1
+            #
+            # or 
+            # 
+            # column.set(int(column) + 1)
+
+            # todo: database type coercsion/detection?
+            print(table, "current value =", column, "new value =", int(column.value) + 1)
+            column << int(column) + 1
+
+        ColumnXProductProcessor(columns=[column], func=go_add)
+    tool.add_stage("add_one", add_one)
+
     tool.run()
 
 
