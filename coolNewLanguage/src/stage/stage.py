@@ -5,6 +5,9 @@ from aiohttp import web
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.component import Component
+from coolNewLanguage.src.component.submit_component import SubmitComponent
+from coolNewLanguage.src.stage.config import Config
+from coolNewLanguage.src.stage.process import Process
 
 
 class Stage:
@@ -32,7 +35,7 @@ class Stage:
     post_body = None
     results_template = None
 
-    def __init__(self, name: str, template: str, stage_func: Callable):
+    def __init__(self, name: str, stage_func: Callable):
         """
         Initialize this stage. The stage url is generated from the passed name
         :param name: This stage's name
@@ -43,10 +46,6 @@ class Stage:
             raise TypeError("name of a stage should be a string")
         self.name = name
 
-        if not isinstance(template, str):
-            raise TypeError("template of a stage should be a string")
-        self.template = template
-
         if not isinstance(stage_func, Callable):
             raise TypeError("stagefunc of a stage should be a function")
         self.stage_func = stage_func
@@ -55,13 +54,57 @@ class Stage:
 
     async def handle(self, request: web.Request) -> web.Response:
         """
-        Handles initial get request for this stage by returning the pre-rendered Config template
+        Handles get request for this stage by painting this stage and returning the rendered template
         :param request:
         :return:
         """
-        jinja_template = consts.JINJA_ENV.from_string(self.template)
+        template = self.paint()
+        jinja_template = consts.JINJA_ENV.from_string(template)
         rendered_template = jinja_template.render()
         return web.Response(body=rendered_template, content_type=consts.AIOHTTP_HTML)
+
+    def paint(self) -> str:
+        stage_url = urllib.parse.quote(self.name)
+        form_action = f'/{stage_url}/post'
+        form_method = "post"
+
+        Config.template_list = [
+            '<html>',
+            '<head>',
+            '<script src="/static/support.js">',
+            '</script>',
+            '<title>',
+            self.name,
+            '</title>',
+            '</head>',
+            '<body>',
+            f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
+        ]
+        stack = ['</html>', '</body>', '</form>']
+        Config.submit_component_added = False
+        Config.building_template = True
+        Config.tool_under_construction = Process.running_tool
+        # num_components is used for id's in the HTML template
+        Component.num_components = 0
+
+        # call the stage_func, so that each component adds to Config.template_list
+        self.stage_func()
+
+        if not Config.submit_component_added:
+            SubmitComponent("Submit")
+
+        while stack:
+            Config.template_list.append(stack.pop())
+
+        Config.tool_under_construction = None
+        Config.building_template = False
+
+        template = ''.join(Config.template_list)
+
+        # reset num_components
+        Component.num_components = 0
+
+        return template
 
     async def post_handler(self, request: web.Request) -> web.Response:
         """
