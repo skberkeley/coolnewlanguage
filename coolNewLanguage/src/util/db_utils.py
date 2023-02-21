@@ -49,8 +49,6 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
         conn.execute(insert_stmt)
         conn.commit()
 
-    table.engine = tool.db_engine
-
     return table
 
 

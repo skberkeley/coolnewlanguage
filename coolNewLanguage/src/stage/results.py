@@ -3,6 +3,7 @@ from typing import List
 import sqlalchemy
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.stage import process
 
 """
@@ -20,10 +21,15 @@ def show_results(result, label: str = ''):
     returning wouldn't pass the state where we want it
     If we're not handling a post request, doesn't do anything
     :param result: The result to render in template
+        Result could be an InputComponent, in which case we try to render its value
     :param label: An optional label for the results
     """
     # we're not handling a post request, so we don't have any results to show
     if not process.handling_post:
+        return
+
+    if isinstance(result, InputComponent):
+        show_results(result.value, label)
         return
 
     form_action = '/'
@@ -80,8 +86,6 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
     """
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected a sqlalchemy Table for table")
-    if not hasattr(table, 'engine'):
-        raise ValueError("Expected the table to have an associated engine")
 
     col_names = table.columns.keys()
     stmt = sqlalchemy.select(table)
@@ -96,7 +100,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
         template_list.append('</th>')
     template_list.append('</tr>')
     # table contents
-    with table.engine.connect() as conn:
+    with process.running_tool.db_engine.connect() as conn:
         for row in conn.execute(stmt):
             template_list.append('<tr>')
             row_map = row._mapping

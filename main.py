@@ -13,7 +13,7 @@ def two_column_select(label: str):
     c_a = ColumnSelectorComponent(label=f"{label} Column 1")
     c_b = ColumnSelectorComponent(label=f"{label} Column 2")
     table = TableSelectorComponent(label=label, columns=[c_a, c_b])
-    return table, c_a, c_b 
+    return table, c_a, c_b
 
 
 def main():
@@ -87,6 +87,13 @@ def main():
             print(int(column) + 1)
         ColumnXProductProcessor(columns=[column], func=do_add)
     tool.add_stage('add_one_v2', add_one_v2)
+
+
+    def table_selector_stage():
+        TextComponent("Pick a table:")
+        table = TableSelectorComponent()
+        show_results(table, label="Selected table:")
+    tool.add_stage('table_selector', table_selector_stage)
 
     tool.run()
 

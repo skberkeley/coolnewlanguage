@@ -1,4 +1,5 @@
 from typing import List, Optional, Any
+import sqlalchemy
 import json
 
 from coolNewLanguage.src.component.input_component import InputComponent
@@ -56,7 +57,7 @@ class ColumnSelectorComponent(InputComponent):
         :return: ""
         """
         return None
-    
+
     def set(self, value: Any):
         """
         Overwrite the cell this ColumnSelectorComponent currently represents with value
@@ -110,6 +111,13 @@ class TableSelectorComponent(InputComponent):
             column.register_on_table_selector(self)
 
         super().__init__(expected_type=str)
+
+        # replace value with an actual sqlalchemy Table object if handling post
+        if process.handling_post:
+            table_name = self.value
+            self.value = sqlalchemy.Table(table_name, self.tool.db_metadata_obj)
+            insp = sqlalchemy.inspect(self.tool.db_engine)
+            insp.reflect_table(self.value, None)
 
     def paint(self) -> str:
         """
