@@ -1,8 +1,8 @@
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.stage.config import Config
 from coolNewLanguage.src.util.db_utils import *
 from typing import List, Optional
 import json
+
 
 class ColumnSelectorComponent(InputComponent):
     """
@@ -14,7 +14,7 @@ class ColumnSelectorComponent(InputComponent):
         if label and not isinstance(label, str):
             raise TypeError("Expected label to be a string")
         self.label = label if label else "Select column..."
-        return super().__init__(expected_type=str)
+        super().__init__(expected_type=str)
 
     def _register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
         if self.table_selector:
@@ -44,7 +44,7 @@ class TableSelectorComponent(InputComponent):
             if any([not isinstance(x, ColumnSelectorComponent) for x in columns]):
                 raise TypeError("All column elements must be ColumnSelector")
 
-        self.tool = Config.tool_under_construction
+        self.tool = process.running_tool
         self.label = label if label else "Select table..."
         self.template = self.tool.jinja_environment.get_template("table_selector.html")
         self.column_selectors: List[ColumnSelectorComponent] = columns if columns else []
@@ -68,4 +68,3 @@ class TableSelectorComponent(InputComponent):
             table_column_map_json=table_column_map_json, 
             column_selectors=self.column_selectors
         )
-

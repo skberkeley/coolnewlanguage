@@ -1,5 +1,5 @@
 from coolNewLanguage.src.component.component import Component
-from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.stage import process
 
 
 class InputComponent(Component):
@@ -21,8 +21,8 @@ class InputComponent(Component):
             raise TypeError("expected type of an input component should be a type")
         self.expected_type = expected_type
 
-        if Stage.handling_post:
-            self.value = Stage.post_body[self.component_id]
+        if process.handling_post:
+            self.value = process.post_body[self.component_id]
         else:
             self.value = None
 

@@ -6,8 +6,7 @@ from aiohttp import web
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.component import Component
 from coolNewLanguage.src.component.submit_component import SubmitComponent
-from coolNewLanguage.src.stage.config import Config
-from coolNewLanguage.src.stage.process import Process
+from coolNewLanguage.src.stage import process, config, results
 
 
 class Stage:
@@ -15,25 +14,16 @@ class Stage:
     A stage of a data processing tool
     Provides two endpoints for the associated Tool's webapp
     handle provides the initial endpoint when the stage is first
-    viewed, and returns the stage's Config, which was pre-rendered
+    viewed, and returns the stage's Config, which it renders when the request is made
     post_handler provides the endpoint when the input from Config is submitted
     and handles processing data correctly and displaying the results
 
     Attributes:
-        handling_post:
-            Whether a post request is currently being handled
-            Used by other classes to determine current execution mode
-        post_body:
-            The body of the post request being handled
-            Used by InputComponents to bind the results of input frm users
         results_template:
             The rendered Jinja template containing any relevant results
             Set here by show_results() so that we have access
             to it outside the scope of the stage_func call
     """
-    handling_post = False
-    post_body = None
-    results_template = None
 
     def __init__(self, name: str, stage_func: Callable):
         """
@@ -68,7 +58,7 @@ class Stage:
         form_action = f'/{stage_url}/post'
         form_method = "post"
 
-        Config.template_list = [
+        config.template_list = [
             '<html>',
             '<head>',
             '<script src="/static/support.js">',
@@ -81,25 +71,25 @@ class Stage:
             f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
         ]
         stack = ['</html>', '</body>', '</form>']
-        Config.submit_component_added = False
-        Config.building_template = True
-        Config.tool_under_construction = Process.running_tool
+        config.submit_component_added = False
+        config.building_template = True
+        config.tool_under_construction = process.running_tool
         # num_components is used for id's in the HTML template
         Component.num_components = 0
 
-        # call the stage_func, so that each component adds to Config.template_list
+        # call the stage_func, so that each component adds to config.template_list
         self.stage_func()
 
-        if not Config.submit_component_added:
+        if not config.submit_component_added:
             SubmitComponent("Submit")
 
         while stack:
-            Config.template_list.append(stack.pop())
+            config.template_list.append(stack.pop())
 
-        Config.tool_under_construction = None
-        Config.building_template = False
+        config.tool_under_construction = None
+        config.building_template = False
 
-        template = ''.join(Config.template_list)
+        template = ''.join(config.template_list)
 
         # reset num_components
         Component.num_components = 0
@@ -118,19 +108,19 @@ class Stage:
         :param request:
         :return:
         """
-        Stage.post_body = await request.post()
-        Stage.handling_post = True
+        process.post_body = await request.post()
+        process.handling_post = True
         Component.num_components = 0
 
         self.stage_func()
 
-        Stage.post_body = None
-        Stage.handling_post = False
+        process.post_body = None
+        process.handling_post = False
         Component.num_components = 0
 
-        if Stage.results_template is not None:
-            template = Stage.results_template
-            Stage.results_template = None
+        if results.results_template is not None:
+            template = results.results_template
+            results.results_template = None
 
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
         else:

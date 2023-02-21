@@ -1,4 +1,4 @@
-from coolNewLanguage.src.stage.config import Config
+from coolNewLanguage.src.stage import config
 
 
 def get_component_id() -> str:
@@ -32,8 +32,8 @@ class Component:
         """
         self.component_id = get_component_id()
         Component.num_components += 1
-        if Config.building_template:
-            Config.template_list.append(self.paint())
+        if config.building_template:
+            config.template_list.append(self.paint())
 
     def paint(self):
         """
