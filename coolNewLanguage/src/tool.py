@@ -1,4 +1,3 @@
-import urllib.parse
 from typing import Callable
 
 import aiohttp_jinja2
@@ -6,10 +5,7 @@ import jinja2
 import sqlalchemy
 from aiohttp import web
 
-from coolNewLanguage.src.component.component import Component
-from coolNewLanguage.src.component.submit_component import SubmitComponent
 from coolNewLanguage.src.consts import DATA_DIR
-from coolNewLanguage.src.stage.config import Config
 from coolNewLanguage.src.stage.process import Process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.web_app import WebApp
@@ -64,48 +60,8 @@ class Tool:
         :param stage_func: The function used to define this stage
         :return:
         """
-        stage_url = urllib.parse.quote(stage_name)
-        form_action = f'/{stage_url}/post'
-        form_method = "post"
-
-        Config.template_list = [
-            '<html>',
-            '<head>',
-            '<script src="/static/support.js">',
-            '</script>',
-            '<title>',
-            stage_name,
-            '</title>',
-            '</head>',
-            '<body>',
-            f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
-        ]
-        stack = ['</html>', '</body>', '</form>']
-        Config.submit_component_added = False
-        Config.building_template = True
-        Config.tool_under_construction = self
-        # num_components is used for id's in the HTML template
-        Component.num_components = 0
-
-        # call the stage_func, so that each component adds to Config.template_list
-        stage_func()
-
-        if not Config.submit_component_added:
-            SubmitComponent("Submit")
-
-        while stack:
-            Config.template_list.append(stack.pop())
-
-        Config.tool_under_construction = None
-        Config.building_template = False
-
-        template = ''.join(Config.template_list)
-
-        new_stage = Stage(stage_name, template, stage_func)
+        new_stage = Stage(stage_name, stage_func)
         self.stages.append(new_stage)
-
-        # reset num_components
-        Component.num_components = 0
 
     def run(self):
         """
