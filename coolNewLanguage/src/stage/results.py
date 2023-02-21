@@ -3,7 +3,14 @@ from typing import List
 import sqlalchemy
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.stage import process
+
+"""
+The rendered Jinja template containing any relevant results
+Set here by show_results() so that we have access
+to it outside the scope of the stage_func call
+"""
+results_template = []
 
 
 def show_results(result, label: str = ''):
@@ -16,7 +23,7 @@ def show_results(result, label: str = ''):
     :param label: An optional label for the results
     """
     # we're not handling a post request, so we don't have any results to show
-    if not Stage.handling_post:
+    if not process.handling_post:
         return
 
     form_action = '/'
@@ -60,7 +67,8 @@ def show_results(result, label: str = ''):
 
     raw_template = ''.join(template_list)
     jinja_template = consts.JINJA_ENV.from_string(raw_template)
-    Stage.results_template = jinja_template.render()
+    global results_template
+    results_template = jinja_template.render()
 
 
 def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:

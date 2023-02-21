@@ -4,7 +4,7 @@ import sqlalchemy
 
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.stage.process import Process
+from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file
@@ -36,7 +36,7 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
         raise TypeError("Expected a bool for has_header")
 
     # create table
-    tool = Process.running_tool
+    tool = process.running_tool
     metadata_obj = tool.db_metadata_obj
     with open(csv_file.value) as f:
         table = sqlalchemy_table_from_csv_file(table_name.value, f, metadata_obj, has_header)
