@@ -4,13 +4,14 @@ import sqlalchemy
 
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
+from coolNewLanguage.src.stage.process import Process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file
 from typing import List
 
 
-def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadComponent, tool: Tool, has_header: bool = True) -> sqlalchemy.Table:
+def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadComponent, has_header: bool = True) -> sqlalchemy.Table:
     """
     Create a table in the database of the tool, using the csv file as the source for the data
     :param table_name: The name to use for the table being inserted
@@ -31,12 +32,11 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
         raise ValueError("Expected File Upload to have a value for csv file")
     if not isinstance(csv_file.value, Path):
         raise ValueError("Expected File Upload value to be a Path to a file")
-    if not isinstance(tool, Tool):
-        raise TypeError("Expected a Tool for tool")
     if not isinstance(has_header, bool):
         raise TypeError("Expected a bool for has_header")
 
     # create table
+    tool = Process.running_tool
     metadata_obj = tool.db_metadata_obj
     with open(csv_file.value) as f:
         table = sqlalchemy_table_from_csv_file(table_name.value, f, metadata_obj, has_header)

@@ -1,5 +1,3 @@
-from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
-from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.component.text_component import TextComponent
@@ -32,7 +30,7 @@ def main():
         csv_file = FileUploadComponent('csv', label="Upload the csv:")
 
         def create_table():
-            return create_table_from_csv(table_name, csv_file, tool)
+            return create_table_from_csv(table_name, csv_file)
         processor = LambdaProcessor(create_table)
         result = processor.result
         show_results(result, label="Uploaded dataset:")
