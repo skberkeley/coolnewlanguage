@@ -1,5 +1,5 @@
 from coolNewLanguage.src.component.component import Component
-from coolNewLanguage.src.stage.config import Config
+from coolNewLanguage.src.stage import config
 
 
 class SubmitComponent(Component):
@@ -10,7 +10,7 @@ class SubmitComponent(Component):
     def __init__(self, submit_text: str = ""):
         """
         Initialize this SubmitComponent
-        Set Config.submit_component_added to true so that we know not to
+        Set config.submit_component_added to true so that we know not to
         procedurally add one to the Config when all the other components are
         finished being rendered
         :param submit_text:     The text to show on the submit button
@@ -21,7 +21,7 @@ class SubmitComponent(Component):
 
         super().__init__()
 
-        Config.submit_component_added = True
+        config.submit_component_added = True
 
     def paint(self) -> str:
         """

@@ -1,7 +1,7 @@
 from typing import Callable
 
 from coolNewLanguage.src.processor.processor import Processor
-from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.stage import process
 
 
 class LambdaProcessor(Processor):
@@ -19,7 +19,7 @@ class LambdaProcessor(Processor):
             raise TypeError("func of a LambdaProcessor should be a function")
         self.func = func
 
-        if Stage.handling_post:
+        if process.handling_post:
             self.result = func()
         else:
             self.result = None

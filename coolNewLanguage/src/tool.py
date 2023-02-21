@@ -6,7 +6,7 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src.consts import DATA_DIR
-from coolNewLanguage.src.stage.process import Process
+from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.web_app import WebApp
 
@@ -81,7 +81,7 @@ class Tool:
 
         self.web_app.app.add_routes(routes)
 
-        Process.running_tool = self
+        process.running_tool = self
 
         web.run_app(self.web_app.app, port=8000)
 
