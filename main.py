@@ -1,6 +1,7 @@
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
+from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.table_selector import *
 from coolNewLanguage.src.tool import Tool
@@ -11,7 +12,7 @@ def two_column_select(label: str):
     c_a = ColumnSelectorComponent(label=f"{label} Column 1")
     c_b = ColumnSelectorComponent(label=f"{label} Column 2")
     table = TableSelectorComponent(label=label, columns=[c_a, c_b])
-    return table, c_a, c_b 
+    return table, c_a, c_b
 
 
 def main():
@@ -32,7 +33,9 @@ def main():
 
         def create_table():
             return create_table_from_csv(table_name, csv_file, tool)
-        LambdaProcessor(create_table)
+        processor = LambdaProcessor(create_table)
+        result = processor.result
+        show_results(result, label="Uploaded dataset:")
 
     tool.add_stage('upload_stage', upload_stage)
 
