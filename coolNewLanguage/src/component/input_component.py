@@ -45,7 +45,11 @@ class InputComponent(Component):
         return str(self.value)
     
     def __int__(self):
-        return int(self.__str__())
+        """
+        Return this InputComponent's value by trying to cast it to an int
+        :return: The int value of this Inputcomponent
+        """
+        return int(self.value)
 
     def __add__(self, other):
         """

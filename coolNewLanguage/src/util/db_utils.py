@@ -6,9 +6,10 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util.sql_alch_csv_utils import *
-from coolNewLanguage.src.component.table_selector import *
-from typing import List
+from typing import List, Tuple, Any, Generator, Iterator
+
+from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
+    sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
 
 
 def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadComponent, has_header: bool = True) -> sqlalchemy.Table:
@@ -53,46 +54,114 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
     return table
 
 
-def get_tables(tool: Tool) -> List[str]:
+def get_table_names_from_tool(tool: Tool) -> List[str]:
+    """
+    Get the names of the database tables associated with the passed table
+    :param tool: The Tool from which to get associated table names
+    :return: A list of table names
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected a Tool for tool")
+
     engine = tool.db_engine
     insp = sqlalchemy.inspect(engine)
     return insp.get_table_names()
 
-def get_table_columns(tool: Tool, table: str) -> List[str]:
+
+def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
+    """
+    Get the column names of the passed table
+    :param tool: The Tool with which the table is associated
+    :param table_name: The name of the table from which to get the column names
+    :return:
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected a Tool for tool")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected a string for table_name")
+
     engine = tool.db_engine
-    insp = sqlalchemy.inspect(engine)
-    columns = [str(col["name"]) for col in insp.get_columns(table_name=table)]
+    insp: sqlalchemy.Inspector = sqlalchemy.inspect(engine)
+
+    if not insp.has_table(table_name):
+        raise ValueError("The passed tool does not have an associated table with the passed name")
+
+    columns = [str(col["name"]) for col in insp.get_columns(table_name=table_name)]
     return filter_to_user_columns(columns)
 
-def get_table(tool:Tool, table_name:str) -> sqlalchemy.Table:
-    engine = tool.db_engine
-    metadata = sqlalchemy.MetaData()
-    metadata.reflect(engine)
-    return sqlalchemy.Table(table_name, metadata)
 
-def iterate_column(tool: Tool, table_name:str, column_name:str) -> Tuple[int, any]:
+def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
+    """
+    Get the sqlaclchemy Table which has the given name associated with the passed Tool
+    Reflect the table using the engine associated with the Tool
+    :param tool: The Tool from which to get the sqlalchemy table
+    :param table_name: The name of the table which we try to get
+    :return: The Table with matching name
+    """
     engine = tool.db_engine
-    table = get_table(tool, table_name)
+    insp: sqlalchemy.Inspector = sqlalchemy.inspect(engine)
+
+    if not insp.has_table(table_name):
+        raise ValueError("The passed tool does not have an associated table with the passed name")
+
+    table = sqlalchemy.Table(table_name, tool.db_metadata_obj)
+    insp.reflect_table(table, None)
+
+    return table
+
+
+def iterate_over_column(tool: Tool, table_name: str, column_name: str) -> Iterator[Tuple[int, Any]]:
+    """
+    Iterate over the column with the passed column
+    :param tool: The tool containing the associated table
+    :param table_name: The name of the table containing the column of interest
+    :param column_name: The name of the column to iterate over
+    :return: Yields a tuple of form (row_id, value)
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+    if not isinstance(column_name, str):
+        raise TypeError("Expected column name to be a string")
+
+    engine = tool.db_engine
+    table = get_table_from_table_name(tool, table_name)
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
     target_column = table.c[column_name]
 
     query = sqlalchemy.select(id_column, target_column)
     with engine.connect() as conn:
-        yield from conn.execute(query)
-        # results = conn.execute(query).fetchall()
-        # print(results)
+        query_result = conn.execute(query)
+    yield from query_result
 
-def assign_column_value(tool:Tool, table_name:str, column_name:str, column_id:int, value):
-    engine = tool.db_engine
-    table = get_table(tool, table_name)
+
+def update_cell(tool: Tool, table_name: str, column_name: str, row_id: int, value: Any):
+    """
+    Update the given cell, identified by the table_name, column_name and row_id, to the passed value
+    :param tool: The Tool which owns the table with the cell to be updated
+    :param table_name: The name of the table with the cell to be updated
+    :param column_name: The name of the column containing the cell to be updated
+    :param row_id: The row containing the cell to be updated
+    :param value: The value to update the cell to
+    :return:
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+    if not isinstance(column_name, str):
+        raise TypeError("Expected column name to be a string")
+    if not isinstance(row_id, int):
+        raise TypeError("Expected row_id to be a string")
+
+    table = get_table_from_table_name(tool, table_name)
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
     target_column = table.c[column_name]
 
-    stmt = sqlalchemy.update(table).where(id_column == column_id).values({
-        target_column : value
-    })
+    stmt = sqlalchemy.update(table).where(id_column == row_id).values({target_column: value})
 
+    engine = tool.db_engine
     with engine.connect() as conn:
-        result = conn.execute(stmt)
+        conn.execute(stmt)
         conn.commit()
-        print("updated", result.rowcount)

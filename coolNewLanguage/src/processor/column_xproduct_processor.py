@@ -1,17 +1,20 @@
-from typing import Callable
+from typing import List, Callable
 
+from coolNewLanguage.src.component.table_selector import ColumnSelectorComponent
 from coolNewLanguage.src.processor.processor import Processor
+from coolNewLanguage.src.stage.process import Process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.component.table_selector import *
-from coolNewLanguage.src.util.db_utils import *
 from itertools import product
+
+from coolNewLanguage.src.util.db_utils import iterate_over_column
+
 
 class ColumnXProductProcessor(Processor):
     """
     A processor which executes a lambda function passed to the Processor for
-    every combination of the the given columns
+    every combination of the given columns
     """
-    def __init__(self, columns:List[ColumnSelectorComponent], func: Callable):
+    def __init__(self, columns: List[ColumnSelectorComponent], func: Callable):
         """
         Initialize this processor
         If handling a post request, run the passed func
@@ -26,9 +29,10 @@ class ColumnXProductProcessor(Processor):
         self.func = func
 
         if Stage.handling_post:
-            iterators = [iterate_column(tool=Process.running_tool,
-                                        table_name=c.table_selector.value,
-                                        column_name=c.value) for c in columns]
+            iterators = [
+                iterate_over_column(tool=Process.running_tool, table_name=c.table_selector.value, column_name=c.value)
+                for c in columns
+            ]
             
             # Stash the column string since we replace the proxy value
             for c in columns:
@@ -36,10 +40,9 @@ class ColumnXProductProcessor(Processor):
             
             for entry in product(*iterators):
                 for (column, data) in zip(columns, entry):
-                    print("!", entry)
-                    column.emulated_id = data[0]
+                    column.emulated_row_id = data[0]
                     column.value = data[1]
-                    func()
+                func()
             self.result = None
         else:
             self.result = None

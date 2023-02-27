@@ -32,7 +32,7 @@ def main():
         csv_file = FileUploadComponent('csv', label="Upload the csv:")
 
         def create_table():
-            return create_table_from_csv(table_name, csv_file, tool)
+            return create_table_from_csv(table_name, csv_file, True)
         LambdaProcessor(create_table)
 
     tool.add_stage('upload_stage', upload_stage)
@@ -68,22 +68,26 @@ def main():
         table = TableSelectorComponent(columns=[column])
 
         def go_add():
-            #nonlocal column
-            #column <<= int(column) + 1
-            #
-            # or 
-            # 
             # column.set(int(column) + 1)
 
             # todo: database type coercsion/detection?
             print(table, "current value =", column, "new value =", int(column.value) + 1)
-            column << int(column) + 1
+            print(int(column) + 1)
 
         ColumnXProductProcessor(columns=[column], func=go_add)
     tool.add_stage("add_one", add_one)
 
-    tool.run()
+    def add_one_v2():
+        TextComponent("Also adds one to each element of selected column")
+        table = TableSelectorComponent()
+        column = create_column_selector_from_table_selector(table)
 
+        def do_add():
+            print(int(column) + 1)
+        ColumnXProductProcessor(columns=[column], func=do_add)
+    tool.add_stage('add_one_v2', add_one_v2)
+
+    tool.run()
 
 if __name__ == '__main__':
     main()
