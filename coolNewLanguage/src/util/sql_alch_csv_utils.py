@@ -1,10 +1,27 @@
 import csv
 import io
+from typing import List
 
 import sqlalchemy
 
+DB_INTERNAL_COLUMN_ID_NAME = "__hls_internal_id"
 
-def sqlalchemy_table_from_csv_file(table_name: str, csv_file: io.IOBase, sqlalch_metadata: sqlalchemy.MetaData, has_header: bool = True) -> sqlalchemy.Table:
+
+def filter_to_user_columns(columns: List[str]) -> List[str]:
+    """
+    Filters a list of column names to just the user ones
+    Currently, just removes the internal id column name
+    :param columns: The list of column names to filter
+    :return:
+    """
+    return list(filter(lambda s: s != DB_INTERNAL_COLUMN_ID_NAME, columns))
+
+
+def sqlalchemy_table_from_csv_file(
+        table_name: str,
+        csv_file: io.IOBase,
+        sqlalch_metadata: sqlalchemy.MetaData,
+        has_header: bool = True) -> sqlalchemy.Table:
     """
     Create a SQLAlchemy Table object from the given csv file. Note that this function only determines the schema from
     the csv, rather than actually inserting data into some database. If a table with the passed name already exists,
@@ -29,15 +46,17 @@ def sqlalchemy_table_from_csv_file(table_name: str, csv_file: io.IOBase, sqlalch
     reader = csv.reader(csv_file, dialect)
 
     header = reader.__next__()
+    cols = [
+        sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)
+    ]
     if has_header:
-        cols = []
         for i, col_name in enumerate(header):
             if col_name == '':
                 cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
             else:
                 cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
     else:
-        cols = [sqlalchemy.Column(f'Col {i}', sqlalchemy.String) for i in range(len(header))]
+        cols += [sqlalchemy.Column(f'Col {i}', sqlalchemy.String) for i in range(len(header))]
 
     return sqlalchemy.Table(table_name, sqlalch_metadata, *cols)
 
@@ -45,7 +64,7 @@ def sqlalchemy_table_from_csv_file(table_name: str, csv_file: io.IOBase, sqlalch
 def sqlalchemy_insert_into_table_from_csv_file(table: sqlalchemy.Table, csv_file: io.IOBase, has_header: bool = True) -> sqlalchemy.sql.expression.Insert:
     """
     Constructs a SQLAlchemy insert object which inserts into the passed table from the data contained in the CSV file
-    Assumes the table already has the correct schema to accomodate the csv file's data
+    Assumes the table already has the correct schema to accommodate the csv file's data
     :param table: The SQLAlchemy table to insert into
     :param csv_file: The CSV file containing the data to insert
     :param has_header: Whether the csv file has a header to be ignored when inserting data
@@ -68,7 +87,7 @@ def sqlalchemy_insert_into_table_from_csv_file(table: sqlalchemy.Table, csv_file
     if has_header:
         reader.__next__()
     # for each row in the csv, construct the appropriate record
-    col_names = table.columns.keys()
+    col_names = filter_to_user_columns(table.columns.keys())
     for row in reader:
         if len(row) < len(col_names):
             record = {col_names[i]: elem for i, elem in enumerate(row)}

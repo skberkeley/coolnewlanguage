@@ -33,7 +33,7 @@ class Component:
         self.component_id = get_component_id()
         Component.num_components += 1
         if config.building_template:
-            config.template_list.append(self.paint())
+            config.component_list.append(self)
 
     def paint(self):
         """
