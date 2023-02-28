@@ -106,7 +106,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
             row_map = row._mapping
             for col in col_names:
                 template_list.append('<td>')
-                template_list.append(row_map[col])
+                template_list.append(str(row_map[col]))
                 template_list.append('</td>')
             template_list.append('</tr>')
     # finish out list and return

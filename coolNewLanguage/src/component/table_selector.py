@@ -115,8 +115,8 @@ class TableSelectorComponent(InputComponent):
         # replace value with an actual sqlalchemy Table object if handling post
         if process.handling_post:
             table_name = self.value
-            self.value = sqlalchemy.Table(table_name, self.tool.db_metadata_obj)
-            insp = sqlalchemy.inspect(self.tool.db_engine)
+            self.value = sqlalchemy.Table(table_name, process.running_tool.db_metadata_obj)
+            insp = sqlalchemy.inspect(process.running_tool.db_engine)
             insp.reflect_table(self.value, None)
 
     def paint(self) -> str:

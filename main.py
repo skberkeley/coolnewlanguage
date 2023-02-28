@@ -5,6 +5,7 @@ from coolNewLanguage.src.component.user_input_component import UserInputComponen
 from coolNewLanguage.src.processor.column_xproduct_processor import ColumnXProductProcessor
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
+from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
 

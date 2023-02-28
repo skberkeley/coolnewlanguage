@@ -30,7 +30,7 @@ class ColumnXProductProcessor(Processor):
 
         if process.handling_post:
             iterators = [
-                iterate_over_column(tool=process.running_tool, table_name=c.table_selector.value, column_name=c.value)
+                iterate_over_column(tool=process.running_tool, table=c.table_selector.value, column_name=c.value)
                 for c in columns
             ]
             
