@@ -2,8 +2,7 @@ from typing import List, Optional, Any
 import json
 
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.stage.config import Config
-from coolNewLanguage.src.stage.process import Process
+from coolNewLanguage.src.stage import process, config
 from coolNewLanguage.src.util.db_utils import update_cell, get_table_names_from_tool, get_column_names_from_table_name
 
 
@@ -56,7 +55,7 @@ class ColumnSelectorComponent(InputComponent):
         TableSelectorComponents
         :return: ""
         """
-        return ""
+        return None
     
     def set(self, value: Any):
         """
@@ -66,7 +65,7 @@ class ColumnSelectorComponent(InputComponent):
         :param value: The value to update the cell with
         :return:
         """
-        update_cell(tool=Process.running_tool, table_name=self.table_selector.value, column_name=self.emulated_column,
+        update_cell(tool=process.running_tool, table_name=self.table_selector.value, column_name=self.emulated_column,
                     row_id=self.emulated_row_id, value=value)
 
     def __lshift__(self, other: Any):
@@ -103,8 +102,8 @@ class TableSelectorComponent(InputComponent):
 
         self.label = label if label else "Select table..."
 
-        if Config.building_template:
-            self.template = Config.tool_under_construction.jinja_environment.get_template('table_selector.html')
+        if config.building_template:
+            self.template = config.tool_under_construction.jinja_environment.get_template('table_selector.html')
 
         self.columns: List[ColumnSelectorComponent] = columns if columns else []
         for column in self.columns:
@@ -118,7 +117,7 @@ class TableSelectorComponent(InputComponent):
         Also paints the ColumnSelectorComponents in self.columns
         :return: The painted TableSelectorComponent
         """
-        tool = Config.tool_under_construction
+        tool = config.tool_under_construction
         tables = get_table_names_from_tool(tool)
         table_column_map = {
             table: get_column_names_from_table_name(tool, table)

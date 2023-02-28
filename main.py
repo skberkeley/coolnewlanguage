@@ -1,11 +1,12 @@
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
+from coolNewLanguage.src.component.table_selector import ColumnSelectorComponent, TableSelectorComponent, \
+    create_column_selector_from_table_selector
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
+from coolNewLanguage.src.processor.column_xproduct_processor import ColumnXProductProcessor
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
-from coolNewLanguage.src.component.table_selector import *
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
-from coolNewLanguage.src.processor.column_xproduct_processor import *
 
 
 def two_column_select(label: str):
@@ -88,6 +89,7 @@ def main():
     tool.add_stage('add_one_v2', add_one_v2)
 
     tool.run()
+
 
 if __name__ == '__main__':
     main()

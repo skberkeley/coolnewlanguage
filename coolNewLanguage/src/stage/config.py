@@ -1,3 +1,5 @@
+from typing import List
+
 """
 A module to hold state while constructing Configs
 Since state is not passed to each component as they are initialized,
@@ -6,6 +8,9 @@ we put variables here so component __init__ functions know where to "find" them
 Attributes:
     template_list:
         A list of HTML elements which comprise this Config
+        
+    component_list:
+        A list of components, which one painted, will comprise the Config being constructed
 
     submit_component_added:
         Whether a submit component has been added to the template_list yet
@@ -20,7 +25,8 @@ Attributes:
     tool_under_construction: Tool
         The Tool whose config is currently being constructed
 """
-template_list = []
-submit_component_added = False
-building_template = False
+
+component_list: List['Component'] = []
+submit_component_added: bool = False
+building_template: bool = False
 tool_under_construction: 'Tool' = None

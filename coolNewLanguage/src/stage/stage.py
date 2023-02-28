@@ -58,7 +58,19 @@ class Stage:
         form_action = f'/{stage_url}/post'
         form_method = "post"
 
-        config.template_list = [
+        config.submit_component_added = False
+        config.building_template = True
+        config.tool_under_construction = process.running_tool
+        # num_components is used for id's in the HTML template
+        Component.num_components = 0
+
+        # call the stage_func, so that each component adds itself to config.component_list
+        self.stage_func()
+
+        if not config.submit_component_added:
+            SubmitComponent("Submit")
+
+        template_list = [
             '<html>',
             '<head>',
             '<script src="/static/support.js">',
@@ -71,25 +83,20 @@ class Stage:
             f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
         ]
         stack = ['</html>', '</body>', '</form>']
-        config.submit_component_added = False
-        config.building_template = True
-        config.tool_under_construction = process.running_tool
-        # num_components is used for id's in the HTML template
-        Component.num_components = 0
 
-        # call the stage_func, so that each component adds to config.template_list
-        self.stage_func()
-
-        if not config.submit_component_added:
-            SubmitComponent("Submit")
-
-        while stack:
-            config.template_list.append(stack.pop())
+        for component in config.component_list:
+            painted_comp = component.paint()
+            if painted_comp is not None:
+                template_list.append(painted_comp)
 
         config.tool_under_construction = None
         config.building_template = False
+        config.component_list = []
 
-        template = ''.join(config.template_list)
+        while stack:
+            template_list.append(stack.pop())
+
+        template = ''.join(template_list)
 
         # reset num_components
         Component.num_components = 0

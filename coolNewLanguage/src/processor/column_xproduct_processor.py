@@ -2,7 +2,7 @@ from typing import List, Callable
 
 from coolNewLanguage.src.component.table_selector import ColumnSelectorComponent
 from coolNewLanguage.src.processor.processor import Processor
-from coolNewLanguage.src.stage.process import Process
+from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from itertools import product
 
@@ -28,9 +28,9 @@ class ColumnXProductProcessor(Processor):
 
         self.func = func
 
-        if Stage.handling_post:
+        if process.handling_post:
             iterators = [
-                iterate_over_column(tool=Process.running_tool, table_name=c.table_selector.value, column_name=c.value)
+                iterate_over_column(tool=process.running_tool, table_name=c.table_selector.value, column_name=c.value)
                 for c in columns
             ]
             

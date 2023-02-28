@@ -10,7 +10,7 @@ The rendered Jinja template containing any relevant results
 Set here by show_results() so that we have access
 to it outside the scope of the stage_func call
 """
-results_template = []
+results_template = None
 
 
 def show_results(result, label: str = ''):
