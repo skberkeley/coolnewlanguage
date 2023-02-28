@@ -49,8 +49,6 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
         conn.execute(insert_stmt)
         conn.commit()
 
-    table.engine = tool.db_engine
-
     return table
 
 
@@ -110,23 +108,22 @@ def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
     return table
 
 
-def iterate_over_column(tool: Tool, table_name: str, column_name: str) -> Iterator[Tuple[int, Any]]:
+def iterate_over_column(tool: Tool, table: sqlalchemy.Table, column_name: str) -> Iterator[Tuple[int, Any]]:
     """
     Iterate over the column with the passed column
     :param tool: The tool containing the associated table
-    :param table_name: The name of the table containing the column of interest
+    :param table: The sqlalchemy Table containing the column of interest
     :param column_name: The name of the column to iterate over
     :return: Yields a tuple of form (row_id, value)
     """
     if not isinstance(tool, Tool):
         raise TypeError("Expected tool to be a Tool")
-    if not isinstance(table_name, str):
-        raise TypeError("Expected table_name to be a string")
+    if not isinstance(table, sqlalchemy.Table):
+        raise TypeError("Expected table to be a sqlalchemy Table")
     if not isinstance(column_name, str):
         raise TypeError("Expected column name to be a string")
 
     engine = tool.db_engine
-    table = get_table_from_table_name(tool, table_name)
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
     target_column = table.c[column_name]
 
