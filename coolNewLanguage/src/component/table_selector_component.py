@@ -7,7 +7,6 @@ from coolNewLanguage.src.stage import process, config
 from coolNewLanguage.src.util.db_utils import update_cell, get_table_names_from_tool, get_column_names_from_table_name
 
 
-
 class ColumnSelectorComponent(InputComponent):
     """
     A linked, dependent component which allows a column to be selected 
@@ -34,8 +33,8 @@ class ColumnSelectorComponent(InputComponent):
         self.table_selector: Optional['TableSelectorComponent'] = None
         self.label = label if label else "Select column..."
         self.emulated_row_id: Optional[int] = None
-        self.emulated_column: Optional[str] = None
-        return super().__init__(expected_type=str)
+        super().__init__(expected_type=str)
+        self.emulated_column: str = self.value
 
     def register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
         """
@@ -66,7 +65,7 @@ class ColumnSelectorComponent(InputComponent):
         :param value: The value to update the cell with
         :return:
         """
-        update_cell(tool=process.running_tool, table_name=self.table_selector.value, column_name=self.emulated_column,
+        update_cell(tool=process.running_tool, table=self.table_selector.value, column_name=self.emulated_column,
                     row_id=self.emulated_row_id, value=value)
 
     def __lshift__(self, other: Any):

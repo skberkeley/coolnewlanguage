@@ -4,14 +4,10 @@ import sqlalchemy
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.input_component import InputComponent
+from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.stage import process
-
-"""
-The rendered Jinja template containing any relevant results
-Set here by show_results() so that we have access
-to it outside the scope of the stage_func call
-"""
-results_template = None
+from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
 def show_results(result, label: str = ''):
@@ -59,6 +55,8 @@ def show_results(result, label: str = ''):
     match result:
         case sqlalchemy.Table():
             template_list += result_template_of_sql_alch_table(result)
+        case [*cols] if all([isinstance(c, ColumnSelectorComponent) for c in cols]):
+            template_list += result_template_of_column_list(cols)
         case _:
             template_list.append(str(result))
 
@@ -73,8 +71,7 @@ def show_results(result, label: str = ''):
 
     raw_template = ''.join(template_list)
     jinja_template = consts.JINJA_ENV.from_string(raw_template)
-    global results_template
-    results_template = jinja_template.render()
+    Stage.results_template = jinja_template.render()
 
 
 def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
@@ -87,29 +84,32 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected a sqlalchemy Table for table")
 
-    col_names = table.columns.keys()
     stmt = sqlalchemy.select(table)
 
-    template_list = ['<table>']
+    return template_from_select_statement(stmt)
 
-    # header row
-    template_list.append('<tr>')
-    for col in col_names:
-        template_list.append('<th>')
-        template_list.append(col)
-        template_list.append('</th>')
-    template_list.append('</tr>')
-    # table contents
-    with process.running_tool.db_engine.connect() as conn:
-        for row in conn.execute(stmt):
-            template_list.append('<tr>')
-            row_map = row._mapping
-            for col in col_names:
-                template_list.append('<td>')
-                template_list.append(str(row_map[col]))
-                template_list.append('</td>')
-            template_list.append('</tr>')
-    # finish out list and return
-    template_list.append('</table>')
 
-    return template_list
+def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> List[str]:
+    """
+    Construct an HTML template of some columns, all presumably from the same table
+    Note: Current implementation assumes all string data
+    :param cols: The table to construct the template for
+    :return: A list of HTML components comprising the table with the table's data
+    :param cols:
+    :return:
+    """
+    if not isinstance(cols, list):
+        raise TypeError("Expected cols to be a list")
+    if not all([isinstance(c, ColumnSelectorComponent) for c in cols]):
+        raise TypeError("Expected each element of cols to be a ColumnSelectorComponent")
+    if any([c.table_selector is None for c in cols]):
+        raise ValueError("Each column in cols should have an associated TableSelectorComponent")
+    if len(set([c.table_selector for c in cols])) > 1:
+        raise ValueError("Each column in cols should be associated with the same TableSelectorComponent")
+
+    table: sqlalchemy.Table = cols[0].table_selector.value
+    sqlalchemy_cols = [table.c[col.emulated_column] for col in cols]
+    stmt = sqlalchemy.select(*sqlalchemy_cols)
+
+    return template_from_select_statement(stmt)
+
