@@ -6,7 +6,7 @@ from aiohttp import web
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.component import Component
 from coolNewLanguage.src.component.submit_component import SubmitComponent
-from coolNewLanguage.src.stage import process, config, results
+from coolNewLanguage.src.stage import process, config
 
 
 class Stage:
@@ -24,6 +24,7 @@ class Stage:
             Set here by show_results() so that we have access
             to it outside the scope of the stage_func call
     """
+    results_template = None
 
     def __init__(self, name: str, stage_func: Callable):
         """
@@ -125,9 +126,9 @@ class Stage:
         process.handling_post = False
         Component.num_components = 0
 
-        if results.results_template is not None:
-            template = results.results_template
-            results.results_template = None
+        if Stage.results_template is not None:
+            template = Stage.results_template
+            Stage.results_template = None
 
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
         else:

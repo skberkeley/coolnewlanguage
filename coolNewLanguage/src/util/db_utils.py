@@ -6,7 +6,7 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
-from typing import List, Tuple, Any, Generator, Iterator
+from typing import List, Tuple, Any, Iterator
 
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
@@ -133,11 +133,11 @@ def iterate_over_column(tool: Tool, table: sqlalchemy.Table, column_name: str) -
     yield from query_result
 
 
-def update_cell(tool: Tool, table_name: str, column_name: str, row_id: int, value: Any):
+def update_cell(tool: Tool, table: sqlalchemy.Table, column_name: str, row_id: int, value: Any):
     """
     Update the given cell, identified by the table_name, column_name and row_id, to the passed value
     :param tool: The Tool which owns the table with the cell to be updated
-    :param table_name: The name of the table with the cell to be updated
+    :param table: The table with the cell to be updated
     :param column_name: The name of the column containing the cell to be updated
     :param row_id: The row containing the cell to be updated
     :param value: The value to update the cell to
@@ -145,14 +145,13 @@ def update_cell(tool: Tool, table_name: str, column_name: str, row_id: int, valu
     """
     if not isinstance(tool, Tool):
         raise TypeError("Expected tool to be a Tool")
-    if not isinstance(table_name, str):
+    if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected table_name to be a string")
     if not isinstance(column_name, str):
         raise TypeError("Expected column name to be a string")
     if not isinstance(row_id, int):
         raise TypeError("Expected row_id to be a string")
 
-    table = get_table_from_table_name(tool, table_name)
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
     target_column = table.c[column_name]
 

@@ -1,5 +1,5 @@
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
-from coolNewLanguage.src.component.table_selector import ColumnSelectorComponent, TableSelectorComponent, \
+from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent, TableSelectorComponent, \
     create_column_selector_from_table_selector
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.column_xproduct_processor import ColumnXProductProcessor
@@ -48,10 +48,7 @@ def main():
 
         table = TableSelectorComponent(columns=columns)
 
-        def done():
-            columns_str = ', '.join([str(column) for column in columns])
-            print("Got table", table, "and columns", columns_str)
-        LambdaProcessor(done)
+        show_results(columns)
     tool.add_stage('table_selector_demo', table_selector_demo_stage)
 
     def two_select_stage():
@@ -73,10 +70,10 @@ def main():
             # column.set(int(column) + 1)
 
             # todo: database type coercsion/detection?
-            print(table, "current value =", column, "new value =", int(column.value) + 1)
-            print(int(column) + 1)
+            column << int(column) + 1
 
         ColumnXProductProcessor(columns=[column], func=go_add)
+        show_results([column])
     tool.add_stage("add_one", add_one)
 
     def add_one_v2():
@@ -88,7 +85,6 @@ def main():
             print(int(column) + 1)
         ColumnXProductProcessor(columns=[column], func=do_add)
     tool.add_stage('add_one_v2', add_one_v2)
-
 
     def table_selector_stage():
         TextComponent("Pick a table:")

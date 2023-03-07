@@ -1,9 +1,8 @@
 from typing import List, Callable
 
-from coolNewLanguage.src.component.table_selector import ColumnSelectorComponent
+from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.processor.processor import Processor
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.stage.stage import Stage
 from itertools import product
 
 from coolNewLanguage.src.util.db_utils import iterate_over_column
