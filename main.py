@@ -1,20 +1,11 @@
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
-from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent, TableSelectorComponent, \
-    create_column_selector_from_table_selector
+from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent, TableSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.processor.column_xproduct_processor import ColumnXProductProcessor
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
-
-
-def two_column_select(label: str):
-    c_a = ColumnSelectorComponent(label=f"{label} Column 1")
-    c_b = ColumnSelectorComponent(label=f"{label} Column 2")
-    table = TableSelectorComponent(label=label, columns=[c_a, c_b])
-    return table, c_a, c_b
 
 
 def main():
@@ -51,40 +42,16 @@ def main():
         show_results(columns)
     tool.add_stage('table_selector_demo', table_selector_demo_stage)
 
-    def two_select_stage():
-        TextComponent("Select two tables and two columns each to corelate on:")
-        t1, c1_1, c1_2 = two_column_select(label="Table 1")
-        t2, c2_1, c2_2 = two_column_select(label="Table 2")
+    def print_each_item_in_col():
+        TextComponent("Pick a table:")
+        col = ColumnSelectorComponent(label=f"Select column")
+        TableSelectorComponent(columns=[col])
 
-        def done():
-            print("Got tables", t1, t2)
-        LambdaProcessor(done)
-    tool.add_stage("two_select_stage", two_select_stage)
-
-    def add_one():
-        TextComponent("This tool adds one to each element of the selected column")
-        column = ColumnSelectorComponent()
-        table = TableSelectorComponent(columns=[column])
-
-        def go_add():
-            # column.set(int(column) + 1)
-
-            # todo: database type coercsion/detection?
-            column << int(column) + 1
-
-        ColumnXProductProcessor(columns=[column], func=go_add)
-        show_results([column])
-    tool.add_stage("add_one", add_one)
-
-    def add_one_v2():
-        TextComponent("Also adds one to each element of selected column")
-        table = TableSelectorComponent()
-        column = create_column_selector_from_table_selector(table)
-
-        def do_add():
-            print(int(column) + 1)
-        ColumnXProductProcessor(columns=[column], func=do_add)
-    tool.add_stage('add_one_v2', add_one_v2)
+        def print_items():
+            for item in col:
+                print(item)
+        LambdaProcessor(print_items)
+    tool.add_stage('print_items_in_col', print_each_item_in_col)
 
     def table_selector_stage():
         TextComponent("Pick a table:")
