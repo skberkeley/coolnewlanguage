@@ -59,6 +59,16 @@ def main():
         show_results(table, label="Selected table:")
     tool.add_stage('table_selector', table_selector_stage)
 
+    def add_one_stage():
+        c = ColumnSelectorComponent(expected_val_type=int)
+        t = TableSelectorComponent(columns=[c])
+
+        def add_one():
+            for cell in c:
+                cell << cell + 1
+        LambdaProcessor(add_one)
+    tool.add_stage('add_one', add_one_stage)
+
     tool.run()
 
 
