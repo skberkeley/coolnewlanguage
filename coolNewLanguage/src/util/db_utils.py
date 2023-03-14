@@ -187,3 +187,29 @@ def get_cell_value(tool: Tool, table: sqlalchemy.Table, column_name: str, row_id
     stmt = sqlalchemy.select(target_column).where(id_column == row_id)
     with tool.db_engine.connect() as conn:
         return conn.execute(stmt)[0][0]
+
+
+def update_column(tool: Tool, table: sqlalchemy.Table, col_name: str, row_id_val_pairs: List[Tuple[int, Any]]):
+    """
+    Update the column of the given table, with each value to update identified by its row id
+    :param tool: The Tool which owns the table with the column to be updated
+    :param table: The table with the column to be updated
+    :param col_name: The name of the column to be updated
+    :param row_id_val_pairs: A list of tuples, of form (row_id, val), where we update table[row_id][column_name] to be
+    val
+    :return:
+    """
+
+    id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+    target_column = table.c[col_name]
+
+    stmt = sqlalchemy.update(table)\
+        .where(id_column == sqlalchemy.bindparam("row_id"))\
+        .values({target_column: sqlalchemy.bindparam("val")})
+
+    with tool.db_engine.connect() as conn:
+        conn.execute(
+            stmt,
+            [{"row_id": row_id, "val": val} for row_id, val in row_id_val_pairs]
+        )
+        conn.commit()

@@ -3,6 +3,7 @@ from coolNewLanguage.src.component.table_selector_component import ColumnSelecto
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
+from coolNewLanguage.src.processor.map_processor import MapProcessor
 from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
@@ -68,6 +69,16 @@ def main():
                 cell << cell + 1
         LambdaProcessor(add_one)
     tool.add_stage('add_one', add_one_stage)
+
+    def map_add_one_stage():
+        c = ColumnSelectorComponent(expected_val_type=int)
+        TableSelectorComponent(columns=[c])
+
+        def add_one(v):
+            return v + 1
+
+        MapProcessor(c, add_one)
+    tool.add_stage('map_add_one', map_add_one_stage)
 
     tool.run()
 
