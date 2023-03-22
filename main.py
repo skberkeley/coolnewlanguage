@@ -31,54 +31,34 @@ def main():
 
     tool.add_stage('upload_stage', upload_stage)
 
-    def table_selector_demo_stage():
-        TextComponent("Pick a table:")
-        columns = [
-            ColumnSelectorComponent(label=f"Select column {str(i)}...")
-            for i in range(3)
-        ]
-
-        table = TableSelectorComponent(columns=columns)
-
-        show_results(columns)
-    tool.add_stage('table_selector_demo', table_selector_demo_stage)
-
-    def print_each_item_in_col():
-        TextComponent("Pick a table:")
-        col = ColumnSelectorComponent(label=f"Select column")
-        TableSelectorComponent(columns=[col])
-
-        def print_items():
-            for item in col:
-                print(item)
-        LambdaProcessor(print_items)
-    tool.add_stage('print_items_in_col', print_each_item_in_col)
-
     def table_selector_stage():
         TextComponent("Pick a table:")
         table = TableSelectorComponent()
         show_results(table, label="Selected table:")
     tool.add_stage('table_selector', table_selector_stage)
 
-    def add_one_stage():
-        c = ColumnSelectorComponent(expected_val_type=int)
-        t = TableSelectorComponent(columns=[c])
+    def matcher_stage():
+        last_names_1 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_1 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_1 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table1 = TableSelectorComponent(columns=[last_names_1, first_names_1, mid_init_1])
 
-        def add_one():
-            for cell in c:
-                cell << cell + 1
-        LambdaProcessor(add_one)
-    tool.add_stage('add_one', add_one_stage)
+        last_names_2 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_2 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_2 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table2 = TableSelectorComponent(columns=[last_names_2, first_names_2, mid_init_2])
 
-    def map_add_one_stage():
-        c = ColumnSelectorComponent(expected_val_type=int)
-        TableSelectorComponent(columns=[c])
+        def match_cols():
+            results = []
+            for ln1, fn1, mi1 in zip(last_names_1, first_names_1, mid_init_1):
+                for ln2, fn2, mi2 in zip(last_names_2, first_names_2, mid_init_2):
+                    if ln1 == ln2 and fn1 == fn2 and mi1 == mi2:
+                        results.append(f"{fn1} {mi1}. {ln1}")
+            return results
 
-        def add_one(v):
-            return v + 1
-
-        MapProcessor(c, add_one)
-    tool.add_stage('map_add_one', map_add_one_stage)
+        res = LambdaProcessor(match_cols).result
+        show_results(res)
+    tool.add_stage('matcher', matcher_stage)
 
     tool.run()
 
