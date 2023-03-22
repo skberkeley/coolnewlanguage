@@ -150,7 +150,7 @@ def update_cell(tool: Tool, table: sqlalchemy.Table, column_name: str, row_id: i
     if not isinstance(column_name, str):
         raise TypeError("Expected column name to be a string")
     if not isinstance(row_id, int):
-        raise TypeError("Expected row_id to be a string")
+        raise TypeError("Expected row_id to be an int")
 
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
     target_column = table.c[column_name]
@@ -160,4 +160,56 @@ def update_cell(tool: Tool, table: sqlalchemy.Table, column_name: str, row_id: i
     engine = tool.db_engine
     with engine.connect() as conn:
         conn.execute(stmt)
+        conn.commit()
+
+
+def get_cell_value(tool: Tool, table: sqlalchemy.Table, column_name: str, row_id: int) -> str:
+    """
+    Get the value of the given cell, identified by the table_name, column_name and row_id
+    :param tool: The Tool which owns the table with the cell to be read
+    :param table: The table with the cell to be read
+    :param column_name: The name of the column containing the cell to be read
+    :param row_id: The row containing the cell to be read
+    :return: The value of the cell, expected to be a string (for now)
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table, sqlalchemy.Table):
+        raise TypeError("Expected table_name to be a string")
+    if not isinstance(column_name, str):
+        raise TypeError("Expected column name to be a string")
+    if not isinstance(row_id, int):
+        raise TypeError("Expected row_id to be a string")
+
+    id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+    target_column = table.c[column_name]
+
+    stmt = sqlalchemy.select(target_column).where(id_column == row_id)
+    with tool.db_engine.connect() as conn:
+        return conn.execute(stmt)[0][0]
+
+
+def update_column(tool: Tool, table: sqlalchemy.Table, col_name: str, row_id_val_pairs: List[Tuple[int, Any]]):
+    """
+    Update the column of the given table, with each value to update identified by its row id
+    :param tool: The Tool which owns the table with the column to be updated
+    :param table: The table with the column to be updated
+    :param col_name: The name of the column to be updated
+    :param row_id_val_pairs: A list of tuples, of form (row_id, val), where we update table[row_id][column_name] to be
+    val
+    :return:
+    """
+
+    id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+    target_column = table.c[col_name]
+
+    stmt = sqlalchemy.update(table)\
+        .where(id_column == sqlalchemy.bindparam("row_id"))\
+        .values({target_column: sqlalchemy.bindparam("val")})
+
+    with tool.db_engine.connect() as conn:
+        conn.execute(
+            stmt,
+            [{"row_id": row_id, "val": val} for row_id, val in row_id_val_pairs]
+        )
         conn.commit()
