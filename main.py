@@ -31,55 +31,52 @@ def main():
 
     tool.add_stage('upload_stage', upload_stage)
 
-    def table_selector_demo_stage():
-        TextComponent("Pick a table:")
-        columns = [
-            ColumnSelectorComponent(label=f"Select column {str(i)}...")
-            for i in range(3)
-        ]
-
-        table = TableSelectorComponent(columns=columns)
-
-        show_results(columns)
-    tool.add_stage('table_selector_demo', table_selector_demo_stage)
-
-    def print_each_item_in_col():
-        TextComponent("Pick a table:")
-        col = ColumnSelectorComponent(label=f"Select column")
-        TableSelectorComponent(columns=[col])
-
-        def print_items():
-            for item in col:
-                print(item)
-        LambdaProcessor(print_items)
-    tool.add_stage('print_items_in_col', print_each_item_in_col)
-
     def table_selector_stage():
         TextComponent("Pick a table:")
         table = TableSelectorComponent()
         show_results(table, label="Selected table:")
     tool.add_stage('table_selector', table_selector_stage)
 
-    def add_one_stage():
-        c = ColumnSelectorComponent(expected_val_type=int)
-        t = TableSelectorComponent(columns=[c])
+    def print_items_in_col_through_table():
+        c = ColumnSelectorComponent(label="Select a column")
+        table = TableSelectorComponent(columns=[c])
 
-        def add_one():
-            for cell in c:
-                cell << cell + 1
-        LambdaProcessor(add_one)
-    tool.add_stage('add_one', add_one_stage)
+        def get_last_names():
+            results = []
+            for row in table:
+                results.append(row[c.emulated_column])
+            return results
+        p = LambdaProcessor(get_last_names)
+        show_results(p.result)
+    tool.add_stage('print_col', print_items_in_col_through_table)
 
-    def map_add_one_stage():
-        c = ColumnSelectorComponent(expected_val_type=int)
-        TableSelectorComponent(columns=[c])
+    def matcher():
+        last_names_1 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_1 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_1 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table1 = TableSelectorComponent(columns=[last_names_1, first_names_1, mid_init_1])
 
-        def add_one(v):
-            return v + 1
+        last_names_2 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_2 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_2 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table2 = TableSelectorComponent(columns=[last_names_2, first_names_2, mid_init_2])
 
-        MapProcessor(c, add_one)
-    tool.add_stage('map_add_one', map_add_one_stage)
-
+        def do_match():
+            results = []
+            for row1 in table1:
+                for row2 in table2:
+                    ln1 = row1[last_names_1]
+                    ln2 = row2[last_names_2]
+                    fn1 = row1[first_names_1]
+                    fn2 = row2[first_names_2]
+                    mi1 = row1[mid_init_1]
+                    mi2 = row2[mid_init_2]
+                    if ln1 == ln2 and fn1 == fn2 and mi1 == mi2:
+                        results.append(row1)
+            return results
+        p = LambdaProcessor(do_match)
+        show_results(p.result)
+    tool.add_stage('matcher', matcher)
     tool.run()
 
 

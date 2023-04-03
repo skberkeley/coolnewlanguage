@@ -63,3 +63,8 @@ class Cell:
         :return:
         """
         self.set(other)
+
+    def __eq__(self, other):
+        if isinstance(other, Cell):
+            return self.val == other.val
+        return self.val == other

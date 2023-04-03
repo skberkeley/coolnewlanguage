@@ -1,17 +1,18 @@
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Sequence
 import sqlalchemy
 import json
 
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.input_component import InputComponent
+from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process, config
 from coolNewLanguage.src.util.db_utils import update_cell, get_table_names_from_tool, get_column_names_from_table_name, \
-    iterate_over_column
+    iterate_over_column, get_rows_of_table
 
 
 class ColumnSelectorComponent(InputComponent):
     """
-    A linked, dependent component which allows a column to be selected 
+    A linked, dependent component which allows a column to be selected
     interactively based on a given selected table
 
     If created before their associated TableSelectorComponent, ColumnSelectors must be passed as a list when the
@@ -193,6 +194,33 @@ class TableSelectorComponent(InputComponent):
             table_column_map_json=table_column_map_json, 
             column_selectors=self.columns
         )
+
+    class TableSelectorIterator:
+        def __init__(self, table: sqlalchemy.Table, rows: Sequence[sqlalchemy.Row]):
+            if not isinstance(table, sqlalchemy.Table):
+                raise TypeError("Expected table to be a sqlalchemy Table")
+            if not isinstance(rows, Sequence):
+                raise TypeError("Expected rows to be a sequence")
+            if not all([isinstance(r, sqlalchemy.Row) for r in rows]):
+                raise TypeError("Expected every item in rows to be a sqlalchemy Row")
+
+            self.table = table
+            self.rows_iterator = rows.__iter__()
+
+        def __iter__(self) -> 'TableSelectorIterator':
+            return self
+
+        def __next__(self) -> Row:
+            try:
+                sql_alchemy_row = self.rows_iterator.__next__()
+            except StopIteration:
+                raise StopIteration
+
+            return Row(table=self.table, sql_alchemy_row=sql_alchemy_row)
+
+    def __iter__(self):
+        rows = get_rows_of_table(process.running_tool, self.value)
+        return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
 
 
 def create_column_selector_from_table_selector(table: TableSelectorComponent, label: Optional[str] = None):
