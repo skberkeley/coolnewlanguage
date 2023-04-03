@@ -6,7 +6,7 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
-from typing import List, Tuple, Any, Iterator
+from typing import List, Tuple, Any, Iterator, Sequence
 
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
@@ -213,3 +213,22 @@ def update_column(tool: Tool, table: sqlalchemy.Table, col_name: str, row_id_val
             [{"row_id": row_id, "val": val} for row_id, val in row_id_val_pairs]
         )
         conn.commit()
+
+
+def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchemy.Row]:
+    """
+    Get the rows of this table using a select statement
+    :param tool: The Tool which owns the table from which to get the rows
+    :param table: The table to get the rows from
+    :return:
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table, sqlalchemy.Table):
+        raise TypeError("Expected table_name to be a string")
+
+    stmt = sqlalchemy.select(table)
+    with tool.db_engine.connect() as conn:
+        results = conn.execute(stmt)
+
+    return results.all()
