@@ -36,9 +36,15 @@ class Cell:
         self.expected_type = expected_type
 
         if val is not None:
-            self.val = val
+            if expected_type is not None:
+                self.val = expected_type(val)
+            else:
+                self.val = val
         else:
-            self.val = expected_type(get_cell_value(process.running_tool, table, col_name, row_id))
+            if expected_type is not None:
+                self.val = expected_type(get_cell_value(process.running_tool, table, col_name, row_id))
+            else:
+                self.val = get_cell_value(process.running_tool, table, col_name, row_id)
 
     def __str__(self) -> str:
         return str(self.val)
@@ -68,3 +74,8 @@ class Cell:
         if isinstance(other, Cell):
             return self.val == other.val
         return self.val == other
+
+    def __mul__(self, other):
+        if isinstance(other, Cell):
+            return self.val * other.val
+        return self.val * other

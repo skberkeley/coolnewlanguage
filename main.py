@@ -77,6 +77,20 @@ def main():
         p = LambdaProcessor(do_match)
         show_results(p.result)
     tool.add_stage('matcher', matcher)
+
+    def filter_then_map():
+        borough = ColumnSelectorComponent(label="Select the borough column", expected_val_type=str)
+        ot_hours = ColumnSelectorComponent(label="Select the OT hours column", expected_val_type=int)
+        table = TableSelectorComponent(columns=[borough, ot_hours])
+        def do_filter():
+            return list(filter(lambda r: r[borough] == "MANHATTAN", table))
+        filter_p = LambdaProcessor(do_filter)
+        def do_map():
+            return [r[ot_hours] * 5 for r in filter_p.result]
+        map_p = LambdaProcessor(do_map)
+        show_results(map_p.result)
+    tool.add_stage('filter_then_map', filter_then_map)
+
     tool.run()
 
 
