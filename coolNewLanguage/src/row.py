@@ -9,7 +9,7 @@ from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NA
 class Row:
     """
     Represents a row in a table, which can be indexed into dictionary style using column names
-    Implemented as a wrapper class around the sqlalchemy Row class
+    Acts as a wrapper class around the sqlalchemy Row class
     """
     def __init__(self, table: sqlalchemy.Table, sql_alchemy_row: sqlalchemy.Row):
         if not isinstance(sql_alchemy_row, sqlalchemy.Row):
@@ -26,17 +26,24 @@ class Row:
         """
         Get an item in this row using a column name, returning a Cell
         If item is a ColumnSelectorComponent, then use the column name instead
+        If is a ColumnSelectorComponent and has an expected type, cast to that
         :param item:
         :return:
         """
-        if hasattr(item, 'emulated_column'):
-            item = item.emulated_column
+        col_name = item.emulated_column if hasattr(item, 'emulated_column') else item
 
-        if item not in self.cell_mapping:
-            val = self.row_mapping[item]
-            self.cell_mapping[item] = Cell(table=self.table, col_name=item, row_id=self.row_id, val=val)
+        if col_name not in self.cell_mapping:
+            val = self.row_mapping[col_name]
+            expected_type = item.expected_val_type if hasattr(item, 'expected_val_type') else None
+            self.cell_mapping[col_name] = Cell(
+                table=self.table,
+                col_name=col_name,
+                row_id=self.row_id,
+                expected_type=expected_type,
+                val=val
+            )
 
-        return self.cell_mapping[item]
+        return self.cell_mapping[col_name]
 
     def __setitem__(self, key, value):
         """Assign to a cell in this row, using key as the column name and value as the new value"""
