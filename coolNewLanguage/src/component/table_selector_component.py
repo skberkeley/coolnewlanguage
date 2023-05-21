@@ -221,7 +221,50 @@ class TableSelectorComponent(InputComponent):
     def __iter__(self):
         rows = get_rows_of_table(process.running_tool, self.value)
         return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
+    
+    def append(self, other):
+        from coolNewLanguage.src.tool import CNLType, Link
+        from coolNewLanguage.src.component.user_input_component import UserInputComponent
+        mapping = {}
+        if self.value is None:
+            raise ValueError("Cannot insert into UI table")
+        match other:
+            case CNLType():
+                flatten_fields = CNLType._hls_type_to_field_flattening(other.__class__)
+                columns = [n for (n, _) in flatten_fields.items()]
+                for (field_name, field) in flatten_fields.items():
+                    value = other.__getattribute__(field_name)
+                    if value is None and not field.optional:
+                        raise ValueError(f"Missing required field {field_name}")
+                    if value is None or isinstance(value, Link):
+                        continue
+                    else:
+                        print(value)
+                        integral_value = field.type(value)
+                    mapping[field_name] = integral_value
+                print(mapping)
+                pass
+            case dict():
+                lifted = {}
+                for (k, v) in other.items():
+                    match v:
+                        case UserInputComponent():
+                            lifted[k] = v.expected_type(v.value)
+                        case _:
+                            lifted[k] = v
+                mapping = lifted
+            case _:
+                raise TypeError("Cannot insert unknown type into table")
+            
+        insert_stmt = sqlalchemy.insert(self.value).values(mapping)
+        with process.running_tool.db_engine.connect() as conn:
+            conn.execute(insert_stmt)
+            conn.commit()
 
+    def delete(self):
+        if self.value is None:
+            raise ValueError("Cannot insert into UI table")
+        self.value.drop(process.running_tool.db_engine)
 
 def create_column_selector_from_table_selector(table: TableSelectorComponent, label: Optional[str] = None):
     """

@@ -4,7 +4,8 @@ import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
-
+from coolNewLanguage.src.tool import *
+from typing import Type
 
 class Row:
     """
@@ -92,3 +93,30 @@ class Row:
     def __iter__(self):
         """Iterate over the cells in this row"""
         return Row.RowIterator(table=self.table, row_mapping=self.row_mapping, row_id=self.row_id)
+
+    def asType(self, type:type[CNLType])->CNLType:
+        return type(backing_row=self)
+    
+    def link(self, to:Any, on:"Link"):
+        from coolNewLanguage.src.row import Row
+        from coolNewLanguage.src.util.db_utils import link_create
+        from coolNewLanguage.src.stage import process
+
+        link_id = on._hls_internal_link_id
+
+        src_row_id:int = self.row_id
+        dst_row_id:int
+        dst_table:str
+        if (isinstance(to, Row)):
+            to:Row
+            dst_row_id = to.row_id
+            dst_table = to.table.name
+        elif (isinstance(to, CNLType)):
+            to:CNLType
+            dst_row_id = to.__hls_backing_row.row_id
+            dst_table = to.__hls_backing_row.table.name
+        else:
+            raise TypeError("Unexpected link target type")
+
+        link = link_create(process.running_tool, link_id, src_row_id, dst_table, dst_row_id)
+        print("Created link", link)
