@@ -5,8 +5,8 @@ import sqlalchemy
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.tool import Tool
-from typing import List, Tuple, Any, Iterator, Sequence
+from coolNewLanguage.src.tool import *
+from typing import List, Tuple, Any, Iterator, Sequence, Dict, Optional
 
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
@@ -51,6 +51,28 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
 
     return table
 
+def create_table_if_not_exists(tool:Tool, table_name:str, fields:Dict[str, Field]) -> sqlalchemy.Table:
+    metadata_obj = tool.db_metadata_obj
+    cols = [
+        sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)
+    ]
+
+    table = get_table_from_table_name(tool, table_name)
+    if table is not None:
+        return table
+
+    for (name, field) in fields.items():
+        field:Field
+        name:str
+
+        sql_type = sqlalchemy.Integer if isinstance(field.type(), int) else sqlalchemy.String
+        cols.append(
+            sqlalchemy.Column(name, sql_type, nullable=field.optional)
+        )
+
+    table = sqlalchemy.Table(table_name, metadata_obj, *cols)
+    table.create(tool.db_engine)
+
 
 def get_table_names_from_tool(tool: Tool) -> List[str]:
     """
@@ -88,7 +110,7 @@ def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
     return filter_to_user_columns(columns)
 
 
-def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
+def get_table_from_table_name(tool: Tool, table_name: str) -> Optional[sqlalchemy.Table]:
     """
     Get the sqlaclchemy Table which has the given name associated with the passed Tool
     Reflect the table using the engine associated with the Tool
@@ -100,8 +122,7 @@ def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
     insp: sqlalchemy.Inspector = sqlalchemy.inspect(engine)
 
     if not insp.has_table(table_name):
-        raise ValueError("The passed tool does not have an associated table with the passed name")
-
+        return None
     table = sqlalchemy.Table(table_name, tool.db_metadata_obj)
     insp.reflect_table(table, None)
 
@@ -232,3 +253,78 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
         results = conn.execute(stmt)
 
     return results.all()
+
+LINKS_META = "__hls_links_meta"
+LINKS_META_LINK_META_ID = "link_meta_id"
+LINKS_META_TABLE_NAME = "table_name"
+LINKS_META_FIELD_NAME = "field_name"
+
+LINKS = "__hls_links"
+LINKS_META_ID = "link_meta_id"
+LINKS_SRC_ROW_ID = "src_row_id"
+LINKS_DST_TABLE_NAME = "dst_table_name"
+LINKS_DST_ROW_ID = "dst_row_id"
+def db_awaken(tool: Tool):
+    metadata_obj = tool.db_metadata_obj
+    
+    links_meta = get_table_from_table_name(tool, LINKS_META)
+    if links_meta is None:
+        links_meta = sqlalchemy.Table(LINKS_META, metadata_obj, 
+            sqlalchemy.Column(LINKS_META_LINK_META_ID, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True),
+            sqlalchemy.Column(LINKS_META_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(LINKS_META_FIELD_NAME, sqlalchemy.String, nullable=False),
+        )
+        links_meta.create(tool.db_engine)
+    
+    links = get_table_from_table_name(tool, LINKS)
+    if links is None:
+        links = sqlalchemy.Table(LINKS, metadata_obj, 
+            sqlalchemy.Column("id", sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True),
+            sqlalchemy.Column(LINKS_META_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(LINKS_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(LINKS_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(LINKS_DST_ROW_ID, sqlalchemy.Integer, nullable=False),
+        )
+        links.create(tool.db_engine)
+
+def get_link_registration_id(tool:Tool, table_name:str, field:str) -> Optional[int]:
+    links_meta = get_table_from_table_name(tool, LINKS_META)
+    stmt = sqlalchemy.select(links_meta.c[LINKS_META_LINK_META_ID]).where(links_meta.c[LINKS_META_TABLE_NAME] == table_name).where(links_meta.c[LINKS_META_FIELD_NAME] == field)
+
+    with tool.db_engine.connect() as conn:
+        result = conn.execute(stmt).first()
+        print(result)
+        if result:
+            return result[0]
+        else:
+            return None
+
+
+def link_register(tool:Tool, table_name:str, field:str) -> Optional[int]:
+    existing = get_link_registration_id(tool, table_name, field)
+    if existing is not None:
+        return existing
+    
+    table = get_table_from_table_name(tool, LINKS_META)
+    insert_stmt = sqlalchemy.insert(table).values({
+        LINKS_META_TABLE_NAME: table_name,
+        LINKS_META_FIELD_NAME: field
+    })
+    with tool.db_engine.connect() as conn:
+        result = conn.execute(insert_stmt)
+        conn.commit()
+    
+    return result.inserted_primary_key
+
+def link_create(tool: Tool, link_id:int, src_row_id:int, dst_table:str, dst_row_id:int):
+    table = get_table_from_table_name(tool, LINKS)
+    insert_stmt = sqlalchemy.insert(table).values({
+        LINKS_META_ID: link_id,
+        LINKS_SRC_ROW_ID: src_row_id,
+        LINKS_DST_TABLE_NAME: dst_table,
+        LINKS_DST_ROW_ID : dst_row_id
+    })
+    with tool.db_engine.connect() as conn:
+        result = conn.execute(insert_stmt)
+        conn.commit()
+        return result.inserted_primary_key

@@ -5,8 +5,20 @@ from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.processor.map_processor import MapProcessor
 from coolNewLanguage.src.stage.results import show_results
-from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
+from coolNewLanguage.src.tool import *
+
+class PrecinctType(CNLType):
+    def fields(self):
+        self.state = Field(type=str)
+        self.name  = Field(type=str)
+
+class OfficerType(CNLType):
+    def fields(self):
+        self.name     = Field(type=str)
+        self.age      = Field(type=int)
+        # self.precinct = Field(type=PrecinctType)
+        self.friends  = Field(type=Link, optional=True)
 
 
 def main():
@@ -20,6 +32,9 @@ def main():
         result = conn.execute(insert_stmt)
         conn.commit()"""
     tool = Tool('uploader')
+
+    tool.create_table("test_table3", OfficerType)
+    test_link = tool.create_global_link("test_link")
 
     def upload_stage():
         table_name = UserInputComponent(str, label="Enter table name:")
@@ -90,6 +105,89 @@ def main():
         map_p = LambdaProcessor(do_map)
         show_results(map_p.result)
     tool.add_stage('filter_then_map', filter_then_map)
+
+    def type_test_stage():
+        TextComponent("Pick a table:")
+        table = TableSelectorComponent()
+
+        def go():
+            results = []
+            for row in table:
+                officer = row.asType(OfficerType)
+                officer.link(to=row, on=officer.friends)
+
+                results.append(f"Officer {officer.name} is {officer.age} years old")
+            show_results(results)
+        LambdaProcessor(go)
+    tool.add_stage('type_test_stage', type_test_stage)
+
+    def data_insert_stage():
+        TextComponent("Insert a new officer into the table:")
+        table = TableSelectorComponent()
+
+        name = UserInputComponent(str, label="Name")
+        age = UserInputComponent(int, label="Age")
+
+        def go():
+            officer = OfficerType()
+            officer.name = name
+            officer.age = age
+            table.append(officer)
+        LambdaProcessor(go)
+    tool.add_stage('data_insert_stage', data_insert_stage)
+
+    def raw_data_insert():
+        TextComponent("Insert a new officer into the table (rawr mode):")
+        table = TableSelectorComponent()
+
+        name = UserInputComponent(str, label="Name")
+        age = UserInputComponent(int, label="Age")
+
+        def go():
+            table.append({
+                "name" : name,
+                "age" : age,
+            })
+        LambdaProcessor(go)
+    tool.add_stage('raw_data_insert', raw_data_insert)        
+
+    def table_delete():
+        TextComponent("Delete which table?\n")
+        table = TableSelectorComponent()
+
+        def go():
+            table.delete()
+        LambdaProcessor(go)
+    tool.add_stage('table_delete', table_delete)
+
+    def raw_match_n_link():
+        last_names_1 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_1 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_1 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table1 = TableSelectorComponent(columns=[last_names_1, first_names_1, mid_init_1])
+
+        last_names_2 = ColumnSelectorComponent(label="Select the Last Name column", expected_val_type=str)
+        first_names_2 = ColumnSelectorComponent(label="Select the First Name column", expected_val_type=str)
+        mid_init_2 = ColumnSelectorComponent(label="Select the Middle Initial column", expected_val_type=str)
+        table2 = TableSelectorComponent(columns=[last_names_2, first_names_2, mid_init_2])
+
+        def do_match():
+            results = []
+            for row1 in table1:
+                for row2 in table2:
+                    ln1 = row1[last_names_1]
+                    ln2 = row2[last_names_2]
+                    fn1 = row1[first_names_1]
+                    fn2 = row2[first_names_2]
+                    mi1 = row1[mid_init_1]
+                    mi2 = row2[mid_init_2]
+                    if ln1 == ln2 and fn1 == fn2 and mi1 == mi2:
+                        row1.link(to=row2, on=test_link)
+            return results
+        LambdaProcessor(do_match)
+    tool.add_stage('raw_match_n_link', raw_match_n_link)
+
+
 
     tool.run()
 

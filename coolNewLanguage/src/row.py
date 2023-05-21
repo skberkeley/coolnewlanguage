@@ -139,3 +139,30 @@ class Row:
     def __iter__(self):
         """Iterate over the cells in this row"""
         return Row.RowIterator(row=self)
+
+    def asType(self, type:type[CNLType])->CNLType:
+        return type(backing_row=self)
+
+    def link(self, to:Any, on:"Link"):
+        from coolNewLanguage.src.row import Row
+        from coolNewLanguage.src.util.db_utils import link_create
+        from coolNewLanguage.src.stage import process
+
+        link_id = on._hls_internal_link_id
+
+        src_row_id:int = self.row_id
+        dst_row_id:int
+        dst_table:str
+        if (isinstance(to, Row)):
+            to:Row
+            dst_row_id = to.row_id
+            dst_table = to.table.name
+        elif (isinstance(to, CNLType)):
+            to:CNLType
+            dst_row_id = to.__hls_backing_row.row_id
+            dst_table = to.__hls_backing_row.table.name
+        else:
+            raise TypeError("Unexpected link target type")
+
+        link = link_create(process.running_tool, link_id, src_row_id, dst_table, dst_row_id)
+        print("Created link", link)
