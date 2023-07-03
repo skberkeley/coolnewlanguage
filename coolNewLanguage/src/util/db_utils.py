@@ -5,6 +5,7 @@ import sqlalchemy
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage import process
+# TODO: No star import
 from coolNewLanguage.src.tool import *
 from typing import List, Tuple, Any, Iterator, Sequence, Dict, Optional
 
@@ -51,7 +52,9 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
 
     return table
 
+# TODO: Name change?
 def create_table_if_not_exists(tool:Tool, table_name:str, fields:Dict[str, Field]) -> sqlalchemy.Table:
+    # TODO: Type checks
     metadata_obj = tool.db_metadata_obj
     cols = [
         sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)
@@ -65,6 +68,7 @@ def create_table_if_not_exists(tool:Tool, table_name:str, fields:Dict[str, Field
         field:Field
         name:str
 
+        # TODO: Add sql typing for other field types too?
         sql_type = sqlalchemy.Integer if isinstance(field.type(), int) else sqlalchemy.String
         cols.append(
             sqlalchemy.Column(name, sql_type, nullable=field.optional)
@@ -254,6 +258,8 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
 
     return results.all()
 
+# TODO: Consts should live in consts.py
+# TODO: Better names for these consts?
 LINKS_META = "__hls_links_meta"
 LINKS_META_LINK_META_ID = "link_meta_id"
 LINKS_META_TABLE_NAME = "table_name"
@@ -264,7 +270,9 @@ LINKS_META_ID = "link_meta_id"
 LINKS_SRC_ROW_ID = "src_row_id"
 LINKS_DST_TABLE_NAME = "dst_table_name"
 LINKS_DST_ROW_ID = "dst_row_id"
+# TODO: Put all the linking stuff in one file?
 def db_awaken(tool: Tool):
+    # TODO: check type
     metadata_obj = tool.db_metadata_obj
     
     links_meta = get_table_from_table_name(tool, LINKS_META)
@@ -288,10 +296,15 @@ def db_awaken(tool: Tool):
         links.create(tool.db_engine)
 
 def get_link_registration_id(tool:Tool, table_name:str, field:str) -> Optional[int]:
+    # TODO: rename field parameter, since it implies that it should be of type Field
+    # TODO: check types
     links_meta = get_table_from_table_name(tool, LINKS_META)
-    stmt = sqlalchemy.select(links_meta.c[LINKS_META_LINK_META_ID]).where(links_meta.c[LINKS_META_TABLE_NAME] == table_name).where(links_meta.c[LINKS_META_FIELD_NAME] == field)
+    stmt = sqlalchemy.select(links_meta.c[LINKS_META_LINK_META_ID])\
+        .where(links_meta.c[LINKS_META_TABLE_NAME] == table_name)\
+        .where(links_meta.c[LINKS_META_FIELD_NAME] == field)
 
     with tool.db_engine.connect() as conn:
+        # TODO: Debug this and see why we need to index, adding comments explaining why
         result = conn.execute(stmt).first()
         print(result)
         if result:
@@ -301,6 +314,7 @@ def get_link_registration_id(tool:Tool, table_name:str, field:str) -> Optional[i
 
 
 def link_register(tool:Tool, table_name:str, field:str) -> Optional[int]:
+    # TODO: do type checks
     existing = get_link_registration_id(tool, table_name, field)
     if existing is not None:
         return existing
@@ -317,6 +331,8 @@ def link_register(tool:Tool, table_name:str, field:str) -> Optional[int]:
     return result.inserted_primary_key
 
 def link_create(tool: Tool, link_id:int, src_row_id:int, dst_table:str, dst_row_id:int):
+    # TODO: type checks
+    # TODO: Check to see if the link exists already
     table = get_table_from_table_name(tool, LINKS)
     insert_stmt = sqlalchemy.insert(table).values({
         LINKS_META_ID: link_id,

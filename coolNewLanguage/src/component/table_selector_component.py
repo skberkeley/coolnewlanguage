@@ -116,11 +116,15 @@ class TableSelectorComponent(InputComponent):
                     if value is None and not field.optional:
                         raise ValueError(f"Missing required field {field_name}")
                     if value is None or isinstance(value, Link):
+                        # TODO: Maybe link fields should contain the link ID's
+                        # I think right now they're just empty
                         continue
                     else:
+                        # TODO: Delete this print
                         print(value)
                         integral_value = field.type(value)
                     mapping[field_name] = integral_value
+                # TODO: Delete this print
                 print(mapping)
                 pass
             case dict():

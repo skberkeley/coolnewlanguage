@@ -14,6 +14,8 @@ from coolNewLanguage.src.web_app import WebApp
 from typing import List, Type, Any, Union
 
 class Field:
+    # TODO: Change __slots__ type to tuple, as we most likely want it to be immutable
+    # TODO: Also, change the name type so we're not overloading the type builtin
     __slots__ = [
         "type", "optional"
     ]
@@ -22,6 +24,7 @@ class Field:
         self.optional = optional
 
 class CNLType:
+    # TODO: Should some of these be static?
     # __slots__ = [
     #     "__hls_backing_row",
     #     "__hls_typing"
@@ -30,6 +33,9 @@ class CNLType:
         self.__hls_backing_row = backing_row
 
     def fields(self):
+        # TODO: Should be NotImplementedError
+        # TODO: How can we stop programmers from overwriting pre-existing fields with the same name
+        # TODO: Is there a better way to do this so it's easier to tell what the user-defined fields are?
         raise ValueError("Fields must be overridden")
 
     # def field_to_nested(self, __name:str):
@@ -39,12 +45,21 @@ class CNLType:
     #     fields = 
     
     def __getattribute__(self, __name: str) -> Any:
+        # TODO: Rewrite
         try:
             return super().__getattribute__(__name)
         except AttributeError:
             return self.__hls_backing_row[__name]
 
     def _hls_type_to_fields(type:Type["CNLType"]):
+        # TODO: Make this static with @staticmethod
+        """
+        Uses fact that calling fields() (which is implemented by the programmer when subclassing CNLType) adds new
+        attributes to distinguish between programmer-added attributes and pre-existing field names
+        :return:
+        """
+        # TODO: Rewrite (type is a builtin)
+        # TODO: use is_subclass or something like that
         if not isinstance(type(), CNLType):
             raise TypeError("Expected a CNLType")
         instance = type()
@@ -59,12 +74,20 @@ class CNLType:
         return instance_fields
     
     def _hls_flatten_field(f:Field, hiearchical_name:str) -> dict:
+        # TODO: Add static decorator
+        # TODO: Combine this and _hls_type_to_field_flattening so we don't have to mutually recurse
+        # TODO: Fix these two so we don't run into infinite recursion with mutually referential CNLTypes
         if isinstance(f.type(), CNLType):
             return CNLType._hls_type_to_field_flattening(f.type, hiearchical_name)
         else:
             return {hiearchical_name : f}
         
     def _hls_type_to_field_flattening(type:Type["CNLType"], hiearchical_name:str = None) -> dict:
+        """
+        :param hiearchical_name:
+        :return:
+        """
+        # TODO: Change type name
         if not isinstance(type(), CNLType):
             raise TypeError("Expected a CNLType")
         
@@ -76,6 +99,10 @@ class CNLType:
         return result
     
     def link(self, to:Any, on:"Link"):
+        # TODO: to is union of row and cnltype
+        # TODO: check types at beginning
+        # TODO: better argument names?
+        # TODO: Delete unused variables
         from coolNewLanguage.src.row import Row
         from coolNewLanguage.src.util.db_utils import link_create
         from coolNewLanguage.src.stage import process
@@ -99,16 +126,19 @@ class CNLType:
             raise TypeError("Unexpected link target type")
 
         link = link_create(process.running_tool, link_id, src_row_id, dst_table, dst_row_id)
+        # TODO: Delet this line?
         print("Created link", link)
 
 
 class Link:
+    # TODO: Add docstrings
     __slots__ = [
         "_hls_internal_field",
         "_hls_internal_link_id"
     ]
     
     def synthesize(field:str, link_id:int):
+        # TODO: Make static
         l = Link()
         l._hls_internal_field = field
         l._hls_internal_link_id = link_id

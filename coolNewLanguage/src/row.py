@@ -141,10 +141,12 @@ class Row:
         return Row.RowIterator(row=self)
 
     def asType(self, type:type[CNLType])->CNLType:
+        # TODO: Check types
+        # TODO: Don't name variables type
+        # TODO: Check to see that self has the expected fields for type
         return type(backing_row=self)
 
     def link(self, to:Any, on:"Link"):
-        from coolNewLanguage.src.row import Row
         from coolNewLanguage.src.util.db_utils import link_create
         from coolNewLanguage.src.stage import process
 
