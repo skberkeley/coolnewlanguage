@@ -33,6 +33,7 @@ class Tool:
         """
         if not isinstance(tool_name, str):
             raise TypeError("Expected a string for Tool name")
+        # This restriction on tool names allows them to be used as the URL paths
         if not check_has_only_alphanumerics_or_underscores(tool_name):
             raise ValueError("Tool name can only contain alphanumeric characters and underscores")
         if not isinstance(url, str):

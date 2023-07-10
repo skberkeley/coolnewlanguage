@@ -33,9 +33,9 @@ class TestWebApp:
     def test_add_static_file_handler_non_string_route(self, web_app: WebApp):
         # Do, Check
         with pytest.raises(TypeError):
-            web_app.add_static_file_handler(5, TestWebApp.FS_HANDLER)
+            web_app.add_static_file_handler(Mock(), TestWebApp.FS_HANDLER)
 
     def test_add_static_file_handler_non_string_fs_path(self, web_app: WebApp):
         # Do, Check
         with pytest.raises(TypeError):
-            web_app.add_static_file_handler(TestWebApp.ROUTE, 4)
+            web_app.add_static_file_handler(TestWebApp.ROUTE, Mock())
