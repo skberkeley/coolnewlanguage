@@ -216,7 +216,7 @@ class TableSelectorComponent(InputComponent):
             except StopIteration:
                 raise StopIteration
 
-            return Row(table=self.table, sql_alchemy_row=sql_alchemy_row)
+            return Row(table=self.table, sqlalchemy_row=sql_alchemy_row)
 
     def __iter__(self):
         rows = get_rows_of_table(process.running_tool, self.value)

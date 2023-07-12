@@ -10,6 +10,8 @@ class Cell:
     """
     Represents a single cell within a sqlalchemy Table
     Used to support updates to an existing table, as well as iteration over a column
+    Even though Cell has an expected_type field, the responsibility of casting the value to that type rests on consumers
+    of the value
     """
     def __init__(self, table: sqlalchemy.Table, col_name: str, row_id: int, expected_type: Optional[type] = None,
                  val: Optional[Any] = None):
@@ -59,6 +61,7 @@ class Cell:
         :param value:
         :return:
         """
+        # TODO: Cast value to expected type before making database call
         update_cell(tool=process.running_tool, table=self.table, column_name=self.col_name, row_id=self.row_id,
                     value=value)
 
