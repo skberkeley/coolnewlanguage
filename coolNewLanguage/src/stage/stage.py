@@ -1,6 +1,7 @@
-import urllib
+import urllib.parse
 from typing import Callable
 
+import jinja2
 from aiohttp import web
 
 from coolNewLanguage.src import consts
@@ -13,18 +14,17 @@ class Stage:
     """
     A stage of a data processing tool
     Provides two endpoints for the associated Tool's webapp
-    handle provides the initial endpoint when the stage is first
-    viewed, and returns the stage's Config, which it renders when the request is made
-    post_handler provides the endpoint when the input from Config is submitted
-    and handles processing data correctly and displaying the results
+    handle provides the initial endpoint when the stage is first viewed, and returns the stage's Config, which it
+    renders when the request is made
+    post_handler provides the endpoint when the input from Config is submitted and handles processing data correctly and
+    displaying any results
 
     Attributes:
         results_template:
             The rendered Jinja template containing any relevant results
-            Set here by show_results() so that we have access
-            to it outside the scope of the stage_func call
+            Set here by show_results() so that we have access to it outside the scope of the stage_func call
     """
-    results_template = None
+    results_template: str = None
 
     def __init__(self, name: str, stage_func: Callable):
         """
@@ -34,11 +34,11 @@ class Stage:
         :param stage_func: The function used to define this stage
         """
         if not isinstance(name, str):
-            raise TypeError("name of a stage should be a string")
+            raise TypeError("Expected name to be a string")
         self.name = name
 
-        if not isinstance(stage_func, Callable):
-            raise TypeError("stagefunc of a stage should be a function")
+        if not callable(stage_func):
+            raise TypeError("Expected stage_func to be callable")
         self.stage_func = stage_func
 
         self.url = urllib.parse.quote(name)
@@ -50,15 +50,16 @@ class Stage:
         :return:
         """
         template = self.paint()
-        jinja_template = consts.JINJA_ENV.from_string(template)
-        rendered_template = jinja_template.render()
-        return web.Response(body=rendered_template, content_type=consts.AIOHTTP_HTML)
+        return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
     def paint(self) -> str:
-        stage_url = urllib.parse.quote(self.name)
-        form_action = f'/{stage_url}/post'
-        form_method = "post"
-
+        """
+        Returns the rendered Jinja template for this stage
+        Begins by running stage_func to build a list of all the components to be included
+        Then builds a list of all the painted components, which are then ready to be put into the Jinja template
+        Finally, uses Jinja magic to render the HTML document using the template found at stage.html
+        :return:
+        """
         config.submit_component_added = False
         config.building_template = True
         config.tool_under_construction = process.running_tool
@@ -71,38 +72,32 @@ class Stage:
         if not config.submit_component_added:
             SubmitComponent("Submit")
 
-        template_list = [
-            '<html>',
-            '<head>',
-            '<script src="/static/support.js">',
-            '</script>',
-            '<title>',
-            self.name,
-            '</title>',
-            '</head>',
-            '<body>',
-            f'<form action="{form_action}" method="{form_method}" enctype="multipart/form-data">'
-        ]
-        stack = ['</html>', '</body>', '</form>']
-
+        painted_components = []
         for component in config.component_list:
             painted_comp = component.paint()
             if painted_comp is not None:
-                template_list.append(painted_comp)
+                painted_components.append(painted_comp)
 
         config.tool_under_construction = None
         config.building_template = False
         config.component_list = []
 
-        while stack:
-            template_list.append(stack.pop())
-
-        template = ''.join(template_list)
-
         # reset num_components
         Component.num_components = 0
 
-        return template
+        # load the jinja template
+        template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+            name=consts.STAGE_TEMPLATE_FILENAME
+        )
+        # return the rendered template
+        form_action = f'/{self.url}/post'
+        form_method = 'post'
+        return template.render(
+            stage_name=self.name,
+            form_action=form_action,
+            form_method=form_method,
+            component_list=painted_components
+        )
 
     async def post_handler(self, request: web.Request) -> web.Response:
         """
@@ -116,6 +111,9 @@ class Stage:
         :param request:
         :return:
         """
+        if not isinstance(request, web.Request):
+            raise TypeError("Expected request to be a web Request")
+
         process.post_body = await request.post()
         process.handling_post = True
         Component.num_components = 0

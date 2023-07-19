@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/static/support.js"></script>
+    <meta charset="UTF-8">
+    <title>{{ stage_name }}</title>
+</head>
+<body>
+<form action="{{ form_action }}" method="{{ form_method }}" enctype="multipart/form-data">
+    {% for component in component_list %}
+        {{ component }}
+    {% endfor %}
+</form>
+</body>
+</html>

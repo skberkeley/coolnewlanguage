@@ -23,3 +23,5 @@ TEMPLATES_DIR = WEB_DIR.joinpath('templates')
 LANDING_PAGE_TEMPLATE_FILENAME = 'list_stages_landing_page.html'
 
 LANDING_PAGE_STAGES = 'stages'
+
+STAGE_TEMPLATE_FILENAME = 'stage.html'
