@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ results_title }}</title>
+</head>
+<body>
+    {% if label != "" %}
+    <div>
+        <p>
+            {{ label }}
+        </p>
+    </div>
+    {% endif %}
+    <div>
+        {{ result }}
+    </div>
+    <form action="/" method="get">
+        <input type="submit" value="Go back to landing page">
+    </form>
+</body>
+</html>

@@ -1,5 +1,6 @@
 from typing import List
 
+import jinja2
 import sqlalchemy
 
 from coolNewLanguage.src import consts
@@ -12,7 +13,7 @@ from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
-def show_results(result, label: str = ''):
+def show_results(result, label: str = '', results_title: str = '') -> None:
     """
     Render the passed result as a rendered Jinja template, and set it on Stage
     This function is called from the programmer defined stage functions, so
@@ -21,7 +22,13 @@ def show_results(result, label: str = ''):
     :param result: The result to render in template
         Result could be an InputComponent, in which case we try to render its value
     :param label: An optional label for the results
+    :param results_title: An optional title for the results webpage
     """
+    if not isinstance(label, str):
+        raise TypeError("Expected label to be a string")
+    if not isinstance(results_title, str):
+        raise TypeError("Expected results_title to be a string")
+
     # we're not handling a post request, so we don't have any results to show
     if not process.handling_post:
         return
@@ -30,62 +37,38 @@ def show_results(result, label: str = ''):
         show_results(result.value, label)
         return
 
-    form_action = '/'
-    form_method = "get"
-
-    template_list = [
-        '<html>',
-        '<head>',
-        '<title>',
-        "Results",
-        '</title>',
-        '</head>',
-        '<body>',
-    ]
-
-    if label:
-        template_list += [
-            '<div>',
-            '<p>',
-            label,
-            '</p>',
-            '</div>'
-        ]
-
-    template_list.append('<div>')
-
     match result:
         case sqlalchemy.Table():
-            template_list += result_template_of_sql_alch_table(result)
+            result = result_template_of_sql_alch_table(result)
         case [*cols] if all([isinstance(c, ColumnSelectorComponent) for c in cols]):
-            template_list += result_template_of_column_list(cols)
-        case [*cells] if all([isinstance(c, Cell) for c in cols]):
-            template_list += result_template_of_cell_list(cells)
+            result = result_template_of_column_list(cols)
+        case [*cells] if all([isinstance(c, Cell) for c in cells]):
+            result = result_template_of_cell_list(cells)
         case [*rows] if all([isinstance(r, Row) for r in rows]):
-            template_list += result_template_of_row_list(rows)
+            result = result_template_of_row_list(rows)
         case _:
-            template_list.append(str(result))
+            result = str(result)
 
-    template_list += [
-        '</div>',
-        f'<form action="{form_action}" method="{form_method}">',
-        '<input type="submit" value="Back to landing page">',
-        '</form>',
-        '</body>',
-        '</html>'
-    ]
+    if results_title == '':
+        results_title = "Results"
 
-    raw_template = ''.join(template_list)
-    jinja_template = consts.JINJA_ENV.from_string(raw_template)
-    Stage.results_template = jinja_template.render()
+    # load the jinja template
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.STAGE_RESULTS_TEMPLATE_FILENAME
+    )
+    # render the template and set it on Stage
+    Stage.results_template = template.render(
+        results_title=results_title,
+        label=label,
+        result=result
+    )
 
 
-def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
+def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     """
-    Construct an HTML template of a sqlalchemy Table
-    Note: Current implementation assumes all string data
+    Construct an HTML snippet of a sqlalchemy Table
     :param table: The table to construct the template for
-    :return: A list of HTML components comprising the table with the table's data
+    :return: A string containing the HTML table the table with the table's data
     """
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected a sqlalchemy Table for table")
@@ -95,14 +78,12 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> List[str]:
     return template_from_select_statement(stmt)
 
 
-def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> List[str]:
+def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> str:
     """
-    Construct an HTML template of some columns, all presumably from the same table
+    Construct an HTML snippet of some columns, all presumably from the same table
     Note: Current implementation assumes all string data
-    :param cols: The table to construct the template for
-    :return: A list of HTML components comprising the table with the table's data
-    :param cols:
-    :return:
+    :param cols: The columns to construct the HTML table for
+    :return: A string containing the HTML table with the data from the columns
     """
     if not isinstance(cols, list):
         raise TypeError("Expected cols to be a list")
@@ -120,63 +101,56 @@ def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> List[
     return template_from_select_statement(stmt)
 
 
-def result_template_of_cell_list(cells: List[Cell]) -> List[str]:
+def result_template_of_cell_list(cells: List[Cell]) -> str:
     """
-    Construct an HTML template of some cells, all assumed to be from the same table and column
+    Construct an HTML snippet of some cells, all assumed to be from the same table and column
     :param cells: The cells to render
-    :return:
+    :return: A string containing an HTML table with the cells' data
     """
     if not isinstance(cells, list):
         raise TypeError("Expected cells to be a list")
     if not all([isinstance(cell, Cell) for cell in cells]):
         raise TypeError("Expected each element of cells to be a Cell")
 
-    template_list = ['<table>']
+    vals = []
     for cell in cells:
-        template_list.append('<tr>')
-        template_list.append('<td>')
-
         val = cell.expected_type(cell.val) if cell.expected_type is not None else cell.val
+        vals.append(str(val))
 
-        template_list.append(str(val))
+    # Get Jinja template
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.CELL_LIST_RESULT_TEMPLATE_FILENAME
+    )
+    # Render and return template
+    return template.render(vals=vals)
 
-        template_list.append('</td>')
-        template_list.append('</tr>')
-    template_list.append('</table>')
 
-    return template_list
-
-
-def result_template_of_row_list(rows: List[Row]) -> List[str]:
+def result_template_of_row_list(rows: List[Row]) -> str:
     """
-    Construct an HTML template of some rows, all assumed to be from the same table
-    :param rows: 
-    :return: 
+    Construct an HTML snippet of some rows, all assumed to be from the same table
+    :param rows: The rows from which to get the data for
+    :return: A string containing an HTML table with data from the rows
     """
     if not isinstance(rows, list):
         raise TypeError("Expected rows to be a list")
     if not all([isinstance(r, Row) for r in rows]):
         raise TypeError("Expected each element of rows to be a Row")
-    
-    template_list = ['<table>']
-    col_names = rows[0].keys()
-    # header
-    template_list.append('<tr>')
-    for col in col_names:
-        template_list.append('<th>')
-        template_list.append(col)
-        template_list.append('</th>')
-    template_list.append('</tr>')
-    # contents
-    for row in rows:
-        template_list.append('<tr>')
-        for col in col_names:
-            template_list.append('<td>')
-            template_list.append(str(row[col]))
-            template_list.append('</td>')
-        template_list.append('</tr>')
-    # finish out list and return
-    template_list.append('</table>')
 
-    return template_list
+    col_names = rows[0].keys()
+    # construct rows for use in Jinja template
+    # each row should be dict[col_name --> string[val]
+    # Note: row's __getitem__ returns a Cell
+    jinja_rows = []
+    for row in rows:
+        jinja_row = {}
+        for col in col_names:
+            jinja_row[col] = str(row[col].get_val())
+        jinja_rows.append(jinja_row)
+
+    # Get Jinja template
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.SELECT_STMT_RESULT_TEMPLATE_FILENAME
+    )
+    # Render and return template
+    return template.render(col_names=col_names, rows=jinja_rows)
 

@@ -25,3 +25,9 @@ LANDING_PAGE_TEMPLATE_FILENAME = 'list_stages_landing_page.html'
 LANDING_PAGE_STAGES = 'stages'
 
 STAGE_TEMPLATE_FILENAME = 'stage.html'
+
+STAGE_RESULTS_TEMPLATE_FILENAME = 'stage_results.html'
+
+SELECT_STMT_RESULT_TEMPLATE_FILENAME = 'select_statement_results.html'
+
+CELL_LIST_RESULT_TEMPLATE_FILENAME = 'cell_list_result.html'
