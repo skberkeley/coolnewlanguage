@@ -34,7 +34,7 @@ def show_results(result, label: str = '', results_title: str = '') -> None:
         return
 
     if isinstance(result, InputComponent):
-        show_results(result.value, label)
+        show_results(result.value, label, results_title)
         return
 
     match result:
@@ -71,7 +71,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     :return: A string containing the HTML table the table with the table's data
     """
     if not isinstance(table, sqlalchemy.Table):
-        raise TypeError("Expected a sqlalchemy Table for table")
+        raise TypeError("Expected table to be a sqlalchemy Table")
 
     stmt = sqlalchemy.select(table)
 
