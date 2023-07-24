@@ -21,8 +21,8 @@ class MapProcessor(Processor):
         """
         if not isinstance(col, ColumnSelectorComponent):
             raise TypeError("Expected col to be a ColumnSelectorComponent")
-        if not isinstance(func, Callable):
-            raise TypeError("Expected func to be a function")
+        if not callable(func):
+            raise TypeError("Expected func to be callable")
 
         if not process.handling_post:
             return
@@ -30,5 +30,12 @@ class MapProcessor(Processor):
         # compute vals and get row ids
         row_id_and_vals = [(c.row_id, func(c)) for c in col]
         # issue update statement
-        update_column(tool=process.running_tool, table=col.table_selector.value, col_name=col.emulated_column,
-                      row_id_val_pairs=row_id_and_vals)
+        update_column(
+            tool=process.running_tool,
+            table=col.table_selector.value,
+            col_name=col.emulated_column,
+            row_id_val_pairs=row_id_and_vals
+        )
+        # Set the result to the column
+        # show_results called on the result will query the database for the column values, so they will be up to date
+        self.result = col
