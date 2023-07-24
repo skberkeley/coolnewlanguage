@@ -14,11 +14,11 @@ class InputComponent(Component):
         the POST request's body
         :param expected_type: The expected type of the eventual user input
         """
+        if not isinstance(expected_type, type):
+            raise TypeError("Expected expected_type to be a type")
 
         super().__init__()
 
-        if not isinstance(expected_type, type):
-            raise TypeError("expected type of an input component should be a type")
         self.expected_type = expected_type
 
         if process.handling_post:
@@ -40,7 +40,7 @@ class InputComponent(Component):
         :return:
         """
         if self.value is None:
-            raise ValueError("Current value not available")
+            raise ValueError("value was None")
 
         return str(self.value)
     
@@ -49,6 +49,9 @@ class InputComponent(Component):
         Return this InputComponent's value by trying to cast it to an int
         :return: The int value of this Inputcomponent
         """
+        if self.value is None:
+            raise ValueError("value was None")
+
         return int(self.value)
 
     def __add__(self, other):
