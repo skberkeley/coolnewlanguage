@@ -16,7 +16,7 @@ class SubmitComponent(Component):
         :param submit_text:     The text to show on the submit button
         """
         if not isinstance(submit_text, str):
-            raise TypeError("submit text of a SubmitComponent should be a string")
+            raise TypeError("Expected submit_text to be a string")
         self.submit_text = submit_text
 
         super().__init__()
@@ -29,7 +29,7 @@ class SubmitComponent(Component):
         Use an <input> since we assume this will be inside a <form>
         :return:
         """
-        if self.submit_text:
+        if self.submit_text != "":
             return f'<input type="submit" value="{self.submit_text}">'
         else:
             return '<input type="submit">'
