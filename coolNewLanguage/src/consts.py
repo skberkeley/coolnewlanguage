@@ -33,3 +33,5 @@ SELECT_STMT_RESULT_TEMPLATE_FILENAME = 'select_statement_results.html'
 CELL_LIST_RESULT_TEMPLATE_FILENAME = 'cell_list_result.html'
 
 FILE_UPLOAD_COMPONENT_TEMPLATE_FILENAME = 'file_upload_component_template.html'
+
+USER_INPUT_COMPONENT_TEMPLATE_FILENAME = 'user_input_component_template.html'
