@@ -1,7 +1,11 @@
-from typing import List, Optional, Sequence
+import collections.abc
+from typing import List, Optional, Sequence, Iterable
+
+import jinja2
 import sqlalchemy
 import json
 
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.row import Row
@@ -21,22 +25,24 @@ class TableSelectorComponent(InputComponent):
             TableSelectorComponent
     """
     
-    def __init__(self, label: Optional[str] = None, columns: Optional[List[ColumnSelectorComponent]] = None):
-        if label is not None and not isinstance(label, str):
+    def __init__(self, label: str = "", columns: List[ColumnSelectorComponent] = None):
+        if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
 
         if columns is not None:
             if not isinstance(columns, list):
                 raise TypeError("Expected columns to be a list")
             if any([not isinstance(x, ColumnSelectorComponent) for x in columns]):
-                raise TypeError("Each element of columns must be ColumnSelector")
+                raise TypeError("Expected each element of columns to be a ColumnSelectorComponent")
 
-        self.label = label if label else "Select table..."
+        self.label = label if label != "" else "Select table..."
 
         if config.building_template:
-            self.template = config.tool_under_construction.jinja_environment.get_template('table_selector.html')
+            self.template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
+                consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
+            )
 
-        self.columns: List[ColumnSelectorComponent] = columns if columns else []
+        self.columns: List[ColumnSelectorComponent] = columns if columns is not None else []
         for column in self.columns:
             column.register_on_table_selector(self)
 
@@ -46,8 +52,9 @@ class TableSelectorComponent(InputComponent):
         if process.handling_post:
             table_name = self.value
             self.value = sqlalchemy.Table(table_name, process.running_tool.db_metadata_obj)
-            insp = sqlalchemy.inspect(process.running_tool.db_engine)
-            insp.reflect_table(self.value, None)
+            insp: sqlalchemy.engine.reflection.Inspector = sqlalchemy.inspect(process.running_tool.db_engine)
+            # Pass None for include_columns to reflect all columns
+            insp.reflect_table(table=self.value, include_columns=None)
 
     def paint(self) -> str:
         """
@@ -71,19 +78,16 @@ class TableSelectorComponent(InputComponent):
         )
 
     class TableSelectorIterator:
-        def __init__(self, table: sqlalchemy.Table, rows: Sequence[sqlalchemy.Row]):
+        def __init__(self, table: sqlalchemy.Table, rows: Iterable[sqlalchemy.Row]):
             if not isinstance(table, sqlalchemy.Table):
                 raise TypeError("Expected table to be a sqlalchemy Table")
-            if not isinstance(rows, Sequence):
-                raise TypeError("Expected rows to be a sequence")
+            if not isinstance(rows, collections.abc.Iterable):
+                raise TypeError("Expected rows to be iterable")
             if not all([isinstance(r, sqlalchemy.Row) for r in rows]):
                 raise TypeError("Expected every item in rows to be a sqlalchemy Row")
 
             self.table = table
             self.rows_iterator = rows.__iter__()
-
-        def __iter__(self) -> 'TableSelectorIterator':
-            return self
 
         def __next__(self) -> Row:
             try:
@@ -94,7 +98,7 @@ class TableSelectorComponent(InputComponent):
             return Row(table=self.table, sqlalchemy_row=sql_alchemy_row)
 
     def __iter__(self):
-        rows = get_rows_of_table(process.running_tool, self.value)
+        rows: Sequence[sqlalchemy.Row] = get_rows_of_table(process.running_tool, self.value)
         return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
 
 
