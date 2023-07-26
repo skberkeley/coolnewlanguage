@@ -1,6 +1,3 @@
-from coolNewLanguage.src.stage import config
-
-
 def get_component_id() -> str:
     """
     Get the id for the current component based on Component.num_components
@@ -25,6 +22,7 @@ class Component:
     num_components = 0
 
     def __init__(self):
+        from coolNewLanguage.src.stage import config
         """
         Initialize this component by setting its component id, incrementing
         num_components, and if currently building the Config template, paint

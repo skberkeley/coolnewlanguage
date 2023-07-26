@@ -1,5 +1,7 @@
 from typing import List
 
+from coolNewLanguage.src.component.component import Component
+
 """
 A module to hold state while constructing Configs
 Since state is not passed to each component as they are initialized,
@@ -26,7 +28,7 @@ Attributes:
         The Tool whose config is currently being constructed
 """
 
-component_list: List['Component'] = []
+component_list: List[Component] = []
 submit_component_added: bool = False
 building_template: bool = False
 tool_under_construction: 'Tool' = None

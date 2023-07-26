@@ -1,4 +1,8 @@
+import jinja2
+
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.input_component import InputComponent
+from coolNewLanguage.src.stage import config
 
 
 class UserInputComponent(InputComponent):
@@ -6,9 +10,11 @@ class UserInputComponent(InputComponent):
     An input component which captures some input which the user types
     """
     def __init__(self, expected_type: type, label: str = ""):
-        # assign these first so that we can paint if needed
+        if not isinstance(expected_type, type):
+            raise TypeError("Expected expected_type to be a type")
         if not isinstance(label, str):
-            raise TypeError("label of a user input component should be a string")
+            raise TypeError("Expected label to be a string")
+        # assign these first so that we can paint if needed
         self.label = label
 
         super().__init__(expected_type)
@@ -18,20 +24,9 @@ class UserInputComponent(InputComponent):
         Paint this UserInputComponent as a snippet of HTML
         :return:
         """
-        snippets = ['<div>']
-
-        # add label if necessary
-        if self.label:
-            snippets.append(
-                f'<label for="{self.component_id}">{self.label}</label>'
-            )
-            snippets.append('<br>')
-
-        # user input element
-        snippets.append(
-            f'<input type="text" id="{self.component_id}" name="{self.component_id}" />'
+        # Load the jinja template
+        template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
+            name=consts.USER_INPUT_COMPONENT_TEMPLATE_FILENAME
         )
-
-        snippets.append('</div>')
-
-        return ''.join(snippets)
+        # Render and return the template
+        return template.render(label=self.label, component_id=self.component_id)

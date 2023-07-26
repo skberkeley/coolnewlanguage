@@ -15,8 +15,8 @@ class LambdaProcessor(Processor):
         :param func: The lambda function to be run as part of the processor
         """
 
-        if not isinstance(func, Callable):
-            raise TypeError("func of a LambdaProcessor should be a function")
+        if not callable(func):
+            raise TypeError("Expected func to be callable")
         self.func = func
 
         if process.handling_post:

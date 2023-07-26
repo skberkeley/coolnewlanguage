@@ -7,7 +7,7 @@ class TextComponent(Component):
     """
     def __init__(self, text: str):
         if not isinstance(text, str):
-            raise TypeError("Expected a string for this TextComponent")
+            raise TypeError("Expected text to be a string")
         self.text = text
 
         super().__init__()
@@ -18,10 +18,3 @@ class TextComponent(Component):
         :return:
         """
         return f'<p>{self.text}</p>'
-
-    def __str__(self):
-        """
-        Returns the text this TextComponent is being used to render
-        :return:
-        """
-        return self.text
