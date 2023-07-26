@@ -105,4 +105,4 @@ class Cell:
                 ret = self.expected_type(self.val)
             except Exception as e:
                 raise_type_casting_error(self.val, self.expected_type, e)
-        return ret
+        return self.val

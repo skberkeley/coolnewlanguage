@@ -6,7 +6,7 @@ class Field:
         data_type: The expected type of data that will live in this Field
         optional: Whether this Field is required for every instance of the host CNLType
     """
-    __slots__ = ['data_type', 'optional']
+    __slots__ = ('data_type', 'optional')
 
     def __init__(self, data_type: type, optional: bool = False) -> None:
         if not isinstance(data_type, type):
