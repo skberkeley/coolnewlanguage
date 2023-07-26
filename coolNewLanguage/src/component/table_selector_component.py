@@ -102,7 +102,8 @@ class TableSelectorComponent(InputComponent):
         return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
     
     def append(self, other):
-        from coolNewLanguage.src.tool import CNLType, Link
+        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
         from coolNewLanguage.src.component.user_input_component import UserInputComponent
         mapping = {}
         if self.value is None:

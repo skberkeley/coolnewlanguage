@@ -3,7 +3,6 @@ from coolNewLanguage.src.component.table_selector_component import ColumnSelecto
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
-from coolNewLanguage.src.processor.map_processor import MapProcessor
 from coolNewLanguage.src.stage.results import show_results
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
 from coolNewLanguage.src.tool import *

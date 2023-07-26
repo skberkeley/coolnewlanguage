@@ -3,6 +3,7 @@ from typing import Dict, Any, Union
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
