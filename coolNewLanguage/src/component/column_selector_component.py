@@ -1,11 +1,11 @@
-from typing import Optional, Any
+from typing import Optional
 
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.util.db_utils import update_cell, iterate_over_column
+from coolNewLanguage.src.util.db_utils import iterate_over_column
 
 
 class ColumnSelectorComponent(InputComponent):
@@ -28,16 +28,17 @@ class ColumnSelectorComponent(InputComponent):
         emulated_column: The name of the column this selector represents
         expected_val_type: The expected type of the values contained in this column
     """
-    def __init__(self, label: Optional[str] = None, expected_val_type: Optional[type] = None):
+    def __init__(self, label: str = "", expected_val_type: Optional[type] = None):
         from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 
-        if label is not None and not isinstance(label, str):
+        if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
+        if expected_val_type is not None and not isinstance(expected_val_type, type):
+            raise TypeError("Expected expected_val_type to be a type")
 
         self.table_selector: Optional[TableSelectorComponent] = None
         self.label = label if label else "Select column..."
-        self.emulated_row_id: Optional[int] = None
-        self.expected_val_type = expected_val_type
+        self.expected_val_type: Optional[type] = expected_val_type
         super().__init__(expected_type=str)
         self.emulated_column: str = self.value
 
@@ -51,38 +52,9 @@ class ColumnSelectorComponent(InputComponent):
         if not isinstance(table_selector, TableSelectorComponent):
             raise TypeError("Expected table_selector to be a TableSelectorComponent")
         if self.table_selector is not None:
-            raise AssertionError("Column must not be added to multiple table selectors")
+            raise ValueError("This ColumnSelectorComponent is already registered on a TableSelectorComponent")
 
         self.table_selector = table_selector
-
-    def paint(self):
-        """
-        Column selectors are not painted by ColumnSelectorComponents, instead they are painted by their registered
-        TableSelectorComponents
-        :return: ""
-        """
-        return None
-
-    def set(self, value: Any):
-        """
-        Overwrite the cell this ColumnSelectorComponent currently represents with value
-        Note: This method overwrites data in the actual database, rather than changing a copy of the data this object
-        has
-        :param value: The value to update the cell with
-        :return:
-        """
-        update_cell(tool=process.running_tool, table=self.table_selector.value, column_name=self.emulated_column,
-                    row_id=self.emulated_row_id, value=value)
-
-    def __lshift__(self, other: Any):
-        """
-        Set the value of the cell this object is currently emulating to other
-        Overloads the << operator
-        c1 << c2 is equivalent to c1.__lshift__(c2) is equivalent to c1.set(c2)
-        :param other: The value to update the cell with
-        :return:
-        """
-        self.set(other)
 
     class ColumnSelectorIterator:
         """
@@ -105,9 +77,6 @@ class ColumnSelectorComponent(InputComponent):
             self.expected_type = expected_type
 
             self.row_id_val_pairs = iterate_over_column(process.running_tool, table, col_name)
-
-        def __iter__(self) -> 'ColumnSelectorIterator':
-            return self
 
         def __next__(self) -> Cell:
             try:
