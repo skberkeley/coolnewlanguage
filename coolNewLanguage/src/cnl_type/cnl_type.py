@@ -1,86 +1,87 @@
-from typing import Any, Type
+from typing import Any, Type, Optional, Union
 
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.cnl_type.link import Link
 
 
 class CNLType:
-    __slots__ = ['_hls_backing_row']
+    """
+    CoolNewLanguageType
+    A class designed to be subclasses by programmers so that they can define custom types
+    Attributes:
+        _hls_backing_row: Row : An optional Row object containing the underlying mapping for a particular CNLType
+            instance, treated as a mapping between column names and values
+        _custom_fields: Dict[str, Field] : A dictionary containing programmer defined fields corresponding to the
+            attributes the programmer wants their custom type to have. Maps from the attribute name to the actual Field
+            instance. Is used by __getattr__ and __setattr__.
+    """
+    __slots__ = ('_hls_backing_row', '_custom_fields')
 
-    def __init__(self, backing_row: 'Row' = None) -> None:
+    def __init__(self, backing_row: Optional['Row'] = None) -> None:
         from coolNewLanguage.src.row import Row
 
-        if not isinstance(backing_row, Row):
+        if backing_row is not None and not isinstance(backing_row, Row):
             raise TypeError("Expected backing_row to be a Row")
 
         self._hls_backing_row = backing_row
+        self._custom_fields = {}
 
-    def fields(self):
+    def fields(self) -> None:
+        """
+        fields is a placeholder within CNLType. Programmers subclassing CNLType to define custom types should override
+        this method, defining the fields they want instances of their custom type to have within it.
+        """
         msg = "The fields method is not defined for the CNLType parent class, and should be overwritten by its " \
               "subclasses"
         raise NotImplementedError(msg)
 
-    # TODO: Add a __setattr__
-
-    # def field_to_nested(self, __name:str):
-    #     fields = Tool.__type_to_fields(self.__class__)
-    #     if __name  fields:
-    #     fields = Tool.__type_to_field_flattening(self.__class__)
-    #     fields =
-
-    def __getattr__(self, name: str) -> Any:
-        # TODO: Rewrite
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            return self.__hls_backing_row[name]
-
-    def _hls_type_to_fields(type:Type["CNLType"]):
-        # TODO: Make this static with @staticmethod
+    def __setattr__(self, name: str, value: Union['Row', Field]):
+        from coolNewLanguage.src.row import Row
         """
-        Uses fact that calling fields() (which is implemented by the programmer when subclassing CNLType) adds new
-        attributes to distinguish between programmer-added attributes and pre-existing field names
+        Override __setattr__ so that attribute assignments made during calls to fields are handled, and attempts to
+        overwrite _custom_fields fail. First checks to see if name is '_custom_fields' then checks to see if value is an
+        instance of a Field to see whether it should be added to _custom_fields, otherwise calls the regular __setattr__
+        method.
+        :param name: The key to use for _custom_fields, or the name to assign to the attribute
+        :param value: The value to pass to _custom_fields, or to set as the attribute
         :return:
         """
-        # TODO: Rewrite (type is a builtin)
-        # TODO: use is_subclass or something like that
-        if not isinstance(type(), CNLType):
-            raise TypeError("Expected a CNLType")
-        instance = type()
-        instance_fields_t0 = instance.__dict__.copy()
-        instance.fields()
-        instance_fields_t1 = instance.__dict__.copy()
-        instance_fields = {
-            k : v for k, v in instance_fields_t1.items()
-            if k not in instance_fields_t0.keys()
-        }
-
-        return instance_fields
-
-    def _hls_flatten_field(f: Field, hiearchical_name:str) -> dict:
-        # TODO: Add static decorator
-        # TODO: Combine this and _hls_type_to_field_flattening so we don't have to mutually recurse
-        # TODO: Fix these two so we don't run into infinite recursion with mutually referential CNLTypes
-        if isinstance(f.type(), CNLType):
-            return CNLType._hls_type_to_field_flattening(f.type, hiearchical_name)
+        if name == '_custom_fields' and hasattr(self, '_custom_fields'):
+            raise AttributeError("Cannot overwrite attribute _custom_fields. Use another attribute name instead")
+        elif name == '_hls_backing_row' and value is not None and not isinstance(value, Row):
+            raise TypeError("Expected value to be a Row when assigning to attribute '_hls_backing_row'")
+        elif isinstance(value, Field):
+            self._custom_fields[name] = value
         else:
-            return {hiearchical_name : f}
+            object.__setattr__(self, name, value)
 
-    def _hls_type_to_field_flattening(type:Type["CNLType"], hiearchical_name:str = None) -> dict:
+    def __getattr__(self, item: str) -> Field:
         """
-        :param hiearchical_name:
-        :return:
+        Override __getattr__ so that attribute references to programmer-defined fields are handled correctly. Since
+        __getattr__ is called if __getattribute__ raises an AttributeError, only checks _custom_fields before raising
+        an AttributeError itself
+        :param item: The attribute name being accessed
+        :return: The Field being accessed
         """
-        # TODO: Change type name
-        if not isinstance(type(), CNLType):
-            raise TypeError("Expected a CNLType")
+        custom_fields = self.__getattribute__('_custom_fields')
+        if item in custom_fields:
+            return custom_fields[item]
+        raise AttributeError
 
-        instance_fields = CNLType._hls_type_to_fields(type)
-        result = {}
-        for (name, field) in instance_fields.items():
-            h_name = f"{hiearchical_name}.{name}" if hiearchical_name else name
-            result.update(CNLType._hls_flatten_field(field, h_name))
-        return result
+    @staticmethod
+    def _hls_type_to_fields(cnl_type: type['CNLType']):
+        """
+        Returns a dictionary containing the programmer-defined fields of the passed CNLType
+        Instantiates a new objects and calls fields before accessing _custom_fields to figure out what the fields are
+        :param cnl_type: A CNLType, either the base class itself or a subclass
+        :return: A dictionary containing the programmer-defined fields of the passed CNLType
+        """
+        if not issubclass(cnl_type, CNLType):
+            raise TypeError("Expected cnl_type to be a subclass of CNLType")
+
+        cnl_type_instance: CNLType = cnl_type()
+        cnl_type_instance.fields()
+        return cnl_type_instance._custom_fields
 
     def link(self, to:Any, on:"Link"):
         # TODO: to is union of row and cnltype
