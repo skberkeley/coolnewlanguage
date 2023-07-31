@@ -24,7 +24,10 @@ class CNLType:
             raise TypeError("Expected backing_row to be a Row")
 
         self._hls_backing_row = backing_row
-        self._custom_fields = {}
+        self._custom_fields: dict[str, Field] = {}
+        # if we're initializing a subclass of CNLType, call fields
+        if self.__class__ != CNLType:
+            self.fields()
 
     def fields(self) -> None:
         """
@@ -40,7 +43,9 @@ class CNLType:
         """
         Override __setattr__ so that attribute assignments made during calls to fields are handled, and attempts to
         overwrite _custom_fields fail. First checks to see if name is '_custom_fields' then checks to see if value is an
-        instance of a Field to see whether it should be added to _custom_fields, otherwise calls the regular __setattr__
+        instance of a Field to see whether it should be added to _custom_fields, then checks that _hls_backing_row is
+        being overwritten with a non-Row object, then checks to see if a field's value is beign written to, before
+        finally calling object.__set_attr
         method.
         :param name: The key to use for _custom_fields, or the name to assign to the attribute
         :param value: The value to pass to _custom_fields, or to set as the attribute
@@ -52,21 +57,39 @@ class CNLType:
             raise TypeError("Expected value to be a Row when assigning to attribute '_hls_backing_row'")
         elif isinstance(value, Field):
             self._custom_fields[name] = value
+        elif hasattr(self, '_custom_fields') and name in self._custom_fields:
+            self._custom_fields[name].set_value(value)
         else:
             object.__setattr__(self, name, value)
 
-    def __getattr__(self, item: str) -> Field:
+    def __getattr__(self, item: str) -> Any:
         """
-        Override __getattr__ so that attribute references to programmer-defined fields are handled correctly. Since
-        __getattr__ is called if __getattribute__ raises an AttributeError, only checks _custom_fields before raising
-        an AttributeError itself
+        Override __getattr__ so that attribute references to programmer-defined fields are handled correctly. Tries to
+        get the value from the value attribute on the Field object found in _custom_fields. If this value is None, tries
+        to get it from this CNLType instance's _hls_backing_row, if that is present, setting it on the relevant Field
+        object's value attribute before returning. If in that case _hls_backing_row is None, returns None instead. Since
+        __getattr__ is called if __getattribute__ raises an AttributeError, only checks _custom_fields before raising an
+        AttributeError itself
         :param item: The attribute name being accessed
-        :return: The Field being accessed
+        :return: The value of the Field being accessed, or None if the value of the Field is None and there is no
+            backing_row present
         """
         custom_fields = self.__getattribute__('_custom_fields')
-        if item in custom_fields:
-            return custom_fields[item]
-        raise AttributeError
+
+        if item not in custom_fields:
+            raise AttributeError
+
+        field = custom_fields[item]
+
+        if field.value is not None:
+            return field.value
+
+        if self._hls_backing_row is None or item not in self._hls_backing_row:
+            return None
+
+        value = self._hls_backing_row[item]
+        field.set_value(value)
+        return value
 
     @staticmethod
     def _hls_type_to_fields(cnl_type: type['CNLType']):
