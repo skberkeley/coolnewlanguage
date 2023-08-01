@@ -1,9 +1,8 @@
-from typing import Dict, Any, Union
+from typing import Any, Union
 
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
-from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
@@ -141,15 +140,22 @@ class Row:
         """Iterate over the cells in this row"""
         return Row.RowIterator(row=self)
 
-    def asType(self, type:type[CNLType])->CNLType:
-        # TODO: Check types
-        # TODO: Don't name variables type
-        # TODO: Check to see that self has the expected fields for type
-        return type(backing_row=self)
+    def cast_to_type(self, cnl_type: type['CNLType']) -> 'CNLType':
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+        """
+        Returns an instance of the passed CNLType with this row as the underlying backing row.
+        :param cnl_type: The CNLType subclass to return an instance of
+        :return:
+        """
+        if not issubclass(cnl_type, CNLType):
+            raise TypeError("Expected cnl_type to be a subclass of CNLType")
+
+        return CNLType.from_row(cnl_type=cnl_type, row=self)
 
     def link(self, to:Any, on:"Link"):
         from coolNewLanguage.src.util.db_utils import link_create
         from coolNewLanguage.src.stage import process
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 
         link_id = on._hls_internal_link_id
 

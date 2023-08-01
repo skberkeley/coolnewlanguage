@@ -5,7 +5,6 @@ import jinja2
 import sqlalchemy
 from aiohttp import web
 
-from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
@@ -130,7 +129,8 @@ class Tool:
             }
         )
 
-    def create_table(self, name:str, type:Type[CNLType]):
+    def create_table(self, name:str, type:Type['CNLType']):
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
         from coolNewLanguage.src.util.db_utils import create_table_if_not_exists, link_register
         flatten_fields = CNLType._hls_type_to_field_flattening(type)
 

@@ -1,29 +1,22 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
+from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
+from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType, A_FIELD, ANOTHER_FIELD, YET_ANOTHER_FIELD
 
 
 class TestCNLType:
     ROW = MagicMock(spec=Row)
-    A_FIELD = Mock(spec=Field)
-    ANOTHER_FIELD = Mock(spec=Field)
-    YET_ANOTHER_FIELD = Mock(spec=Field)
-
-    class BabysFirstType(CNLType):
-        def fields(self) -> None:
-            self.a_field = TestCNLType.A_FIELD
-            self.another_field = TestCNLType.ANOTHER_FIELD
-            self.yet_another_field = TestCNLType.YET_ANOTHER_FIELD
 
     @pytest.fixture
     def babys_first_type(self):
-        return TestCNLType.BabysFirstType(TestCNLType.ROW)
+        return MyFirstType(TestCNLType.ROW)
 
-    class BabysFirstBadType:
+    class MyFirstBadType:
         pass
 
     def test_cnl_type_happy_path(self):
@@ -99,7 +92,7 @@ class TestCNLType:
     def test_setattr_assignment_to_programmer_defined_attribute(self, babys_first_type):
         # Setup
         # Mock field's set_value
-        TestCNLType.A_FIELD.set_value = Mock()
+        A_FIELD.set_value = Mock()
         mock_value = Mock()
 
         # Do
@@ -107,7 +100,7 @@ class TestCNLType:
 
         # Check
         # Check that the set_value was called as expected
-        TestCNLType.A_FIELD.set_value.assert_called_with(mock_value)
+        A_FIELD.set_value.assert_called_with(mock_value)
 
     def test_getattr_custom_fields_field_object_has_value(self, babys_first_type):
         # Setup
@@ -124,7 +117,7 @@ class TestCNLType:
     def test_getattr_custom_fields_field_has_no_value_row_has_no_value(self):
         # Setup
         # Create a new BabysFirstType instance with no backing row
-        babys_first_type = TestCNLType.BabysFirstType(backing_row=None)
+        babys_first_type = MyFirstType(backing_row=None)
         # Mock the field's value to be None
         babys_first_type._custom_fields['a_field'].value = None
 
@@ -173,28 +166,65 @@ class TestCNLType:
 
     def test_cnl_type_subclass_init_happy_path(self):
         # Do
-        babys_first_type = TestCNLType.BabysFirstType(TestCNLType.ROW)
+        babys_first_type = MyFirstType(TestCNLType.ROW)
 
         # Check
         assert babys_first_type._hls_backing_row == TestCNLType.ROW
         # Check that fields was called by checking the contents of _custom_fields
         assert babys_first_type._custom_fields == {
-            'a_field': TestCNLType.A_FIELD,
-            'another_field': TestCNLType.ANOTHER_FIELD,
-            'yet_another_field': TestCNLType.YET_ANOTHER_FIELD
+            'a_field': A_FIELD,
+            'another_field': ANOTHER_FIELD,
+            'yet_another_field': YET_ANOTHER_FIELD
         }
 
     def test_hls_type_to_fields_happy_path(self):
         # Do
-        field_dict = CNLType._hls_type_to_fields(TestCNLType.BabysFirstType)
+        field_dict = CNLType._hls_type_to_fields(MyFirstType)
 
         # Check
         assert field_dict == {
-            'a_field': TestCNLType.A_FIELD,
-            'another_field': TestCNLType.ANOTHER_FIELD,
-            'yet_another_field': TestCNLType.YET_ANOTHER_FIELD
+            'a_field': A_FIELD,
+            'another_field': ANOTHER_FIELD,
+            'yet_another_field': YET_ANOTHER_FIELD
         }
 
     def test_hls_type_to_fields_cnl_type_is_not_a_cnl_type_subclass(self):
         with pytest.raises(TypeError, match="Expected cnl_type to be a subclass of CNLType"):
-            CNLType._hls_type_to_fields(TestCNLType.BabysFirstBadType)
+            CNLType._hls_type_to_fields(TestCNLType.MyFirstBadType)
+
+    def test_from_row_happy_path(self):
+        # Setup
+        # Mock a row object
+        mock_row = Mock(spec=Row)
+        # Mock the row having the requisite fields by mocking __contains__
+        mock_row.__contains__ = Mock(return_value=True)
+
+        # Do
+        my_first_type_instance = CNLType.from_row(MyFirstType, mock_row)
+
+        # Check
+        # Check that the returned object is an instance of MyFirstType
+        assert isinstance(my_first_type_instance, MyFirstType)
+        # Check that the backing_row is mock_row
+        assert my_first_type_instance._hls_backing_row == mock_row
+
+    def test_from_row_row_is_not_a_row(self):
+        with pytest.raises(TypeError, match="Expected row to be a Row"):
+            CNLType.from_row(MyFirstType, Mock())
+
+    def test_from_row_cnl_type_is_not_cnl_type_subclass(self):
+        with pytest.raises(TypeError, match="Expected cnl_type to be a strict subclass of CNLType"):
+            CNLType.from_row(TestCNLType.MyFirstBadType, Mock(spec=Row))
+        with pytest.raises(TypeError, match="Expected cnl_type to be a strict subclass of CNLType"):
+            CNLType.from_row(CNLType, Mock(spec=Row))
+
+    def test_from_row_row_fields_have_mismatch(self):
+        # Setup
+        # Mock a row object
+        mock_row = Mock(spec=Row)
+        # Mock the row not having the requisite fields by mocking __contains__
+        mock_row.__contains__ = Mock(return_value=False)
+
+        # Do, Check
+        with pytest.raises(CNLError):
+            CNLType.from_row(MyFirstType, mock_row)

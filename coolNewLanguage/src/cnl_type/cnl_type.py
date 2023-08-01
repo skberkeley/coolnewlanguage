@@ -1,7 +1,9 @@
-from typing import Any, Type, Optional, Union
+from typing import Any, Optional, Union
 
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.exceptions.CNLError import raise_type_casting_error
+from coolNewLanguage.src.row import Row
 
 
 class CNLType:
@@ -105,6 +107,35 @@ class CNLType:
         cnl_type_instance: CNLType = cnl_type()
         cnl_type_instance.fields()
         return cnl_type_instance._custom_fields
+
+    @staticmethod
+    def from_row(cnl_type: type['CNLType'], row: Row) -> 'CNLType':
+        """
+        Returns a new instance of the passed cnl_type backed by the passed Row instance. Checks to see that all the
+        Fields defined by cnl_type are present in the row.
+        :param cnl_type:
+        :param row:
+        :return:
+        """
+        if not issubclass(cnl_type, CNLType) or cnl_type is CNLType:
+            raise TypeError("Expected cnl_type to be a strict subclass of CNLType")
+        if not isinstance(row, Row):
+            raise TypeError("Expected row to be a Row")
+
+        cnl_type_instance = cnl_type()
+
+        # Compare the expected fields and fields present in row
+        for field_name in cnl_type_instance._custom_fields:
+            if field_name not in row:
+                raise_type_casting_error(
+                    value=row,
+                    expected_type=cnl_type,
+                    error=ValueError("The Row did not contain all the expected fields")
+                )
+
+        cnl_type_instance._hls_backing_row = row
+
+        return cnl_type_instance
 
     def link(self, to:Any, on:"Link"):
         # TODO: to is union of row and cnltype

@@ -112,7 +112,7 @@ def main():
         def go():
             results = []
             for row in table:
-                officer = row.asType(OfficerType)
+                officer = row.cast_to_type(OfficerType)
                 officer.link(to=row, on=officer.friends)
 
                 results.append(f"Officer {officer.name} is {officer.age} years old")

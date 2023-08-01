@@ -3,10 +3,12 @@ from unittest.mock import Mock, patch
 import pytest
 import sqlalchemy
 
+import coolNewLanguage.src.cnl_type.cnl_type
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
+from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType
 
 
 class TestRow:
@@ -19,6 +21,7 @@ class TestRow:
         DB_INTERNAL_COLUMN_ID_NAME: ROW_ID,
         NAME_COLUMN: OSKI
     }
+    SQLALCHEMY_ROW = Mock(spec=sqlalchemy.Row)
 
     def test_row_happy_path(self):
         # Setup
@@ -50,10 +53,9 @@ class TestRow:
             Row(Mock(spec=sqlalchemy.Table), Mock())
 
     @pytest.fixture
-    def row(self):
-        sqlalchemy_row = Mock(spec=sqlalchemy.Row)
-        sqlalchemy_row._asdict.return_value = TestRow.ROW_DICT
-        return Row(table=Mock(spec=sqlalchemy.Table), sqlalchemy_row=sqlalchemy_row)
+    def row(self) -> Row:
+        TestRow.SQLALCHEMY_ROW._asdict.return_value = TestRow.ROW_DICT
+        return Row(table=Mock(spec=sqlalchemy.Table), sqlalchemy_row=TestRow.SQLALCHEMY_ROW)
 
     def test_getitem_item_is_string_cell_not_in_cell_mapping(self, row: Row):
         # Setup
@@ -261,3 +263,23 @@ class TestRow:
         for val in row:
             vals.append(val)
         assert vals == [TestRow.ROW_ID, TestRow.OSKI]
+
+    @patch.object(coolNewLanguage.src.cnl_type.cnl_type.CNLType, 'from_row')
+    def test_cast_to_type_happy_path(self, mock_from_row: Mock, row: Row):
+        # Setup
+        # Mock CNLType.from_row
+        mock_my_first_type = Mock(spec=MyFirstType)
+        mock_from_row.return_value = mock_my_first_type
+
+        # Do
+        my_first_type = row.cast_to_type(MyFirstType)
+
+        # Check
+        # Check from_row was called as expected
+        mock_from_row.assert_called_with(cnl_type=MyFirstType, row=row)
+        # Check return value
+        assert my_first_type == mock_my_first_type
+
+    def test_cast_to_type_cnl_type_is_not_cnl_type_subclass(self, row: Row):
+        with pytest.raises(TypeError, match="Expected cnl_type to be a subclass of CNLType"):
+            row.cast_to_type(Row)
