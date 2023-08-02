@@ -313,7 +313,7 @@ def db_awaken(tool: Tool):
                 sqlalchemy.Integer,
                 sqlalchemy.Identity(),
                 primary_key=True),
-            sqlalchemy.Column(consts.LINKS_METATYPES_LINK_METANAME, sqlalchemy.String, nullable=False)
+            sqlalchemy.Column(consts.LINKS_METATYPES_LINK_META_NAME, sqlalchemy.String, nullable=False, unique=True)
         ]
         links_metatypes_table = sqlalchemy.Table(consts.LINKS_METATYPES_TABLE_NAME, tool.db_metadata_obj, *cols)
         links_metatypes_table.create(tool.db_engine)
@@ -333,53 +333,3 @@ def db_awaken(tool: Tool):
         ]
         links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, tool.db_metadata_obj, *cols)
         links_registry_table.create(tool.db_engine)
-
-def get_link_registration_id(tool: Tool, link_meta_name: str) -> Optional[int]:
-    # TODO: rename field parameter, since it implies that it should be of type Field
-    # TODO: check types
-    links_meta = get_table_from_table_name(tool, LINKS_META)
-    stmt = sqlalchemy.select(links_meta.c[LINKS_META_LINK_META_ID])\
-        .where(links_meta.c[LINKS_META_TABLE_NAME] == table_name)\
-        .where(links_meta.c[LINKS_META_FIELD_NAME] == field)
-
-    with tool.db_engine.connect() as conn:
-        # TODO: Debug this and see why we need to index, adding comments explaining why
-        result = conn.execute(stmt).first()
-        print(result)
-        if result:
-            return result[0]
-        else:
-            return None
-
-
-def link_register(tool:Tool, link_meta_name: str) -> Optional[int]:
-    # TODO: do type checks
-    existing = get_link_registration_id(tool, table_name, field)
-    if existing is not None:
-        return existing
-    
-    table = get_table_from_table_name(tool, LINKS_META)
-    insert_stmt = sqlalchemy.insert(table).values({
-        LINKS_META_TABLE_NAME: table_name,
-        LINKS_META_FIELD_NAME: field
-    })
-    with tool.db_engine.connect() as conn:
-        result = conn.execute(insert_stmt)
-        conn.commit()
-    
-    return result.inserted_primary_key
-
-def link_create(tool: Tool, link_id:int, src_row_id:int, dst_table:str, dst_row_id:int):
-    # TODO: type checks
-    # TODO: Check to see if the link exists already
-    table = get_table_from_table_name(tool, LINKS)
-    insert_stmt = sqlalchemy.insert(table).values({
-        LINKS_META_ID: link_id,
-        LINKS_SRC_ROW_ID: src_row_id,
-        LINKS_DST_TABLE_NAME: dst_table,
-        LINKS_DST_ROW_ID : dst_row_id
-    })
-    with tool.db_engine.connect() as conn:
-        result = conn.execute(insert_stmt)
-        conn.commit()
-        return result.inserted_primary_key
