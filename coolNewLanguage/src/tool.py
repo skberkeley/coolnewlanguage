@@ -26,6 +26,7 @@ class Tool:
     web_app : WebApp
     """
     def __init__(self, tool_name: str, url: str = ''):
+        from coolNewLanguage.src.util.db_utils import db_awaken
         """
         Initialize this tool
         Starts the web_app which forms the back end of this tool
@@ -69,7 +70,7 @@ class Tool:
         self.db_engine.connect()
         self.db_metadata_obj = sqlalchemy.MetaData()
 
-        from coolNewLanguage.src.util.db_utils import db_awaken
+        # Awakening the db creates the necessary tables required to run the tool
         db_awaken(self)
 
     def add_stage(self, stage_name: str, stage_func: Callable):

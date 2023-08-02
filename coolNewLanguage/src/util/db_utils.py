@@ -4,6 +4,7 @@ from pathlib import Path
 
 import sqlalchemy
 
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
@@ -291,50 +292,49 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
 
     return results.all()
 
-# TODO: Consts should live in consts.py
-# TODO: Better names for these consts?
-LINKS_META = "__hls_links_meta"
-LINKS_META_LINK_META_ID = "link_meta_id"
-LINKS_META_TABLE_NAME = "table_name"
-LINKS_META_FIELD_NAME = "field_name"
-
-LINKS = "__hls_links"
-LINKS_META_ID = "link_meta_id"
-LINKS_SRC_ROW_ID = "src_row_id"
-LINKS_DST_TABLE_NAME = "dst_table_name"
-LINKS_DST_ROW_ID = "dst_row_id"
 # TODO: Put all the linking stuff in one file?
+
+
 def db_awaken(tool: Tool):
-    # TODO: Flesh out docstring
     """
-    Creates/gets necessary tables in backend when Tool is instantiated
-    :param tool:
+    Creates/gets necessary tables in backend, and is called when the tool is instantiated
+    Creates the LINKS_META table, which encodes the existing Link metatypes, and the LINKS table, which acts as a
+    registry of the individual links themselves.
+    :param tool: The Tool for which the db is being awakened.
     :return:
     """
-    # TODO: check type
-    metadata_obj = tool.db_metadata_obj
-    
-    links_meta = get_table_from_table_name(tool, LINKS_META)
-    if links_meta is None:
-        links_meta = sqlalchemy.Table(LINKS_META, metadata_obj, 
-            sqlalchemy.Column(LINKS_META_LINK_META_ID, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True),
-            sqlalchemy.Column(LINKS_META_TABLE_NAME, sqlalchemy.String, nullable=False),
-            sqlalchemy.Column(LINKS_META_FIELD_NAME, sqlalchemy.String, nullable=False),
-        )
-        links_meta.create(tool.db_engine)
-    
-    links = get_table_from_table_name(tool, LINKS)
-    if links is None:
-        links = sqlalchemy.Table(LINKS, metadata_obj, 
-            sqlalchemy.Column("id", sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True),
-            sqlalchemy.Column(LINKS_META_ID, sqlalchemy.Integer, nullable=False),
-            sqlalchemy.Column(LINKS_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
-            sqlalchemy.Column(LINKS_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
-            sqlalchemy.Column(LINKS_DST_ROW_ID, sqlalchemy.Integer, nullable=False),
-        )
-        links.create(tool.db_engine)
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
 
-def get_link_registration_id(tool:Tool, table_name:str, field:str) -> Optional[int]:
+    if get_table_from_table_name(tool, consts.LINKS_METATYPES_TABLE_NAME) is None:
+        cols = [
+            sqlalchemy.Column(
+                consts.LINKS_METATYPES_LINK_META_ID,
+                sqlalchemy.Integer,
+                sqlalchemy.Identity(),
+                primary_key=True),
+            sqlalchemy.Column(consts.LINKS_METATYPES_LINK_METANAME, sqlalchemy.String, nullable=False)
+        ]
+        links_metatypes_table = sqlalchemy.Table(consts.LINKS_METATYPES_TABLE_NAME, tool.db_metadata_obj, *cols)
+        links_metatypes_table.create(tool.db_engine)
+
+    if get_table_from_table_name(tool, consts.LINKS_REGISTRY_TABLE_NAME) is None:
+        cols = [
+            sqlalchemy.Column(
+                consts.LINKS_REGISTRY_LINK_ID,
+                sqlalchemy.Integer,
+                sqlalchemy.Identity(),
+                primary_key=True),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_LINK_META_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_DST_ROW_ID, sqlalchemy.Integer, nullable=False)
+        ]
+        links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, tool.db_metadata_obj, *cols)
+        links_registry_table.create(tool.db_engine)
+
+def get_link_registration_id(tool: Tool, link_meta_name: str) -> Optional[int]:
     # TODO: rename field parameter, since it implies that it should be of type Field
     # TODO: check types
     links_meta = get_table_from_table_name(tool, LINKS_META)
@@ -352,7 +352,7 @@ def get_link_registration_id(tool:Tool, table_name:str, field:str) -> Optional[i
             return None
 
 
-def link_register(tool:Tool, table_name:str, field:str) -> Optional[int]:
+def link_register(tool:Tool, link_meta_name: str) -> Optional[int]:
     # TODO: do type checks
     existing = get_link_registration_id(tool, table_name, field)
     if existing is not None:

@@ -37,3 +37,15 @@ FILE_UPLOAD_COMPONENT_TEMPLATE_FILENAME = 'file_upload_component_template.html'
 USER_INPUT_COMPONENT_TEMPLATE_FILENAME = 'user_input_component_template.html'
 
 TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'table_selector.html'
+
+LINKS_METATYPES_TABLE_NAME = "__hls_links_metatypes"
+LINKS_METATYPES_LINK_META_ID = "link_meta_id"
+LINKS_METATYPES_LINK_METANAME = "metaname"
+
+LINKS_REGISTRY_TABLE_NAME = "__hls_links"
+LINKS_REGISTRY_LINK_ID = "id"
+LINKS_REGISTRY_LINK_META_ID = "link_meta_id"
+LINKS_REGISTRY_SRC_TABLE_NAME = "src_table_name"
+LINKS_REGISTRY_SRC_ROW_ID = "src_row_id"
+LINKS_REGISTRY_DST_TABLE_NAME = "dst_table_name"
+LINKS_REGISTRY_DST_ROW_ID = "dst_row_id"
