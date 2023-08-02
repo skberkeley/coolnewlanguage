@@ -137,33 +137,16 @@ class CNLType:
 
         return cnl_type_instance
 
-    def link(self, to:Any, on:"Link"):
-        # TODO: to is union of row and cnltype
-        # TODO: check types at beginning
-        # TODO: better argument names?
-        # TODO: Delete unused variables
-        from coolNewLanguage.src.row import Row
-        from coolNewLanguage.src.util.db_utils import link_create
-        from coolNewLanguage.src.stage import process
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: Link) -> Optional[int]:
+        """
+        Registers a link from this CNLType instance to link_dst, which is a Row or another CNLType instance. This method
+        acts as a wrapper around the Row class's link method. However, it first checks to see if this instance has a
+        backing row or not.
+        :param link_dst:
+        :param link_metatype:
+        :return:
+        """
+        if self._hls_backing_row is None:
+            return None
 
-        link_field = on._hls_internal_field
-        link_id = on._hls_internal_link_id
-
-        src_row_id:int = self.__hls_backing_row.row_id
-        # src_table:int = self.__hls_backing_row.table.name
-        dst_row_id:int
-        dst_table:str
-        if (isinstance(to, Row)):
-            to:Row
-            dst_row_id = to.row_id
-            dst_table = to.table.name
-        elif (isinstance(to, CNLType)):
-            to:CNLType
-            dst_row_id = to.__hls_backing_row.row_id
-            dst_table = to.__hls_backing_row.table.name
-        else:
-            raise TypeError("Unexpected link target type")
-
-        link = link_create(process.running_tool, link_id, src_row_id, dst_table, dst_row_id)
-        # TODO: Delet this line?
-        print("Created link", link)
+        return self._hls_backing_row.link(link_dst, link_metatype)
