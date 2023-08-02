@@ -6,14 +6,13 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src.cnl_type.field import Field
-from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
-from typing import List, Type
+from typing import List
 
 
 class Tool:
@@ -129,9 +128,10 @@ class Tool:
             }
         )
 
-    def create_table(self, name:str, type:Type['CNLType']):
+    def create_table(self, name: str, type: type['CNLType']):
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
         from coolNewLanguage.src.util.db_utils import create_table_if_not_exists, link_register
+        from coolNewLanguage.src.cnl_type.link import Link
         flatten_fields = CNLType._hls_type_to_field_flattening(type)
 
         columns = [n for (n, _) in flatten_fields.items()]
@@ -153,7 +153,9 @@ class Tool:
         create_table_if_not_exists(self, name, instance_fields)
 
     def create_global_link(self, name:str) -> "Link":
+        # TODO: Instantiate a new Link object instead of calling link_register directly
         from coolNewLanguage.src.util.db_utils import link_register
+        from coolNewLanguage.src.cnl_type.link import Link
         link_id = link_register(self, "__hls_global", name)
 
         return Link.synthesize(name, link_id)
