@@ -1,8 +1,10 @@
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.util.link_utils import get_link_id, register_new_link
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
@@ -152,26 +154,61 @@ class Row:
 
         return CNLType.from_row(cnl_type=cnl_type, row=self)
 
-    def link(self, to:Any, on:"Link"):
-        from coolNewLanguage.src.util.db_utils import link_create
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: Link) -> Optional[int]:
+        """
+        Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
+        passed metatype. First checks to see if a matching link already exists before trying to create it. Returns the
+        id of the link. If not handling_post, does nothing and returns None instead.
+        :param link_dst: The destination of the link to be created.
+        :param link_metatype: The metatype of the link to be created.
+        :return:
+        """
         from coolNewLanguage.src.stage import process
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 
-        link_id = on._hls_internal_link_id
+        if not isinstance(link_dst, Row) and not isinstance(link_dst, CNLType):
+            raise TypeError("Expected link_dst to be a Row or a CNLType instance")
+        if not isinstance(link_metatype, Link):
+            raise TypeError("Expected link_metatype to be a Link")
 
-        src_row_id:int = self.row_id
-        dst_row_id:int
-        dst_table:str
-        if (isinstance(to, Row)):
-            to:Row
-            dst_row_id = to.row_id
-            dst_table = to.table.name
-        elif (isinstance(to, CNLType)):
-            to:CNLType
-            dst_row_id = to.__hls_backing_row.row_id
-            dst_table = to.__hls_backing_row.table.name
+        if not process.handling_post:
+            return None
+
+        if isinstance(link_dst, CNLType) and link_dst._hls_backing_row is None:
+            return None
+
+        tool = process.running_tool
+        link_meta_id = link_metatype.get_link_meta_id()
+        src_table_name = self.table.name
+        src_row_id = self.row_id
+        dst_table_name: str
+        dst_row_id: int
+
+        if isinstance(link_dst, Row):
+            dst_table_name = link_dst.table.name
+            dst_row_id = link_dst.row_id
         else:
-            raise TypeError("Unexpected link target type")
+            link_dst: CNLType
+            dst_table_name = link_dst._hls_backing_row.table.name
+            dst_row_id = link_dst._hls_backing_row.row_id
 
-        link = link_create(process.running_tool, link_id, src_row_id, dst_table, dst_row_id)
-        print("Created link", link)
+        link_id = get_link_id(
+            tool=tool,
+            link_meta_id=link_meta_id,
+            src_table_name=src_table_name,
+            src_row_id=src_row_id,
+            dst_table_name=dst_table_name,
+            dst_row_id=dst_row_id
+        )
+
+        if link_id is not None:
+            return link_id
+
+        return register_new_link(
+            tool=tool,
+            link_meta_id=link_meta_id,
+            src_table_name=src_table_name,
+            src_row_id=src_row_id,
+            dst_table_name=dst_table_name,
+            dst_row_id=dst_row_id
+        )

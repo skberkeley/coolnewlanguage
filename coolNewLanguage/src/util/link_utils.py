@@ -108,6 +108,7 @@ def get_link_id(
 
     return result[consts.LINKS_REGISTRY_LINK_ID]
 
+
 def register_new_link(
         tool: Tool,
         link_meta_id: int,
