@@ -1,5 +1,7 @@
+from typing import Optional
+
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.util.db_utils import get_link_registration_id, link_register
+from coolNewLanguage.src.util.link_utils import get_link_metatype_id_from_metaname, register_link_metatype
 
 
 class Link:
@@ -29,11 +31,32 @@ class Link:
         if process.handling_post:
             tool = process.running_tool
 
-            meta_id = get_link_registration_id(tool=tool, link_meta_name=name)
+            meta_id = get_link_metatype_id_from_metaname(tool=tool, link_meta_name=name)
 
             if meta_id is None:
-                meta_id = link_register(tool=tool, link_meta_name=name)
+                meta_id = register_link_metatype(tool=tool, link_meta_name=name)
 
             self._hls_internal_link_meta_id = meta_id
         else:
             self._hls_internal_link_meta_id = None
+
+    def get_link_meta_id(self) -> Optional[int]:
+        """
+        Returns this Link metatype's meta id. If it is None, tries to obtain one using the running Tool. Returns None if
+        the id is None and no Tool is currently executing a Processor.
+        :return:
+        """
+        if self._hls_internal_link_meta_id is not None:
+            return self._hls_internal_link_meta_id
+
+        if not process.handling_post:
+            return None
+
+        tool = process.running_tool
+
+        self._hls_internal_link_meta_id = get_link_metatype_id_from_metaname(tool=tool, link_meta_name=self.meta_name)
+
+        if self._hls_internal_link_meta_id is None:
+            self._hls_internal_link_meta_id = register_link_metatype(tool=tool, link_meta_name=self.meta_name)
+
+        return self._hls_internal_link_meta_id
