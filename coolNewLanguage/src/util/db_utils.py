@@ -5,7 +5,6 @@ from pathlib import Path
 import sqlalchemy
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from typing import List, Tuple, Any, Iterator, Sequence, Optional
@@ -73,7 +72,7 @@ def create_table_from_csv(
     return table
 
 
-def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, Field]) -> sqlalchemy.Table:
+def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, 'Field']) -> sqlalchemy.Table:
     """
     Create a table in the backend of the passed Tool if one with the passed name does not already exist. Uses the passed
     fields dictionary to figure out what columns this table should have. Returns the created table, or the table that
@@ -83,6 +82,8 @@ def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, Fi
     :param fields: A dictionary from field_name to Field instances, used to determine the columns to give the table.
     :return:
     """
+    from coolNewLanguage.src.cnl_type.field import Field
+
     if not isinstance(tool, Tool):
         raise TypeError("Expected tool to be a Tool")
     if not isinstance(table_name, str):

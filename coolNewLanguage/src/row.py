@@ -12,6 +12,7 @@ class Row:
     """
     Represents a row in a table, which can be indexed into dictionary style using column names
     Acts as a wrapper class around the sqlalchemy Row class
+    Assumed to have a database-synced view of data
 
     Attributes:
         row_mapping:
