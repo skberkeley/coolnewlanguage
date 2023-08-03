@@ -1,5 +1,5 @@
 import collections.abc
-from typing import List, Optional, Sequence, Iterable
+from typing import List, Optional, Sequence, Iterable, Union
 
 import jinja2
 import sqlalchemy
@@ -8,6 +8,7 @@ import json
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.input_component import InputComponent
+from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process, config
 from coolNewLanguage.src.util.db_utils import get_table_names_from_tool, get_column_names_from_table_name, \
@@ -101,44 +102,38 @@ class TableSelectorComponent(InputComponent):
         rows: Sequence[sqlalchemy.Row] = get_rows_of_table(process.running_tool, self.value)
         return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
     
-    def append(self, other):
-        from coolNewLanguage.src.cnl_type.link import Link
+    def append(self, other: Union['CNLType', dict]) -> None:
+        """
+        Appends other as a row to the Table represented by this TableSelectorComponent by emitting an insert statement
+        with values gathered from the other object. Assumes that the field names present in the CNLType or the keys in
+        the dict exactly match the column names in this Table. If the value in a dict is a UserInputComponent instance,
+        uses that Component's value attribute as the actual value to insert into this Table.
+        :param other: Either a CNLType or a dict
+        :return:
+        """
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
         from coolNewLanguage.src.component.user_input_component import UserInputComponent
+
+        if not isinstance(other, CNLType) and not isinstance(other, dict):
+            raise TypeError("Expected other to be a CNLType instance or a dictionary")
+
         mapping = {}
+
         if self.value is None:
-            raise ValueError("Cannot insert into UI table")
+            raise CNLError("Cannot append to a TableSelectorComponent outside of a Processor", Exception())
+
         match other:
             case CNLType():
-                flatten_fields = CNLType._hls_type_to_field_flattening(other.__class__)
-                columns = [n for (n, _) in flatten_fields.items()]
-                for (field_name, field) in flatten_fields.items():
-                    value = other.__getattribute__(field_name)
-                    if value is None and not field.optional:
-                        raise ValueError(f"Missing required field {field_name}")
-                    if value is None or isinstance(value, Link):
-                        # TODO: Maybe link fields should contain the link ID's
-                        # I think right now they're just empty
-                        continue
-                    else:
-                        # TODO: Delete this print
-                        print(value)
-                        integral_value = field.type(value)
-                    mapping[field_name] = integral_value
-                # TODO: Delete this print
-                print(mapping)
-                pass
+                other: CNLType
+                mapping = other.get_field_values()
             case dict():
-                lifted = {}
-                for (k, v) in other.items():
-                    match v:
-                        case UserInputComponent():
-                            lifted[k] = v.expected_type(v.value)
-                        case _:
-                            lifted[k] = v
-                mapping = lifted
+                for k, v in other.items():
+                    if isinstance(v, UserInputComponent):
+                        mapping[k] = v.get_value()
+                    else:
+                        mapping[k] = v
             case _:
-                raise TypeError("Cannot insert unknown type into table")
+                raise TypeError("Cannot append unknown type onto table")
             
         insert_stmt = sqlalchemy.insert(self.value).values(mapping)
         with process.running_tool.db_engine.connect() as conn:
@@ -146,9 +141,15 @@ class TableSelectorComponent(InputComponent):
             conn.commit()
 
     def delete(self):
+        """
+        Deletes the Table associated with this TableSelectorComponent
+        :return:
+        """
         if self.value is None:
-            raise ValueError("Cannot insert into UI table")
+            raise CNLError("Cannot delete a Table outside of a Processor", Exception())
+
         self.value.drop(process.running_tool.db_engine)
+
 
 def create_column_selector_from_table_selector(table: TableSelectorComponent, label: Optional[str] = None):
     """

@@ -150,3 +150,10 @@ class CNLType:
             return None
 
         return self._hls_backing_row.link(link_dst, link_metatype)
+
+    def get_field_values(self) -> dict[str, Any]:
+        """
+        Returns a dictionary mapping programmer-defined attribute names to the values contained in the associated fields
+        :return:
+        """
+        return {field_name: field.value for field_name, field in self._custom_fields.items() }
