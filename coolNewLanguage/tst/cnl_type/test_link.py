@@ -18,7 +18,7 @@ class TestLink:
 
         process.handling_post = True
 
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_link_process_is_not_running(
             self,
@@ -41,7 +41,7 @@ class TestLink:
         assert link._hls_internal_link_meta_id is None
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_link_link_registration_already_exists_happy_path(
             self,
@@ -66,7 +66,7 @@ class TestLink:
         assert link._hls_internal_link_meta_id == TestLink.LINK_META_ID
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_link_link_registration_does_not_exist_happy_path(
             self,
@@ -99,7 +99,7 @@ class TestLink:
         return Link(TestLink.LINK_NAME)
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_get_link_meta_id_meta_id_is_none_handling_post_registration_exists(
             self,
@@ -124,7 +124,7 @@ class TestLink:
         assert meta_id == TestLink.LINK_META_ID
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_get_link_meta_id_meta_id_is_none_handling_post_registration_does_not_exist(
             self,
@@ -149,7 +149,7 @@ class TestLink:
         # Check the returned meta_id
         assert meta_id == TestLink.LINK_META_ID
 
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_get_link_meta_id_meta_id_is_none_not_handling_post(
             self,
@@ -168,7 +168,7 @@ class TestLink:
         # Check the returned meta_id
         assert meta_id is None
 
-    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype')
+    @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
     @patch('coolNewLanguage.src.cnl_type.link.get_link_metatype_id_from_metaname')
     def test_get_link_meta_id_meta_id_is_not_none(
             self,
