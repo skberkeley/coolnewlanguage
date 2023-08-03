@@ -112,7 +112,7 @@ class CNLType:
     def from_row(cnl_type: type['CNLType'], row: Row) -> 'CNLType':
         """
         Returns a new instance of the passed cnl_type backed by the passed Row instance. Checks to see that all the
-        Fields defined by cnl_type are present in the row.
+        Fields defined by cnl_type are present in the row, except for those representing Links.
         :param cnl_type:
         :param row:
         :return:
@@ -125,7 +125,10 @@ class CNLType:
         cnl_type_instance = cnl_type()
 
         # Compare the expected fields and fields present in row
-        for field_name in cnl_type_instance._custom_fields:
+        for field_name, field_instance in cnl_type_instance._custom_fields.items():
+            if isinstance(field_instance.data_type, Link):
+                continue
+
             if field_name not in row:
                 raise_type_casting_error(
                     value=row,

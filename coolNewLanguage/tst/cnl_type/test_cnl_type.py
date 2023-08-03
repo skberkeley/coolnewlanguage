@@ -4,6 +4,7 @@ import pytest
 
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType, A_FIELD, ANOTHER_FIELD, YET_ANOTHER_FIELD
@@ -228,6 +229,21 @@ class TestCNLType:
         # Do, Check
         with pytest.raises(CNLError):
             CNLType.from_row(MyFirstType, mock_row)
+
+    def test_from_row_no_check_for_link_fields(self):
+        # Setup
+        # Create a CNLType with only a Link field
+        class onlyLink(CNLType):
+            def fields(self) -> None:
+                self.link_field = Field(data_type=Mock(spec=Link))
+        # Mock a row
+        mock_row = MagicMock(spec=Row)
+
+        # Do
+        CNLType.from_row(onlyLink, mock_row)
+
+        # Check
+        mock_row.__contains__.assert_not_called()
 
     def test_save(self):
         # Setup
