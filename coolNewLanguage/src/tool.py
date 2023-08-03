@@ -10,6 +10,7 @@ from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, 
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.util.link_utils import register_link_metatype
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
 from typing import List
@@ -153,11 +154,18 @@ class Tool:
                 instance_fields[k] = v
         create_table_if_not_exists(self, name, instance_fields)
 
-    def create_global_link(self, name:str) -> "Link":
-        # TODO: Instantiate a new Link object instead of calling link_register directly
-        from coolNewLanguage.src.util.db_utils import link_register
+    def register_link_metatype(self, link_meta_name: str) -> "Link":
+        """
+        Registers a new link metatype. Provides an API for registering a new link metatype separate from adding a Field
+        of type Link to a CNLType subclass.
+        :param link_meta_name:
+        :return:
+        """
         from coolNewLanguage.src.cnl_type.link import Link
-        link_id = link_register(self, "__hls_global", name)
 
-        return Link.synthesize(name, link_id)
+        if not isinstance(link_meta_name, str):
+            raise TypeError("Expected link_meta_name to be a string")
 
+        register_link_metatype(tool=self, link_meta_name=link_meta_name)
+
+        return Link(name=link_meta_name)
