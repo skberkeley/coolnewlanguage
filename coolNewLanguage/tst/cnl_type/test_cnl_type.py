@@ -1,4 +1,4 @@
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, call
 
 import pytest
 
@@ -228,3 +228,23 @@ class TestCNLType:
         # Do, Check
         with pytest.raises(CNLError):
             CNLType.from_row(MyFirstType, mock_row)
+
+    def test_save(self):
+        # Setup
+        # Mock a row object
+        mock_row = MagicMock(spec=Row)
+        # Instantiate a my_first_type instance
+        my_first_type = MyFirstType(backing_row=mock_row)
+        # Populate fields
+        my_first_type._custom_fields['a_field'].value = "A Field"
+        my_first_type._custom_fields['another_field'].value = "Another Field"
+        my_first_type._custom_fields['yet_another_field'].value = "Yet Another Field"
+        # Mock the row's __getitem__ so that one field has a mismatched value
+        row_dict = {'a_field': "A Field", 'another_field': "Another Field", 'yet_another_field': "Field"}
+        mock_row.__getitem__ = Mock(side_effect=row_dict.__getitem__)
+
+        # Do
+        my_first_type.save()
+
+        # Check
+        assert mock_row.__setitem__.mock_calls == [call('yet_another_field', "Yet Another Field")]

@@ -156,4 +156,17 @@ class CNLType:
         Returns a dictionary mapping programmer-defined attribute names to the values contained in the associated fields
         :return:
         """
-        return {field_name: field.value for field_name, field in self._custom_fields.items() }
+        return {field_name: field.value for field_name, field in self._custom_fields.items()}
+
+    def save(self):
+        """
+        Updates this CNLType instance's backing row so that it reflects the values present in its programmer-defined
+        fields. Does nothing if the backing row is None.
+        :return:
+        """
+        if self._hls_backing_row is None:
+            return
+
+        for field_name, field_value in self.get_field_values().items():
+            if self._hls_backing_row[field_name] != field_value:
+                self._hls_backing_row[field_name] = field_value
