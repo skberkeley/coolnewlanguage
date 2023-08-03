@@ -34,7 +34,7 @@ def get_link_metatype_id_from_metaname(tool: Tool, link_meta_name: str) -> Optio
     return result[consts.LINKS_METATYPES_LINK_META_ID]
 
 
-def register_link_metatype(tool: Tool, link_meta_name: str) -> Optional[int]:
+def register_link_metatype_on_tool(tool: Tool, link_meta_name: str) -> Optional[int]:
     """
     Registers a link metatype, by first checking to see if it exists in the metatype table before inserting a new row
     into it. Returns the resulting meta id for the registered link metatype.

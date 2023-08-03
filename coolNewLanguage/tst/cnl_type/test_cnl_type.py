@@ -179,7 +179,7 @@ class TestCNLType:
 
     def test_hls_type_to_fields_happy_path(self):
         # Do
-        field_dict = CNLType._hls_type_to_fields(MyFirstType)
+        field_dict = CNLType.CNL_type_to_fields(MyFirstType)
 
         # Check
         assert field_dict == {
@@ -190,7 +190,7 @@ class TestCNLType:
 
     def test_hls_type_to_fields_cnl_type_is_not_a_cnl_type_subclass(self):
         with pytest.raises(TypeError, match="Expected cnl_type to be a subclass of CNLType"):
-            CNLType._hls_type_to_fields(TestCNLType.MyFirstBadType)
+            CNLType.CNL_type_to_fields(TestCNLType.MyFirstBadType)
 
     def test_from_row_happy_path(self):
         # Setup

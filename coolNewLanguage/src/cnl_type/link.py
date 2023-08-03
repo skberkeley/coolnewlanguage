@@ -1,7 +1,7 @@
 from typing import Optional
 
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.util.link_utils import get_link_metatype_id_from_metaname, register_link_metatype
+from coolNewLanguage.src.util.link_utils import get_link_metatype_id_from_metaname, register_link_metatype_on_tool
 
 
 class Link:
@@ -34,7 +34,7 @@ class Link:
             meta_id = get_link_metatype_id_from_metaname(tool=tool, link_meta_name=name)
 
             if meta_id is None:
-                meta_id = register_link_metatype(tool=tool, link_meta_name=name)
+                meta_id = register_link_metatype_on_tool(tool=tool, link_meta_name=name)
 
             self._hls_internal_link_meta_id = meta_id
         else:
@@ -57,6 +57,6 @@ class Link:
         self._hls_internal_link_meta_id = get_link_metatype_id_from_metaname(tool=tool, link_meta_name=self.meta_name)
 
         if self._hls_internal_link_meta_id is None:
-            self._hls_internal_link_meta_id = register_link_metatype(tool=tool, link_meta_name=self.meta_name)
+            self._hls_internal_link_meta_id = register_link_metatype_on_tool(tool=tool, link_meta_name=self.meta_name)
 
         return self._hls_internal_link_meta_id

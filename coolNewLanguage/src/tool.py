@@ -5,12 +5,10 @@ import jinja2
 import sqlalchemy
 from aiohttp import web
 
-from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util.link_utils import register_link_metatype
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
 from typing import List
@@ -130,29 +128,29 @@ class Tool:
             }
         )
 
-    def create_table(self, name: str, type: type['CNLType']):
+    def create_table(self, name: str, cnl_type: type['CNLType']):
+        """
+        Creates a new Table in this Tool's backend, with the given name and columns matching the fields of the passed
+        CNLType subclass. Doesn't create columns for Fields of type Link; instead, registers the Link metatype for each
+        one.
+        :param name: The name to give the created table
+        :param cnl_type: The CNLType subclass from which to infer the columns to be created
+        :return:
+        """
+        from coolNewLanguage.src.util import db_utils, link_utils
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-        from coolNewLanguage.src.util.db_utils import create_table_if_not_exists, link_register
         from coolNewLanguage.src.cnl_type.link import Link
-        flatten_fields = CNLType._hls_type_to_field_flattening(type)
 
-        columns = [n for (n, _) in flatten_fields.items()]
-        print(f"new fields {columns}")
+        table_fields = {}
+        cnl_type_fields = CNLType.CNL_type_to_fields(cnl_type)
 
-        # links = {}
-        instance_fields = {}
-        for (k, v) in flatten_fields.items():
-            v: Field
-            if (isinstance(v.type(), Link)):
-                link_id = link_register(self, name, k)
-                print("Registering link:", )
-                link = Link()
-                link._hls_internal_field = k
-                link._hls_internal_link_id = link_id
-                setattr(type, k, link)
+        for field_name, field_instance in cnl_type_fields.items():
+            if isinstance(field_instance.data_type, Link):
+                link_utils.register_link_metatype_on_tool(tool=self, link_meta_name=field_instance.data_type.meta_name)
             else:
-                instance_fields[k] = v
-        create_table_if_not_exists(self, name, instance_fields)
+                table_fields[field_name] = field_instance
+
+        db_utils.create_table_if_not_exists(tool=self, table_name=name, fields=table_fields)
 
     def register_link_metatype(self, link_meta_name: str) -> "Link":
         """
@@ -162,10 +160,11 @@ class Tool:
         :return:
         """
         from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.util.link_utils import register_link_metatype_on_tool
 
         if not isinstance(link_meta_name, str):
             raise TypeError("Expected link_meta_name to be a string")
 
-        register_link_metatype(tool=self, link_meta_name=link_meta_name)
+        register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
 
         return Link(name=link_meta_name)

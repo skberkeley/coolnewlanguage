@@ -94,7 +94,7 @@ class CNLType:
         return value
 
     @staticmethod
-    def _hls_type_to_fields(cnl_type: type['CNLType']):
+    def CNL_type_to_fields(cnl_type: type['CNLType']) -> dict[str, Field]:
         """
         Returns a dictionary containing the programmer-defined fields of the passed CNLType
         Instantiates a new objects and calls fields before accessing _custom_fields to figure out what the fields are
