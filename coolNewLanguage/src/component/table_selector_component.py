@@ -128,8 +128,8 @@ class TableSelectorComponent(InputComponent):
                 mapping = other.get_field_values()
             case dict():
                 for k, v in other.items():
-                    if isinstance(v, UserInputComponent):
-                        mapping[k] = v.get_value()
+                    if isinstance(v, InputComponent):
+                        mapping[k] = v.value
                     else:
                         mapping[k] = v
             case _:
