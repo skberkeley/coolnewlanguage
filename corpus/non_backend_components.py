@@ -1,10 +1,11 @@
+from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.stage.results import show_results, add_result
 from coolNewLanguage.src.tool import Tool
 
 
 def main():
-    tool = Tool('input_components')
+    tool = Tool('non_backend_components')
 
     def user_input_component():
         """
@@ -21,6 +22,14 @@ def main():
 
         show_results()
     tool.add_stage('user_input_component', user_input_component)
+
+    def text_component():
+        """
+        A stage to demo a text_component. To test, run and verify that it shows "Hello World"
+        :return:
+        """
+        TextComponent(text="Hello World")
+    tool.add_stage('text_component', text_component)
 
     tool.run()
 
