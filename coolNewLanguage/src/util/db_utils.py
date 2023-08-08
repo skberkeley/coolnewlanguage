@@ -1,18 +1,38 @@
+import datetime
+import enum
 from pathlib import Path
 
 import sqlalchemy
 
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
+from typing import List, Tuple, Any, Iterator, Sequence, Optional
+
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
-from typing import List, Tuple, Any, Iterator, Sequence
-
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
     sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
 
 
-def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadComponent, has_header: bool = True) -> sqlalchemy.Table:
+PYTHON_TYPE_TO_SQLALCHEMY_TYPE: dict[type, type[sqlalchemy.types.TypeEngine]] = {
+    bool: sqlalchemy.types.Boolean,
+    datetime.date: sqlalchemy.types.Date,
+    datetime.datetime: sqlalchemy.types.DateTime,
+    enum.Enum: sqlalchemy.types.Enum,
+    float: sqlalchemy.types.Float,
+    int: sqlalchemy.types.Integer,
+    datetime.timedelta: sqlalchemy.types.Interval,
+    str: sqlalchemy.types.String,
+    datetime.time: sqlalchemy.types.Time
+}
+
+
+def create_table_from_csv(
+        table_name: UserInputComponent,
+        csv_file: FileUploadComponent,
+        has_header: bool = True
+) -> sqlalchemy.Table:
     """
     Create a table in the database of the tool, using the csv file as the source for the data
     :param table_name: The name to use for the table being inserted
@@ -52,6 +72,47 @@ def create_table_from_csv(table_name: UserInputComponent, csv_file: FileUploadCo
     return table
 
 
+def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, 'Field']) -> sqlalchemy.Table:
+    """
+    Create a table in the backend of the passed Tool if one with the passed name does not already exist. Uses the passed
+    fields dictionary to figure out what columns this table should have. Returns the created table, or the table that
+    already exists.
+    :param tool: The tool whose backend within which the table should be created.
+    :param table_name: The name to give the table.
+    :param fields: A dictionary from field_name to Field instances, used to determine the columns to give the table.
+    :return:
+    """
+    from coolNewLanguage.src.cnl_type.field import Field
+
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+    if not isinstance(fields, dict):
+        raise TypeError("Expected fields to be a dictionary")
+    if not all([isinstance(key, str) and isinstance(value, Field) for key, value in fields.items()]):
+        raise TypeError("Expected fields to map from strings to Fields")
+
+    table = get_table_from_table_name(tool, table_name)
+    if table is not None:
+        return table
+
+    metadata_obj = tool.db_metadata_obj
+    cols = [
+        sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)
+    ]
+
+    name: str
+    field: Field
+    for name, field in fields.items():
+        sql_type = PYTHON_TYPE_TO_SQLALCHEMY_TYPE[field.data_type]
+        cols.append(sqlalchemy.Column(name, sql_type, nullable=field.optional))
+
+    table = sqlalchemy.Table(table_name, metadata_obj, *cols)
+    table.create(tool.db_engine)
+    return table
+
+
 def get_table_names_from_tool(tool: Tool) -> List[str]:
     """
     Get the names of the database tables associated with the passed table
@@ -88,7 +149,7 @@ def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
     return filter_to_user_columns(columns)
 
 
-def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
+def get_table_from_table_name(tool: Tool, table_name: str) -> Optional[sqlalchemy.Table]:
     """
     Get the sqlaclchemy Table which has the given name associated with the passed Tool
     Reflect the table using the engine associated with the Tool
@@ -100,8 +161,7 @@ def get_table_from_table_name(tool: Tool, table_name: str) -> sqlalchemy.Table:
     insp: sqlalchemy.Inspector = sqlalchemy.inspect(engine)
 
     if not insp.has_table(table_name):
-        raise ValueError("The passed tool does not have an associated table with the passed name")
-
+        return None
     table = sqlalchemy.Table(table_name, tool.db_metadata_obj)
     insp.reflect_table(table, None)
 
@@ -232,3 +292,45 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
         results = conn.execute(stmt)
 
     return results.all()
+
+# TODO: Put all the linking stuff in one file?
+
+
+def db_awaken(tool: Tool):
+    """
+    Creates/gets necessary tables in backend, and is called when the tool is instantiated
+    Creates the LINKS_META table, which encodes the existing Link metatypes, and the LINKS table, which acts as a
+    registry of the individual links themselves.
+    :param tool: The Tool for which the db is being awakened.
+    :return:
+    """
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+
+    if get_table_from_table_name(tool, consts.LINKS_METATYPES_TABLE_NAME) is None:
+        cols = [
+            sqlalchemy.Column(
+                consts.LINKS_METATYPES_LINK_META_ID,
+                sqlalchemy.Integer,
+                sqlalchemy.Identity(),
+                primary_key=True),
+            sqlalchemy.Column(consts.LINKS_METATYPES_LINK_META_NAME, sqlalchemy.String, nullable=False, unique=True)
+        ]
+        links_metatypes_table = sqlalchemy.Table(consts.LINKS_METATYPES_TABLE_NAME, tool.db_metadata_obj, *cols)
+        links_metatypes_table.create(tool.db_engine)
+
+    if get_table_from_table_name(tool, consts.LINKS_REGISTRY_TABLE_NAME) is None:
+        cols = [
+            sqlalchemy.Column(
+                consts.LINKS_REGISTRY_LINK_ID,
+                sqlalchemy.Integer,
+                sqlalchemy.Identity(),
+                primary_key=True),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_LINK_META_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
+            sqlalchemy.Column(consts.LINKS_REGISTRY_DST_ROW_ID, sqlalchemy.Integer, nullable=False)
+        ]
+        links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, tool.db_metadata_obj, *cols)
+        links_registry_table.create(tool.db_engine)

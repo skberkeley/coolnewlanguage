@@ -7,11 +7,16 @@ import pytest
 import sqlalchemy
 from aiohttp import web
 
+import coolNewLanguage.src.util.db_utils
+from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+from coolNewLanguage.src.cnl_type.field import Field
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.consts import STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
     LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.web_app import WebApp
+from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType
 
 
 class TestTool:
@@ -172,8 +177,37 @@ class TestTool:
             context={LANDING_PAGE_STAGES: tool.stages}
         )
 
-
     def test_landing_page_non_web_request_request(self, tool: Tool):
         # Do, Check
         with pytest.raises(TypeError, match="Expected request to be an aiohttp web Request"):
             asyncio.run(tool.landing_page(Mock()))
+
+    @patch('coolNewLanguage.src.util.link_utils.register_link_metatype_on_tool')
+    @patch('coolNewLanguage.src.util.db_utils.create_table_if_not_exists')
+    @patch.object(CNLType, 'CNL_type_to_fields')
+    def test_create_table(
+            self,
+            mock_CNL_type_to_fields: Mock,
+            mock_create_table_if_not_exists: Mock,
+            mock_register_link_metatype: Mock,
+            tool: Tool):
+        # Setup
+        field1, field2 = Mock(spec=Field), Mock(spec=Field)
+        link_name = 'Zelda'
+        link_field = Mock(spec=Field, data_type=Mock(spec=Link, meta_name=link_name))
+        table_name = 'cool_new_table'
+        # Mock MyFirstType's CNL_type_to_fields
+        mock_CNL_type_to_fields.return_value = {'field1': field1, 'field2': field2, 'link_field': link_field}
+
+        # Do
+        tool.create_table(table_name, MyFirstType)
+
+        # Check
+        # Check that create table was called
+        mock_create_table_if_not_exists.assert_called_with(
+            tool=tool,
+            table_name=table_name,
+            fields={'field1': field1, 'field2': field2}
+        )
+        # Check that register_link_metatype was called
+        mock_register_link_metatype.assert_called_with(tool=tool, link_meta_name=link_name)

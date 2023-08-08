@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 import aiohttp_jinja2
 import jinja2
@@ -11,6 +11,7 @@ from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
+from typing import List
 
 
 class Tool:
@@ -24,6 +25,7 @@ class Tool:
     web_app : WebApp
     """
     def __init__(self, tool_name: str, url: str = ''):
+        from coolNewLanguage.src.util.db_utils import db_awaken
         """
         Initialize this tool
         Starts the web_app which forms the back end of this tool
@@ -66,6 +68,9 @@ class Tool:
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
         self.db_engine.connect()
         self.db_metadata_obj = sqlalchemy.MetaData()
+
+        # Awakening the db creates the necessary tables required to run the tool
+        db_awaken(self)
 
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
@@ -122,3 +127,44 @@ class Tool:
                 LANDING_PAGE_STAGES: self.stages
             }
         )
+
+    def create_table(self, name: str, cnl_type: type['CNLType']):
+        """
+        Creates a new Table in this Tool's backend, with the given name and columns matching the fields of the passed
+        CNLType subclass. Doesn't create columns for Fields of type Link; instead, registers the Link metatype for each
+        one.
+        :param name: The name to give the created table
+        :param cnl_type: The CNLType subclass from which to infer the columns to be created
+        :return:
+        """
+        from coolNewLanguage.src.util import db_utils, link_utils
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+        from coolNewLanguage.src.cnl_type.link import Link
+
+        table_fields = {}
+        cnl_type_fields = CNLType.CNL_type_to_fields(cnl_type)
+
+        for field_name, field_instance in cnl_type_fields.items():
+            if isinstance(field_instance.data_type, Link):
+                link_utils.register_link_metatype_on_tool(tool=self, link_meta_name=field_instance.data_type.meta_name)
+            else:
+                table_fields[field_name] = field_instance
+
+        db_utils.create_table_if_not_exists(tool=self, table_name=name, fields=table_fields)
+
+    def register_link_metatype(self, link_meta_name: str) -> "Link":
+        """
+        Registers a new link metatype. Provides an API for registering a new link metatype separate from adding a Field
+        of type Link to a CNLType subclass.
+        :param link_meta_name:
+        :return:
+        """
+        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.util.link_utils import register_link_metatype_on_tool
+
+        if not isinstance(link_meta_name, str):
+            raise TypeError("Expected link_meta_name to be a string")
+
+        register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
+
+        return Link(name=link_meta_name)

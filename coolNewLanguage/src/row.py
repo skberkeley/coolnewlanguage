@@ -1,8 +1,10 @@
-from typing import Dict, Any, Union
+from typing import Any, Union, Optional
 
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.util.link_utils import get_link_id, register_new_link
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
@@ -10,6 +12,7 @@ class Row:
     """
     Represents a row in a table, which can be indexed into dictionary style using column names
     Acts as a wrapper class around the sqlalchemy Row class
+    Assumed to have a database-synced view of data
 
     Attributes:
         row_mapping:
@@ -139,3 +142,74 @@ class Row:
     def __iter__(self):
         """Iterate over the cells in this row"""
         return Row.RowIterator(row=self)
+
+    def cast_to_type(self, cnl_type: type['CNLType']) -> 'CNLType':
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+        """
+        Returns an instance of the passed CNLType with this row as the underlying backing row.
+        :param cnl_type: The CNLType subclass to return an instance of
+        :return:
+        """
+        if not issubclass(cnl_type, CNLType):
+            raise TypeError("Expected cnl_type to be a subclass of CNLType")
+
+        return CNLType.from_row(cnl_type=cnl_type, row=self)
+
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: Link) -> Optional[int]:
+        """
+        Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
+        passed metatype. First checks to see if a matching link already exists before trying to create it. Returns the
+        id of the link. If not handling_post, does nothing and returns None instead.
+        :param link_dst: The destination of the link to be created.
+        :param link_metatype: The metatype of the link to be created.
+        :return:
+        """
+        from coolNewLanguage.src.stage import process
+        from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+
+        if not isinstance(link_dst, Row) and not isinstance(link_dst, CNLType):
+            raise TypeError("Expected link_dst to be a Row or a CNLType instance")
+        if not isinstance(link_metatype, Link):
+            raise TypeError("Expected link_metatype to be a Link")
+
+        if not process.handling_post:
+            return None
+
+        if isinstance(link_dst, CNLType) and link_dst._hls_backing_row is None:
+            return None
+
+        tool = process.running_tool
+        link_meta_id = link_metatype.get_link_meta_id()
+        src_table_name = self.table.name
+        src_row_id = self.row_id
+        dst_table_name: str
+        dst_row_id: int
+
+        if isinstance(link_dst, Row):
+            dst_table_name = link_dst.table.name
+            dst_row_id = link_dst.row_id
+        else:
+            link_dst: CNLType
+            dst_table_name = link_dst._hls_backing_row.table.name
+            dst_row_id = link_dst._hls_backing_row.row_id
+
+        link_id = get_link_id(
+            tool=tool,
+            link_meta_id=link_meta_id,
+            src_table_name=src_table_name,
+            src_row_id=src_row_id,
+            dst_table_name=dst_table_name,
+            dst_row_id=dst_row_id
+        )
+
+        if link_id is not None:
+            return link_id
+
+        return register_new_link(
+            tool=tool,
+            link_meta_id=link_meta_id,
+            src_table_name=src_table_name,
+            src_row_id=src_row_id,
+            dst_table_name=dst_table_name,
+            dst_row_id=dst_row_id
+        )
