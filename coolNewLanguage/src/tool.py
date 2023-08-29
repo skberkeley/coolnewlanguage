@@ -1,3 +1,4 @@
+import pathlib
 from typing import Callable
 
 import aiohttp_jinja2
@@ -5,6 +6,7 @@ import jinja2
 import sqlalchemy
 from aiohttp import web
 
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
@@ -23,8 +25,9 @@ class Tool:
     stages : list[Stage]
     url : str
     web_app : WebApp
+    file_dir : Pathlib.Path - A path to the directory in which to store files uploaded to this Tool
     """
-    def __init__(self, tool_name: str, url: str = ''):
+    def __init__(self, tool_name: str, url: str = '', file_dir_path: str = ''):
         from coolNewLanguage.src.util.db_utils import db_awaken
         """
         Initialize this tool
@@ -42,6 +45,8 @@ class Tool:
             raise TypeError("Expected a string for Tool url")
         if len(url) > 0 and not check_has_only_alphanumerics_or_underscores(url):
             raise ValueError("Tool url can only contain alphanumeric characters and underscores")
+        if not isinstance(file_dir_path, str):
+            raise TypeError("Expected file_dir_path to be a string")
 
 
         self.tool_name = tool_name
@@ -71,6 +76,14 @@ class Tool:
 
         # Awakening the db creates the necessary tables required to run the tool
         db_awaken(self)
+
+        # Create a directory to store uploaded files
+        if file_dir_path == '':
+            self.file_dir = consts.FILES_DIR.joinpath(tool_name)
+        else:
+            self.file_dir = pathlib.Path(file_dir_path)
+        self.file_dir.mkdir(parents=True, exist_ok=True)
+
 
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
