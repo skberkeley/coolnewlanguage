@@ -99,8 +99,6 @@ def result_template_of_value(value) -> str:
     :param value:
     :return:
     """
-    if isinstance(value, InputComponent):
-        return result_template_of_value(value.value)
 
     match value:
         case sqlalchemy.Table():
@@ -111,6 +109,10 @@ def result_template_of_value(value) -> str:
             return result_template_of_cell_list(cells)
         case [*rows] if all([isinstance(r, Row) for r in rows]):
             return result_template_of_row_list(rows)
+        case ColumnSelectorComponent():
+            return result_template_of_column_list([value])
+        case InputComponent():
+            return result_template_of_value(value.value)
         case _:
             return str(value)
 

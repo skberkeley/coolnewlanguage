@@ -143,11 +143,12 @@ def get_table_names_from_tool(tool: Tool, only_user_tables: bool = True) -> List
     return all_table_names
 
 
-def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
+def get_column_names_from_table_name(tool: Tool, table_name: str, only_user_columns: bool = True) -> List[str]:
     """
     Get the column names of the passed table
     :param tool: The Tool with which the table is associated
     :param table_name: The name of the table from which to get the column names
+    :param only_user_columns: Whether the column names should be filtered to include only user columns
     :return:
     """
     if not isinstance(tool, Tool):
@@ -162,7 +163,10 @@ def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
         raise ValueError("The passed tool does not have an associated table with the passed name")
 
     columns = [str(col["name"]) for col in insp.get_columns(table_name=table_name)]
-    return filter_to_user_columns(columns)
+
+    if only_user_columns:
+        return filter_to_user_columns(columns)
+    return columns
 
 
 def get_table_from_table_name(tool: Tool, table_name: str) -> Optional[sqlalchemy.Table]:
