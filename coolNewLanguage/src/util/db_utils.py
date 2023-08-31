@@ -29,7 +29,7 @@ PYTHON_TYPE_TO_SQLALCHEMY_TYPE: dict[type, type[sqlalchemy.types.TypeEngine]] = 
 
 
 def create_table_from_csv(
-        table_name: UserInputComponent,
+        table_name: UserInputComponent | str,
         csv_file: FileUploadComponent,
         has_header: bool = True
 ) -> sqlalchemy.Table:
@@ -41,12 +41,24 @@ def create_table_from_csv(
     :param has_header: Whether the passed csv file has a header or not
     :return: The created table
     """
-    if not isinstance(table_name, UserInputComponent):
-        raise TypeError("Expected a User Input for table name")
-    if table_name.value is None:
+    if not isinstance(table_name, UserInputComponent) and not isinstance(table_name, str):
+        raise TypeError("Expected a User Input or a string for table name")
+    if isinstance(table_name, UserInputComponent) and table_name.value is None:
         raise ValueError("Expected User Input to have a value for table name")
-    if not isinstance(table_name.value, str):
+    if isinstance(table_name, UserInputComponent) and not isinstance(table_name.value, str):
         raise ValueError("Expected User Input value to be a string for table name")
+
+    if isinstance(table_name, UserInputComponent):
+        table_name = table_name.value
+
+    if table_name.startswith('__'):
+        raise ValueError("User created tables cannot begin with '__'")
+
+    # Check whether a table with the passed name already exists
+    tool = process.running_tool
+    if table_name in get_table_names_from_tool(tool, True):
+        raise ValueError("A table with this name already exists")
+
     if not isinstance(csv_file, FileUploadComponent):
         raise TypeError("Expected a File Upload for csv file")
     if csv_file.value is None:
@@ -57,10 +69,9 @@ def create_table_from_csv(
         raise TypeError("Expected a bool for has_header")
 
     # create table
-    tool = process.running_tool
     metadata_obj = tool.db_metadata_obj
     with open(csv_file.value) as f:
-        table = sqlalchemy_table_from_csv_file(table_name.value, f, metadata_obj, has_header)
+        table = sqlalchemy_table_from_csv_file(table_name, f, metadata_obj, has_header)
     metadata_obj.create_all(tool.db_engine)
     # insert data
     with open(csv_file.value) as f:
@@ -113,10 +124,11 @@ def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, 'F
     return table
 
 
-def get_table_names_from_tool(tool: Tool) -> List[str]:
+def get_table_names_from_tool(tool: Tool, only_user_tables: bool = True) -> List[str]:
     """
     Get the names of the database tables associated with the passed table
     :param tool: The Tool from which to get associated table names
+    :param only_user_tables: Whether to fetch only user-created tables
     :return: A list of table names
     """
     if not isinstance(tool, Tool):
@@ -124,7 +136,11 @@ def get_table_names_from_tool(tool: Tool) -> List[str]:
 
     engine = tool.db_engine
     insp = sqlalchemy.inspect(engine)
-    return insp.get_table_names()
+    all_table_names = insp.get_table_names()
+
+    if only_user_tables:
+        return list(filter(lambda table_name: not table_name.startswith('__'), all_table_names))
+    return all_table_names
 
 
 def get_column_names_from_table_name(tool: Tool, table_name: str) -> List[str]:
