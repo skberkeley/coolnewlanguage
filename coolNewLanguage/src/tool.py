@@ -72,7 +72,7 @@ class Tool:
         self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
         self.db_engine.connect()
-        self.db_metadata_obj = sqlalchemy.MetaData()
+        self.db_metadata_obj: sqlalchemy.MetaData = sqlalchemy.MetaData()
 
         # Awakening the db creates the necessary tables required to run the tool
         db_awaken(self)

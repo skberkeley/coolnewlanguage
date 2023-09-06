@@ -37,7 +37,6 @@ def create_table_from_csv(
     Create a table in the database of the tool, using the csv file as the source for the data
     :param table_name: The name to use for the table being inserted
     :param csv_file: The csv file to use as the data source
-    :param tool: The tool whose database the data will be inserted into
     :param has_header: Whether the passed csv file has a header or not
     :return: The created table
     """
@@ -69,13 +68,94 @@ def create_table_from_csv(
         raise TypeError("Expected a bool for has_header")
 
     # create table
-    metadata_obj = tool.db_metadata_obj
+    metadata_obj: sqlalchemy.MetaData = tool.db_metadata_obj
     with open(csv_file.value) as f:
         table = sqlalchemy_table_from_csv_file(table_name, f, metadata_obj, has_header)
     metadata_obj.create_all(tool.db_engine)
     # insert data
     with open(csv_file.value) as f:
         insert_stmt = sqlalchemy_insert_into_table_from_csv_file(table, f, has_header)
+    with tool.db_engine.connect() as conn:
+        conn.execute(insert_stmt)
+        conn.commit()
+
+    return table
+
+
+def create_table_from_lists(
+        table_name: str,
+        data: list[list],
+        return_existing_table: bool = True,
+        overwrite_existing_table: bool = False
+) -> sqlalchemy.Table:
+    """
+    Create and commit a table in the database of the currently running tool, populating it with data passed in as a list
+    of lists. Assumes the first row contains the column names for the table.
+
+    :param table_name: The name to give the table
+    :param data: The data to use to populate the created table, passed as a list of lists
+    :param return_existing_table: A boolean describing whether to run if an existing table with the same name already
+        exists. If such a table exists, return that table.
+    :param overwrite_existing_table: A boolean describing whether to overwrite if an existing table with the same name
+        already exists.
+    :return: The created sqlalchemy Table
+    """
+    # if not running process, exit
+    if not process.handling_post:
+        return
+
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+
+    if table_name.startswith('__'):
+        raise ValueError("User created tables cannot begin with '__'")
+
+    # Check whether a table with the passed name already exists
+    tool: Tool = process.running_tool
+    metadata = tool.db_metadata_obj
+    if table_name in get_table_names_from_tool(tool, True):
+        table = get_table_from_table_name(tool, table_name)
+        if return_existing_table:
+            return table
+        if not overwrite_existing_table:
+            raise ValueError("A table with this name already exists")
+        else:
+            # drop existing table
+            table.drop(bind=tool.db_engine)
+            metadata.remove(table)
+
+    if not isinstance(data, list):
+        raise TypeError("Expected data to be a list")
+    if not all([isinstance(row, list) for row in data]):
+        raise TypeError("Expected each element of data to be a list")
+    # Check that the first row is all strings, as it should be column names
+    if not all([isinstance(column_name, str) for column_name in data[0]]):
+        raise TypeError("Expected all the elements of the first row to be a string")
+
+    # Validate the shape of data
+    if not all([len(row) == len(data[0]) for row in data]):
+        raise ValueError("Expected all rows of data to have the same length")
+
+    # Create the table
+    cols = [sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)]
+    col_names = data[0]
+    for i, col_name in enumerate(col_names):
+        if col_name == '':
+            cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
+        else:
+            cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
+    table = sqlalchemy.Table(table_name, metadata, *cols)
+    # Commit created table
+    metadata.create_all(tool.db_engine)
+
+    # Construct insert statement
+    records = []
+    for row in data[1:]:
+        record = {col_name: row[i] for i, col_name in enumerate(col_names)}
+        records.append(record)
+    insert_stmt = sqlalchemy.insert(table).values(records)
+
+    # Commit insert statement
     with tool.db_engine.connect() as conn:
         conn.execute(insert_stmt)
         conn.commit()
