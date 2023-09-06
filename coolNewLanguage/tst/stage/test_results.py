@@ -19,6 +19,8 @@ class TestResults:
     LABEL = "Drink me"
     TITLE = "BIG OL' TABLE"
     RESULT_HTML = "<totally_html>"
+    COL_NAME1 = "First Name"
+    COL_NAME2 = "Last Name"
 
     @pytest.fixture(autouse=True)
     def setup_and_cleanup(self):
@@ -173,3 +175,68 @@ class TestResults:
         # Do, Check
         with pytest.raises(TypeError, match="Expected table to be a sqlalchemy Table"):
             result_template_of_sql_alch_table(Mock())
+
+    @patch('coolNewLanguage.src.stage.process.running_tool')
+    def test_result_template_of_row_list_happy_path(self, mock_running_tool: Mock):
+        # Setup
+        # Mock rows
+        row1, row2 = [Mock(spec=Row), Mock(spec=Row)]
+        col_names = [TestResults.COL_NAME1, TestResults.COL_NAME2]
+        row1.keys = Mock(return_value=col_names)
+        row2.keys = Mock(return_value=col_names)
+        # Mock indexing into each row
+        row1_dict = {
+            TestResults.COL_NAME1: Mock(get_val=Mock(return_value="Oski")),
+            TestResults.COL_NAME2: Mock(get_val=Mock(return_value="Bear"))
+        }
+        row1.__getitem__ = lambda _, c: row1_dict[c]
+        row2_dict = {
+            TestResults.COL_NAME1: Mock(get_val=Mock(return_value="Carol")),
+            TestResults.COL_NAME2: Mock(get_val=Mock(return_value="Christ"))
+        }
+        row2.__getitem__ = lambda _, c: row2_dict[c]
+        # Mock jinja environment and template
+        mock_running_tool.jinja_environment = Mock()
+        mock_jinja_template = Mock(spec=jinja2.Template)
+        mock_running_tool.jinja_environment.get_template = Mock(return_value=mock_jinja_template)
+        mock_jinja_template.render = Mock(return_value=TestResults.RESULT_HTML)
+
+        # Do
+        result_html = results.result_template_of_row_list([row1, row2])
+
+        # Check
+        mock_running_tool.jinja_environment.get_template.assert_called_with(name=consts.TABLE_RESULT_TEMPLATE_FILENAME)
+        mock_jinja_template.render.assert_called_with(
+            col_names=col_names,
+            rows=[
+                {TestResults.COL_NAME1: "Oski", TestResults.COL_NAME2: "Bear"},
+                {TestResults.COL_NAME1: "Carol", TestResults.COL_NAME2: "Christ"}
+            ]
+        )
+        assert TestResults.RESULT_HTML == result_html
+
+    @patch('coolNewLanguage.src.stage.process.running_tool')
+    def test_result_template_of_list_list_happy_path(self, mock_running_tool: Mock):
+        # Setup
+        # Construct rows to pass
+        col_names = [TestResults.COL_NAME1, TestResults.COL_NAME2]
+        rows = [col_names, ["Oski", "Bear"], ["Carol", "Christ"]]
+        # Mock jinja environment and template
+        mock_running_tool.jinja_environment = Mock()
+        mock_jinja_template = Mock(spec=jinja2.Template)
+        mock_running_tool.jinja_environment.get_template = Mock(return_value=mock_jinja_template)
+        mock_jinja_template.render = Mock(return_value=TestResults.RESULT_HTML)
+
+        # Do
+        result_html = results.result_template_of_list_list(rows)
+
+        # Check
+        mock_running_tool.jinja_environment.get_template.assert_called_with(name=consts.TABLE_RESULT_TEMPLATE_FILENAME)
+        mock_jinja_template.render.assert_called_with(
+            col_names=col_names,
+            rows=[
+                {TestResults.COL_NAME1: "Oski", TestResults.COL_NAME2: "Bear"},
+                {TestResults.COL_NAME1: "Carol", TestResults.COL_NAME2: "Christ"}
+            ]
+        )
+        assert TestResults.RESULT_HTML == result_html

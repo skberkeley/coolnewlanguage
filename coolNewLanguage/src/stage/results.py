@@ -109,6 +109,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_cell_list(cells)
         case [*rows] if all([isinstance(r, Row) for r in rows]):
             return result_template_of_row_list(rows)
+        case [*rows] if all([isinstance(r, list) for r in rows]):
+            return result_template_of_list_list(rows)
         case ColumnSelectorComponent():
             return result_template_of_column_list([value])
         case InputComponent():
@@ -202,8 +204,32 @@ def result_template_of_row_list(rows: List[Row]) -> str:
 
     # Get Jinja template
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
-        name=consts.SELECT_STMT_RESULT_TEMPLATE_FILENAME
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
     )
     # Render and return template
     return template.render(col_names=col_names, rows=jinja_rows)
 
+
+def result_template_of_list_list(rows: list[list]) -> str:
+    """
+    Construct an HTML snippet of a table passed as a list of lists. Calls str() on each value to concert to HTML.
+    Assumes the first row contains column names.
+    :param rows: The rows of the table to render
+    :return: A string containing an HTML table with the data from rows
+    """
+    if not isinstance(rows, list):
+        raise TypeError("Expected rows to be a list")
+    if not all(map(lambda l: isinstance(l, list), rows)):
+        raise TypeError("Expected each member of rows to be a list")
+    if not all(map(lambda l: len(l) == len(rows[0]), rows[1:])):
+        raise ValueError("Expected each member of rows to have the same length")
+
+    col_names = rows[0]
+    jinja_rows = [{col_name: str(row[i]) for i, col_name in enumerate(col_names)} for row in rows[1:]]
+
+    # Get Jinja template
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+    )
+    # Render and return template
+    return template.render(col_names=col_names, rows=jinja_rows)

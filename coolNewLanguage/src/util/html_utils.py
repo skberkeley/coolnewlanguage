@@ -23,7 +23,7 @@ def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select) -> st
 
     # get jinja template
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
-        name=consts.SELECT_STMT_RESULT_TEMPLATE_FILENAME
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
     )
     # render and return it
     return template.render(col_names=col_names, rows=rows)

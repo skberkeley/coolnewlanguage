@@ -28,7 +28,7 @@ STAGE_TEMPLATE_FILENAME = 'stage.html'
 
 STAGE_RESULTS_TEMPLATE_FILENAME = 'stage_results.html'
 
-SELECT_STMT_RESULT_TEMPLATE_FILENAME = 'select_statement_results.html'
+TABLE_RESULT_TEMPLATE_FILENAME = 'table.html'
 
 CELL_LIST_RESULT_TEMPLATE_FILENAME = 'cell_list_result.html'
 
