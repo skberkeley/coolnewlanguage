@@ -1,6 +1,6 @@
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.stage.results import show_results, add_result
+from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
 
 
@@ -15,12 +15,16 @@ def main():
         :return:
         """
         str_user_input = UserInputComponent(str, "Enter a string: ")
-        add_result(value=str_user_input, label="String user input:")
 
         int_user_input = UserInputComponent(int, "Enter an integer: ")
-        add_result(value=int_user_input, label="Int user input:")
 
-        show_results()
+        results.show_results(
+            [
+                results.Result(value=str_user_input, label="String user input:"),
+                results.Result(value=int_user_input, label="Int user input:")
+            ]
+        )
+
     tool.add_stage('user_input_component', user_input_component)
 
     def text_component():

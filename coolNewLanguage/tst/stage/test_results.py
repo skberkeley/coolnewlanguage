@@ -4,14 +4,10 @@ import jinja2
 import pytest
 import sqlalchemy
 
-import coolNewLanguage.src.stage.results
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.cell import Cell
-from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process, results
-from coolNewLanguage.src.stage.results import show_results, result_template_of_sql_alch_table, Result, add_result
+from coolNewLanguage.src.stage.results import show_results, result_template_of_sql_alch_table, Result
 from coolNewLanguage.src.stage.stage import Stage
 
 
@@ -25,13 +21,10 @@ class TestResults:
     @pytest.fixture(autouse=True)
     def setup_and_cleanup(self):
         process.handling_post = False
-        results.results = []
 
         yield
 
         process.handling_post = True
-        results.results = []
-
     @patch('coolNewLanguage.src.stage.process.running_tool')
     def test_show_results__happy_path(
             self,
@@ -48,12 +41,12 @@ class TestResults:
         mock_running_tool.jinja_environment = Mock()
         mock_get_template = Mock(return_value=mock_template)
         mock_running_tool.jinja_environment.get_template = mock_get_template
-        # Put some stuff in results
+        # Mock some results
         mock_result = Mock(spec=Result)
-        results.results = [mock_result]
+        mock_results = [mock_result]
 
         # Do
-        show_results(results_title=TestResults.TITLE)
+        show_results(mock_results, results_title=TestResults.TITLE)
 
         # Check
         # Check that the jinja template was loaded from the right file
@@ -65,15 +58,13 @@ class TestResults:
         )
         # Check that the rendered template was set on Stage
         assert Stage.results_template == mock_rendered_template
-        # Check that results was reset
-        assert results.results == []
         # Reset process.handling_post as part of cleanup
         process.handling_post = False
 
     def test_show_results_non_string_results_title(self):
         # Do, Check
         with pytest.raises(TypeError, match="Expected results_title to be a string"):
-            show_results(results_title=Mock())
+            show_results([], results_title=Mock())
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
     def test_show_results_not_handling_post(
@@ -86,7 +77,7 @@ class TestResults:
         mock_running_tool.jinja_environment.get_template = Mock()
 
         # Do
-        show_results(results_title=TestResults.TITLE)
+        show_results([], results_title=TestResults.TITLE)
 
         # Check
         # Check that get_template wasn't called
@@ -105,12 +96,12 @@ class TestResults:
         mock_running_tool.jinja_environment = Mock()
         mock_get_template = Mock(return_value=mock_template)
         mock_running_tool.jinja_environment.get_template = mock_get_template
-        # Put some stuff in results
+        # Mock some results
         mock_result = Mock(spec=Result)
-        results.results = [mock_result]
+        mock_results = [mock_result]
 
         # Do
-        show_results()
+        show_results(mock_results)
 
         # Check
         # Check that the jinja template was loaded from the right file
@@ -122,27 +113,8 @@ class TestResults:
         )
         # Check that the rendered template was set on Stage
         assert Stage.results_template == mock_rendered_template
-        # Check that results was reset
-        assert results.results == []
         # Reset process.handling_post as part of cleanup
         process.handling_post = False
-
-    @patch('coolNewLanguage.src.stage.results.result_template_of_value')
-    def test_add_result_happy_path(self, mock_result_template_of_value: Mock):
-        # Setup
-        process.handling_post = True
-        mock_value = Mock()
-        # Mock the html value being returned
-        mock_result_template_of_value.return_value = TestResults.RESULT_HTML
-
-        # Do
-        add_result(mock_value)
-
-        # Check
-        # Check that result_template_of_value was called
-        mock_result_template_of_value.assert_called_with(mock_value)
-        # Check that results was appended to
-        assert results.results == [Result(TestResults.RESULT_HTML)]
 
     @patch('coolNewLanguage.src.stage.results.template_from_select_statement')
     @patch('sqlalchemy.select')

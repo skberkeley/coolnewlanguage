@@ -25,8 +25,7 @@ def main():
         def create_table():
             return create_table_from_csv(table_name, csv_file, True)
         created_table = LambdaProcessor(create_table).result
-        results.add_result(created_table, "Created table: ")
-        results.show_results()
+        results.show_results([results.Result(created_table, "Created table: ")])
 
     tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
@@ -38,8 +37,7 @@ def main():
         """
         TextComponent("Select a table: ")
         table = TableSelectorComponent()
-        results.add_result(table, "Selected table: ")
-        results.show_results()
+        results.show_results([results.Result(table, "Selected table: ")])
 
     tool.add_stage('table_viewer', table_viewer)
 
@@ -51,8 +49,7 @@ def main():
         """
         TextComponent("Select a table: ")
         table = TableSelectorComponent(only_user_tables=False)
-        results.add_result(table, "Selected table: ")
-        results.show_results()
+        results.show_results([results.Result(table, "Selected table: ")])
 
     tool.add_stage('all_table_viewer', all_table_viewer)
 
@@ -65,8 +62,7 @@ def main():
         TextComponent("Select a table and then select a column:")
         column_selector = ColumnSelectorComponent("Select a column:")
         TableSelectorComponent(label="Select a table: ", columns=[column_selector])
-        results.add_result(column_selector, "Selected column: ")
-        results.show_results()
+        results.show_results([results.Result(column_selector, "Selected column: ")])
 
     tool.add_stage('column_viewer', column_viewer)
 
