@@ -1,3 +1,4 @@
+import os.path
 import pathlib
 
 import aiohttp.web_request
@@ -5,7 +6,7 @@ import jinja2
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.stage import config
+from coolNewLanguage.src.stage import config, process
 
 
 class FileUploadComponent(InputComponent):
@@ -30,10 +31,20 @@ class FileUploadComponent(InputComponent):
         if self.value is not None:
             if not isinstance(self.value, aiohttp.web_request.FileField):
                 raise TypeError("Expected value to be an aiohttp FileField")
-            # if FILES_DIR doesn't exist, create it
-            consts.FILES_DIR.mkdir(parents=True, exist_ok=True)
-            # construct path
-            file_path = consts.FILES_DIR.joinpath(self.value.filename)
+            # Check file extension
+            extension = pathlib.Path(self.value.filename).suffix
+            if extension != ('.' + expected_ext):
+                raise ValueError(
+                    f"The uploaded file's extension did not match the expected one. Expected a file with extension "
+                    f"{self.expected_ext}, and instead got {extension}"
+                )
+            # construct path to store file
+            tool = process.running_tool
+            file_path = tool.file_dir.joinpath(self.value.filename)
+            # check that the file doesn't already exist
+            if os.path.isfile(file_path):
+                raise ValueError(f"A file named {self.value.filename} already been uploaded. Please rename the file or "
+                                 f"upload a file with a different name.")
             # write our own copy of the file
             with open(file_path, mode='wb') as f:
                 f.write(self.value.file.read())

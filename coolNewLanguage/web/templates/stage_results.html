@@ -5,16 +5,18 @@
     <title>{{ results_title }}</title>
 </head>
 <body>
-    {% if label != "" %}
+    {% for result in results %}
     <div>
-        <p>
-            {{ label }}
-        </p>
+        {% if result.label != "" %}
+        <div>
+            <p>
+                {{ result.label }}
+            </p>
+        </div>
+        {% endif %}
+        {{ result.html_value }}
     </div>
-    {% endif %}
-    <div>
-        {{ result }}
-    </div>
+    {% endfor %}
     <form action="/" method="get">
         <input type="submit" value="Go back to landing page">
     </form>

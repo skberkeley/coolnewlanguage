@@ -8,4 +8,4 @@ class CNLError(Exception):
 
 
 def raise_type_casting_error(value: Any, expected_type: type, error: Exception):
-    raise CNLError(f"An error occurred while trying to cast {value} to {expected_type}", error)
+    raise CNLError(f"An error occurred while trying to cast the value < {value} > to {expected_type}", error)

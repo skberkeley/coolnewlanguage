@@ -41,9 +41,7 @@ def sqlalchemy_table_from_csv_file(
     if not isinstance(has_header, bool):
         raise TypeError("Expected a bool for has_header")
 
-    dialect = csv.Sniffer().sniff(csv_file.read(1024))
-    csv_file.seek(0)
-    reader = csv.reader(csv_file, dialect)
+    reader = csv.reader(csv_file)
 
     header = reader.__next__()
     cols = [
@@ -77,9 +75,7 @@ def sqlalchemy_insert_into_table_from_csv_file(table: sqlalchemy.Table, csv_file
     if not isinstance(has_header, bool):
         raise TypeError("Expected a bool for has_header")
 
-    dialect = csv.Sniffer().sniff(csv_file.read(1024))
-    csv_file.seek(0)
-    reader = csv.reader(csv_file, dialect)
+    reader = csv.reader(csv_file)
 
     # Construct records
     records = []

@@ -24,9 +24,11 @@ class TableSelectorComponent(InputComponent):
         template: The template to use to paint this TableSelectorComponent
         columns: A list of ColumnSelectorComponents, each of which select a column from the table associated with this
             TableSelectorComponent
+        only_user_tables: Whether only user-created tables should be selectable or CNL-created metadata tables can also
+            be selected
     """
     
-    def __init__(self, label: str = "", columns: List[ColumnSelectorComponent] = None):
+    def __init__(self, label: str = "", columns: List[ColumnSelectorComponent] = None, only_user_tables: bool = True):
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
 
@@ -47,6 +49,8 @@ class TableSelectorComponent(InputComponent):
         for column in self.columns:
             column.register_on_table_selector(self)
 
+        self.only_user_tables = only_user_tables
+
         super().__init__(expected_type=str)
 
         # replace value with an actual sqlalchemy Table object if handling post
@@ -64,7 +68,7 @@ class TableSelectorComponent(InputComponent):
         :return: The painted TableSelectorComponent
         """
         tool = config.tool_under_construction
-        tables = get_table_names_from_tool(tool)
+        tables = get_table_names_from_tool(tool, self.only_user_tables)
         table_column_map = {
             table: get_column_names_from_table_name(tool, table)
             for table in tables
@@ -128,8 +132,8 @@ class TableSelectorComponent(InputComponent):
                 mapping = other.get_field_values()
             case dict():
                 for k, v in other.items():
-                    if isinstance(v, UserInputComponent):
-                        mapping[k] = v.get_value()
+                    if isinstance(v, InputComponent):
+                        mapping[k] = v.value
                     else:
                         mapping[k] = v
             case _:

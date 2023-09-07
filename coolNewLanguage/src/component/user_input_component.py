@@ -20,6 +20,14 @@ class UserInputComponent(InputComponent):
 
         super().__init__(expected_type)
 
+        if self.value is None:
+            return
+
+        try:
+            self.value = self.expected_type(self.value)
+        except Exception as e:
+            raise_type_casting_error(value=self.value, expected_type=self.expected_type, error=e)
+
     def paint(self) -> str:
         """
         Paint this UserInputComponent as a snippet of HTML
@@ -31,14 +39,3 @@ class UserInputComponent(InputComponent):
         )
         # Render and return the template
         return template.render(label=self.label, component_id=self.component_id)
-
-    def get_value(self):
-        """
-        Returns this UserInputComponent's value, casting it to its expected type, and returning None if no value exists,
-        in the case that this method is called while not executing a Processor.
-        :return:
-        """
-        try:
-            return self.expected_type(self.value)
-        except Exception as e:
-            raise_type_casting_error(value=self.value, expected_type=self.expected_type, error=e)

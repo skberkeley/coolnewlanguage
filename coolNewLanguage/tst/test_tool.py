@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy
 from aiohttp import web
 
-import coolNewLanguage.src.util.db_utils
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.cnl_type.link import Link
@@ -24,6 +24,7 @@ class TestTool:
     TOOL_URL = "OSKI"
     STAGE_NAME = "The Wizard of Woz"
     STAGE_FUNC = Mock()
+    FILE_DIR_PATH = "a/real/path"
 
     @patch('aiohttp_jinja2.setup')
     @patch('jinja2.Environment')
@@ -70,6 +71,9 @@ class TestTool:
         assert os.path.exists(expected_db_path)
         # metadata obj was created
         assert isinstance(tool.db_metadata_obj, sqlalchemy.MetaData)
+        # file_dir was set correctly
+        expected_file_dir = consts.FILES_DIR.joinpath(TestTool.TOOL_NAME)
+        assert tool.file_dir == expected_file_dir
 
     def test_tool_no_url_happy_path(self, tmp_path: pathlib.Path, monkeypatch):
         # Setup
@@ -104,6 +108,30 @@ class TestTool:
         # Do, Check
         with pytest.raises(ValueError, match="Tool url can only contain alphanumeric characters and underscores"):
             Tool(tool_name=TestTool.TOOL_NAME, url='not a      v a l i d      url')
+
+    @patch('aiohttp_jinja2.setup')
+    @patch('jinja2.Environment')
+    @patch('jinja2.FileSystemLoader')
+    def test_tool_custom_file_dir_path(
+            self,
+            mock_FileSystemLoader: Mock,
+            mock_Environment: Mock,
+            mock_aiohttp_jinja2_setup: Mock,
+            tmp_path: pathlib.Path,
+            monkeypatch
+    ):
+        # Setup
+        # Monkey patch DATA_DIR so that the database is created in tmp_path
+        monkeypatch.setattr('coolNewLanguage.src.tool.DATA_DIR', tmp_path)
+        monkeypatch.setattr('coolNewLanguage.src.tool.STATIC_FILE_DIR', tmp_path)
+
+        # Do
+        tool = Tool(tool_name=TestTool.TOOL_NAME, file_dir_path=TestTool.FILE_DIR_PATH)
+
+        # Check
+        expected_file_dir = pathlib.Path(TestTool.FILE_DIR_PATH)
+        assert expected_file_dir == tool.file_dir
+
 
     @pytest.fixture
     def tool(self, tmp_path: pathlib.Path, monkeypatch) -> Tool:

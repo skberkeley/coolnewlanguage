@@ -42,6 +42,9 @@ class ColumnSelectorComponent(InputComponent):
         super().__init__(expected_type=str)
         self.emulated_column: str = self.value
 
+    def paint(self):
+        return
+
     def register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
         from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
         """

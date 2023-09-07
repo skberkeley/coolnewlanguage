@@ -50,7 +50,7 @@ class Cell:
             self.val = val
 
     def __str__(self) -> str:
-        return str(self.val)
+        return str(self.get_val())
 
     def __add__(self, other):
         return self.expected_type(self.val) + other

@@ -39,6 +39,7 @@ class TestTableSelectorComponent:
         # Check fields
         assert table_selector_component.label == TestTableSelectorComponent.LABEL
         assert table_selector_component.columns == TestTableSelectorComponent.COLUMNS
+        assert table_selector_component.only_user_tables
         # Check that the columns were registered on the table selector
         TestTableSelectorComponent.COLUMN1.register_on_table_selector.assert_called_with(table_selector_component)
         TestTableSelectorComponent.COLUMN2.register_on_table_selector.assert_called_with(table_selector_component)
@@ -144,7 +145,7 @@ class TestTableSelectorComponent:
     @pytest.fixture
     @patch.object(coolNewLanguage.src.component.input_component.InputComponent, '__init__')
     def table_selector_component(self, _: Mock):
-        return TableSelectorComponent(TestTableSelectorComponent.LABEL, TestTableSelectorComponent.COLUMNS)
+        return TableSelectorComponent(TestTableSelectorComponent.LABEL, TestTableSelectorComponent.COLUMNS, True)
 
     @patch('json.dumps')
     @patch('coolNewLanguage.src.component.table_selector_component.get_column_names_from_table_name')
@@ -177,7 +178,7 @@ class TestTableSelectorComponent:
 
         # Check
         # Check get_table_names_from_tool was called correctly
-        mock_get_table_names_from_tool.assert_called_with(mock_tool_under_construction)
+        mock_get_table_names_from_tool.assert_called_with(mock_tool_under_construction, True)
         # Check get_column_names_from_table_name was called as expected
         mock_get_column_names_from_table_name.assert_has_calls(
             [call(mock_tool_under_construction, table1), call(mock_tool_under_construction, table2)]
