@@ -23,10 +23,10 @@ def main():
         # Instantiating a Processor ensures the code is run after the user is finished inputting
         processor = LambdaProcessor(save_dataset)
         # We use the result property to access the return value of the function called by the LambdaProcessor
-        # To build up a list of results, we use add_results
-        results.add_result(processor.result, "Here is the saved dataset: ")
-        # To ensure the results are actually shown, call show_results
-        results.show_results()
+        # To show a result later, we place it in a Result object
+        my_result = results.Result(processor.result, "Here is the saved dataset: ")
+        # To show the results, call show_results on a list of Result objects
+        results.show_results([my_result])
 
     # After defining the stage, we add it to our Tool
     tool.add_stage('dataset_upload', dataset_upload_stage)
@@ -70,8 +70,7 @@ def main():
         # Again, we pass the function into a LambdaProcessor
         processor = LambdaProcessor(do_simple_match)
         # We then display the results to the user
-        results.add_result(processor.result)
-        results.show_results()
+        results.show_results([results.Result(processor.result)])
 
     tool.add_stage('simple_matcher', simple_column_matcher)
 
@@ -80,8 +79,7 @@ def main():
         # Use a TableSelectorComponent so that users can select the table they want to view
         table = TableSelectorComponent("Select a table to view")
         # In this case, we don't need to do anything extra with the table, and can display it right away
-        results.add_result(table)
-        results.show_results()
+        results.show_results([results.Result(table)])
 
     tool.add_stage('table_viewer', table_viewer)
 
@@ -93,6 +91,7 @@ def main():
     def complex_matcher():
         # let users choose the type of matching they want from some programmer-defined options
         pass
+
 
 if __name__ == '__main__':
     main()

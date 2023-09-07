@@ -20,8 +20,7 @@ def main():
                 overwrite_existing_table=True
             )
         created_table = LambdaProcessor(create_table).result
-        results.add_result(created_table, "Created table:")
-        results.show_results()
+        results.show_results([results.Result(created_table, "Created table:")])
 
     tool.add_stage('table_results', table_as_results)
 
@@ -29,8 +28,7 @@ def main():
         col1 = ColumnSelectorComponent(label="Pick a column")
         col2 = ColumnSelectorComponent(label="Pick another")
         TableSelectorComponent("Pick a table to view columns from", [col1, col2])
-        results.add_result([col1, col2])
-        results.show_results()
+        results.show_results([results.Result([col1, col2])])
 
     tool.add_stage('column_list_results', column_list_as_results)
 
@@ -39,12 +37,14 @@ def main():
         col = ColumnSelectorComponent(label="Pick a column to get Cells from")
         TableSelectorComponent("Pick a table to select a column from", [col])
 
+        my_results = []
+
         def get_cells():
             for cell in col:
-                results.add_result(cell)
+                my_results.append(results.Result(cell))
 
         LambdaProcessor(get_cells)
-        results.show_results()
+        results.show_results(my_results)
 
     tool.add_stage('cell_list_results', cell_list_as_results)
 
@@ -55,8 +55,7 @@ def main():
             return [row for row in table]
 
         rows = LambdaProcessor(get_rows).result
-        results.add_result(rows)
-        results.show_results()
+        results.show_results([results.Result(rows)])
 
     tool.add_stage('row_list_results', row_list_as_results)
 
