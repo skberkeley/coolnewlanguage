@@ -9,7 +9,7 @@ from coolNewLanguage.src.row import Row
 class CNLType:
     """
     CoolNewLanguageType
-    A class designed to be subclasses by programmers so that they can define custom types
+    A class designed to be subclassed by programmers so that they can define custom types
     Attributes:
         _hls_backing_row: Row : An optional Row object containing the underlying mapping for a particular CNLType
             instance, treated as a mapping between column names and values

@@ -64,6 +64,9 @@ def main():
                     if first_name1 == first_name2 and last_name1 == last_name2:
                         matches_table.append([first_name1, last_name1])
 
+            # If we didn't find any matches, return a string saying so
+            if len(matches_table) == 1:
+                return "No matches found"
             # Return the matches we found so that we have access to them after this function returns
             return matches_table
 
@@ -82,6 +85,8 @@ def main():
         results.show_results([results.Result(table)])
 
     tool.add_stage('table_viewer', table_viewer)
+
+
 
     # Make sure to run the tool
     tool.run()
