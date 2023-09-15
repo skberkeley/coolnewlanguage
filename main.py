@@ -1,11 +1,14 @@
+from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent, TableSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.component.text_component import TextComponent
+from coolNewLanguage.src.processor.map_processor import MapProcessor
 from coolNewLanguage.src.stage.results import show_results
+from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
-from coolNewLanguage.src.tool import *
 
 class PrecinctType(CNLType):
     def fields(self):
@@ -16,6 +19,7 @@ class OfficerType(CNLType):
     def fields(self):
         self.name     = Field(type=str)
         self.age      = Field(type=int)
+        self.buddy = Field(type=OfficerType)
         # self.precinct = Field(type=PrecinctType)
         self.friends  = Field(type=Link, optional=True)
 
@@ -33,7 +37,7 @@ def main():
     tool = Tool('uploader')
 
     tool.create_table("test_table3", OfficerType)
-    test_link = tool.create_global_link("test_link")
+    test_link = tool.register_link_metatype("test_link")
 
     def upload_stage():
         table_name = UserInputComponent(str, label="Enter table name:")
