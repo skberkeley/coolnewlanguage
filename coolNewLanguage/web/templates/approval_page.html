@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Approvals for {{ stage_name }}</title>
+</head>
+<body>
+    <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
+    <input type="submit">
+    {% for approve_result in approve_results %}
+    {% if approve_result.approve_result_type == ApproveResultType.TABLE %}
+    <div>
+        <h1>Select rows to approve for {{ approve_result.table_name }}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                    {% for column_name in approve_result.column_names %}
+                    <th>{{ column_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in approve_result.rows %}
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="pending" checked>
+                        </label>
+                    </td>
+                    {% for value in row %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    {% endfor %}
+    <input type="submit">
+    </form>
+</body>
+</html>

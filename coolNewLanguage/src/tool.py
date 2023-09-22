@@ -7,6 +7,7 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.approvals import approvals
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
@@ -84,7 +85,6 @@ class Tool:
             self.file_dir = pathlib.Path(file_dir_path)
         self.file_dir.mkdir(parents=True, exist_ok=True)
 
-
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
         Add a stage to this tool
@@ -110,12 +110,9 @@ class Tool:
         routes = [web.get('/', self.landing_page)]
 
         for stage in self.stages:
-            routes.append(
-                web.get(f'/{stage.url}', stage.handle)
-            )
-            routes.append(
-                web.post(f'/{stage.url}/post', stage.post_handler)
-            )
+            routes.append(web.get(f'/{stage.url}', stage.handle))
+            routes.append(web.post(f'/{stage.url}/post', stage.post_handler))
+            routes.append(web.post(f'/{stage.url}/approve', approvals.approval_handler))
 
         self.web_app.app.add_routes(routes)
 

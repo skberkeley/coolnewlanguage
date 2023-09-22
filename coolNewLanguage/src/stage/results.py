@@ -21,7 +21,7 @@ class Result:
         html_value: An HTML representation of this Result's value, to be rendered later
         label: An optional label for the value to display
     """
-    __slots__ = ('html_value', 'label')
+    __slots__ = ('value', 'label', 'html_value')
 
     def __init__(self, value: Any, label: str = ''):
         if not process.handling_post:
@@ -30,12 +30,12 @@ class Result:
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
 
-        self.html_value = result_template_of_value(value)
+        self.value = value
         self.label = label
 
     def __eq__(self, other):
         if isinstance(other, Result):
-            return self.html_value == other.html_value and self.label == other.label
+            return self.value == other.value and self.label == other.label
         return False
 
 
@@ -52,11 +52,22 @@ def show_results(results: list[Result], results_title: str = '') -> None:
         raise TypeError("Expected results_title to be a string")
 
     # we're not handling a post request, so we don't have any results to show
-    if not process.handling_post:
+    if not process.handling_post and not process.handling_user_approvals:
+        return
+
+    # if process.get_user_approvals is set to True, cache the results to show then return, since we want to collect user
+    # approvals first
+    if process.get_user_approvals:
+        process.cached_show_results = results
+        process.cached_show_results_title = results_title
         return
 
     if results_title == '':
         results_title = "Results"
+
+    # render each Result
+    for result in results:
+        result.html_value = result_template_of_value(result.value)
 
     # load the jinja template
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
@@ -98,11 +109,16 @@ def result_template_of_value(value) -> str:
 def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     """
     Construct an HTML snippet of a sqlalchemy Table
+    If the table doesn't exist in the underlying db, returns an emtpy string
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected table to be a sqlalchemy Table")
+
+    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
+    if table.name not in process.running_tool.db_metadata_obj.tables:
+        return ""
 
     stmt = sqlalchemy.select(table)
 

@@ -145,6 +145,14 @@ def create_table_from_lists(
         else:
             cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
     table = sqlalchemy.Table(table_name, metadata, *cols)
+
+    # If get_user_approvals is on, cache the table as an ApprovalResult
+    if process.get_user_approvals:
+        from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+        approve_result = TableApproveResult(data, table_name, table)
+        process.approve_results.append(approve_result)
+        return table
+
     # Commit created table
     metadata.create_all(tool.db_engine)
 
