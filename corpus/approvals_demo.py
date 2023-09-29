@@ -17,7 +17,8 @@ def main():
                 "Names",
                 [["First Name", "Last Name", "Age"], ["Oski", "Bear", "43"], ["Carol", "Christ", "500"]],
                 return_existing_table=False,
-                overwrite_existing_table=True
+                overwrite_existing_table=True,
+                get_user_approvals=True
             )
 
         created_table = LambdaProcessor(create_table).result

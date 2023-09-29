@@ -7,6 +7,7 @@
 <body>
     <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
     <input type="submit">
+    {% if approve_results|length > 0 %}
     {% for approve_result in approve_results %}
     {% if approve_result.approve_result_type == ApproveResultType.TABLE %}
     <div>
@@ -53,6 +54,9 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% else %}
+    <h1>No results to approve. Press submit to see all results.</h1>
+    {% endif %}
     <input type="submit">
     </form>
 </body>

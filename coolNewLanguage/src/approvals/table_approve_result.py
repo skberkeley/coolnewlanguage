@@ -5,7 +5,7 @@ from coolNewLanguage.src.approvals.approve_result_type import ApproveResultType
 
 
 class TableApproveResult(ApproveResult):
-    __slots__ = ('column_names', 'rows', 'sqlalchemy_table')
+    __slots__ = ('column_names', 'rows', 'sqlalchemy_table', 'table_name')
 
     def __init__(self, table: list[list], table_name: str, sqlalchemy_table: sqlalchemy.Table):
         if not isinstance(table, list):
@@ -20,9 +20,10 @@ class TableApproveResult(ApproveResult):
         if not all(len(row) == len(table[0]) for row in table[1:]):
             raise ValueError("Expected each row of table to have the same number of columns")
 
-        super().__init__(table_name)
+        super().__init__()
         self.approve_result_type = ApproveResultType.TABLE
         self.sqlalchemy_table = sqlalchemy_table
+        self.table_name = table_name
 
         # get column names
         self.column_names = table[0]
