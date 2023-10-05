@@ -12,6 +12,8 @@ FILES_DIR = DATA_DIR.joinpath('uploaded_files')
 
 STATIC_ROUTE = '/static'
 
+STYLES_ROUTE = '/styles'
+
 CNL_DIR = Path('coolNewLanguage')
 
 WEB_DIR = CNL_DIR.joinpath('web')
@@ -19,6 +21,8 @@ WEB_DIR = CNL_DIR.joinpath('web')
 STATIC_FILE_DIR = WEB_DIR.joinpath('static')
 
 TEMPLATES_DIR = WEB_DIR.joinpath('templates')
+
+STYLES_DIR = WEB_DIR.joinpath('styles')
 
 LANDING_PAGE_TEMPLATE_FILENAME = 'list_stages_landing_page.html'
 

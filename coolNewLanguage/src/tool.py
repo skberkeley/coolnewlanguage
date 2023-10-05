@@ -9,7 +9,7 @@ from aiohttp import web
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.approvals import approvals
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
-    LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
+    LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
@@ -62,6 +62,7 @@ class Tool:
         self.web_app = WebApp()
         # add a handler for the web app's static files (like javascript stuff)
         self.web_app.add_static_file_handler(STATIC_ROUTE, str(STATIC_FILE_DIR))
+        self.web_app.add_static_file_handler(STYLES_ROUTE, str(STYLES_DIR))
 
         loader = jinja2.FileSystemLoader(TEMPLATES_DIR)
         # jinja environment used to render templates

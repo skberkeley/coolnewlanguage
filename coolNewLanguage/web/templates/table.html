@@ -1,14 +1,18 @@
 <table>
-    <tr>
+    <thead>
+        <tr>
         {% for col in col_names %}
-        <th>{{ col }}</th>
+            <th>{{ col }}</th>
         {% endfor %}
-    </tr>
+        </tr>
+    </thead>
+    <tbody>
     {% for row in rows %}
-    <tr>
-        {% for col in col_names %}
+        <tr>
+            {% for col in col_names %}
             <td>{{ row[col] }}</td>
-        {% endfor %}
-    </tr>
+            {% endfor %}
+        </tr>
     {% endfor %}
+    </tbody>
 </table>

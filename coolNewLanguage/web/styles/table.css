@@ -1,0 +1,34 @@
+:root {
+    --th-bg: #e2e8f0;
+    --tr-bottom-border-color: #94a3b8;
+    --tr-bottom-border-weight: 2px;
+}
+table {
+    border-collapse: collapse;
+    text-align: left;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-seriffont-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; font-monofont-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+th {
+    background-color: var(--th-bg);
+}
+th, td {
+    padding: 1rem 0.5rem;
+}
+tbody tr {
+    border-bottom: 1px dashed var(--tr-bottom-border-color);
+}
+tbody tr:last-child {
+    border-bottom: none;
+}
+thead tr {
+    position: sticky;
+    top: 0;
+}
+thead tr::after {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    border-top: var(--tr-bottom-border-weight) solid var(--tr-bottom-border-color);
+    content: "";
+    bottom: calc(var(--tr-bottom-border-weight) * -1);
+}
