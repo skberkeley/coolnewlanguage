@@ -2,6 +2,7 @@ from typing import Any, Optional, Union
 
 from coolNewLanguage.src.cnl_type.field import Field
 from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.exceptions.CNLError import raise_type_casting_error
 from coolNewLanguage.src.row import Row
 
@@ -86,10 +87,11 @@ class CNLType:
         if field.value is not None:
             return field.value
 
-        if self._hls_backing_row is None or item not in self._hls_backing_row:
+        if self._hls_backing_row is None or field.column_name is None or field.column_name not in self._hls_backing_row:
             return None
 
-        value = self._hls_backing_row[item]
+        self._hls_backing_row[field.column_name].expected_type = field.data_type
+        value = self._hls_backing_row[field.column_name]
         field.set_value(value)
         return value
 
@@ -161,15 +163,28 @@ class CNLType:
         """
         return {field_name: field.value for field_name, field in self._custom_fields.items()}
 
-    def save(self):
+    def get_field_values_with_columns(self) -> dict[str, Any]:
+        """
+        Returns a dictionary containing field values, filtered to those with associated column names
+        :return:
+        """
+        return {
+            field.column_name: field.value for field in self._custom_fields.values() if field.column_name is not None
+        }
+
+    def set_field_column(self, field_name: str, column_name: ColumnSelectorComponent | str):
+        self._custom_fields[field_name].set_column(column_name)
+
+    def save(self, get_user_approvals: bool = True):
         """
         Updates this CNLType instance's backing row so that it reflects the values present in its programmer-defined
         fields. Does nothing if the backing row is None.
+        :param get_user_approvals: Whether to get user approvals before saving the update to the database
         :return:
         """
         if self._hls_backing_row is None:
             return
 
-        for field_name, field_value in self.get_field_values().items():
-            if self._hls_backing_row[field_name] != field_value:
-                self._hls_backing_row[field_name] = field_value
+        for column_name, value in self.get_field_values_with_columns().items():
+            self._hls_backing_row[column_name] = value
+        self._hls_backing_row.save(get_user_approvals=get_user_approvals)

@@ -4,6 +4,8 @@ import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.stage import process
+from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.link_utils import get_link_id, register_new_link
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
@@ -18,6 +20,7 @@ class Row:
         row_mapping:
             The mapping representation of the underlying sqlalchemy Row
             Maps from column names to cell values
+            Contains an up-to-date view of the database's values
         table:
             The underlying sqlalchemy Table which this Row is a member of
         row_id:
@@ -25,6 +28,7 @@ class Row:
         cell_mapping:
             A mapping from column names to Cell instances
             cell_mapping keys are a subset of row_mapping's keys
+            Cell values may be more updated than row_mapping and the database's values
     """
     def __init__(self, table: sqlalchemy.Table, sqlalchemy_row: sqlalchemy.Row):
         if not isinstance(table, sqlalchemy.Table):
@@ -107,7 +111,6 @@ class Row:
         # Update cell's expected type if relevant
         if expected_type is not None and cell.expected_type != expected_type:
             cell.expected_type = expected_type
-        # Makes database call to update value too
         cell.set(value)
 
     def keys(self):
@@ -117,6 +120,34 @@ class Row:
     def __contains__(self, item) -> bool:
         """Returns whether this row contains a certain column"""
         return item in self.row_mapping.keys()
+
+    def save(self, get_user_approvals: bool = False):
+        """
+        Saves the current state of this row to the database, by updating values where the cell values differ from the
+        values in row_mapping.
+        :param get_user_approvals: Whether to get user approvals before saving changes to the database.
+        :return:
+        """
+        # Update row_mapping
+        for col_name, cell in self.cell_mapping.items():
+            self.row_mapping[col_name] = cell.get_val()
+
+        if get_user_approvals:
+            from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
+            table_name = self.table.name
+            approve_result = RowApproveResult(row=self.row_mapping, table_name=table_name, is_new_row=False)
+            process.approve_results.append(approve_result)
+            return
+
+        # Create an update statement
+        id_column = self.table.c[DB_INTERNAL_COLUMN_ID_NAME]
+        stmt = sqlalchemy.update(self.table).where(id_column == self.row_id).values(self.row_mapping)
+
+        # Execute the update statement
+        tool: Tool = process.running_tool
+        with tool.db_engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
 
     class RowIterator:
         """

@@ -52,6 +52,47 @@
             </tbody>
         </table>
     </div>
+    {% elif approve_result.approve_result_type == ApproveResultType.ROW %}
+    <div>
+        <h1>Approve addition of this row to {{ approve_result.table_name }}?</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                    {% for column_name in approve_result.row.keys() %}
+                    <th>{{ column_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="pending" checked>
+                        </label>
+                    </td>
+                    {% for column_name in approve_result.row.keys() %}
+                    <td>{{ approve_result.row[column_name] }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
     {% endif %}
     {% endfor %}
     {% else %}

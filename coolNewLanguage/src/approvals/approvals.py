@@ -6,10 +6,13 @@ from coolNewLanguage.src import consts
 from coolNewLanguage.src.approvals.approve_result import ApproveResult
 from coolNewLanguage.src.approvals.approve_result_type import ApproveResultType
 from coolNewLanguage.src.approvals.approve_state import ApproveState
+from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.tool import Tool
+from coolNewLanguage.src.util import db_utils
+from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
 def get_user_approvals():
@@ -61,6 +64,9 @@ async def approval_handler(request: web.Request) -> web.Response:
         if approve_result.approve_result_type == ApproveResultType.TABLE:
             approve_result: TableApproveResult
             handle_table_approve_result(approve_result)
+        elif approve_result.approve_result_type == ApproveResultType.ROW:
+            approve_result: RowApproveResult
+            handle_row_approve_result(approve_result)
 
     # If there are results to show, call show_results on them to construct the results template
     results_template: str = ""
@@ -99,10 +105,13 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
         if approval_state == ApproveState.APPROVED:
             approved_rows.append(row)
 
-    # If there is at least one approved row, create the associated table in the db
+    # If there were no approved rows, then return early
+    if len(approved_rows) == 0:
+        return
+
+    # Create the associated table in the db
     tool: Tool = process.running_tool
-    if approved_rows:
-        tool.db_metadata_obj.create_all(tool.db_engine, [table_approve_result.sqlalchemy_table])
+    tool.db_metadata_obj.create_all(tool.db_engine, [table_approve_result.sqlalchemy_table])
 
     # Construct an insert statement for the approved rows
     records = [{col_name: row[i] for i, col_name in enumerate(table_approve_result.column_names)} for row in approved_rows]
@@ -111,4 +120,36 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
     # Execute the constructed insert statement
     with tool.db_engine.connect() as conn:
         conn.execute(insert_stmt)
+        conn.commit()
+
+def handle_row_approve_result(row_approve_result: RowApproveResult):
+    """
+    Handles a user-processed RowApproveResult
+    Checks to see if the row was approved by the user, and commits it if so.
+    :param row_approve_result:
+    :return:
+    """
+    approve_result_name = f'approve_{row_approve_result.id}'
+    raw_approval_state = process.approval_post_body[approve_result_name]
+    approval_state = ApproveState.of_string(raw_approval_state)
+
+    if approval_state != ApproveState.APPROVED:
+        return
+
+    # Get the table associated with this row
+    tool: Tool = process.running_tool
+    table: sqlalchemy.Table = db_utils.get_table_from_table_name(tool, row_approve_result.table_name)
+
+    # If the approved row is a new one, create an insert statement
+    if row_approve_result.is_new_row:
+        stmt = sqlalchemy.insert(table).values(row_approve_result.row)
+    # Else, construct an update statement
+    else:
+        id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+        row_id = row_approve_result.row[DB_INTERNAL_COLUMN_ID_NAME]
+        stmt = sqlalchemy.update(table).where(id_column == row_id).values(row_approve_result.row)
+
+    # Execute the constructed statement
+    with tool.db_engine.connect() as conn:
+        conn.execute(stmt)
         conn.commit()

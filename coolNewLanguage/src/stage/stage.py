@@ -5,6 +5,7 @@ import jinja2
 from aiohttp import web
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.approvals.approve_result import ApproveResult
 from coolNewLanguage.src.component.component import Component
 from coolNewLanguage.src.component.submit_component import SubmitComponent
 from coolNewLanguage.src.stage import process, config
@@ -121,6 +122,10 @@ class Stage:
         process.curr_stage_url = self.url
         process.cached_show_results_title = ""
         process.cached_show_results = []
+
+        process.approve_results = []
+        process.approval_post_body = None
+        ApproveResult.num_approve_results = 0
 
         self.stage_func()
 
