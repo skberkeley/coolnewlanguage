@@ -54,7 +54,13 @@
     </div>
     {% elif approve_result.approve_result_type == ApproveResultType.ROW %}
     <div>
-        <h1>Approve addition of this row to {{ approve_result.table_name }}?</h1>
+        <h1>
+            {% if approve_result.is_new_row %}
+            Approve addition of this row to {{ approve_result.table_name }}?
+            {% else %}
+            Approve changes to this row in {{ approve_result.table_name }}?
+            {% endif %}
+        </h1>
         <table>
             <thead>
                 <tr>
