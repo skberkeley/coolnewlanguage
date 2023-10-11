@@ -1,7 +1,7 @@
 from typing import Any
 
 from coolNewLanguage.src.cell import Cell
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.exceptions.CNLError import raise_type_casting_error
@@ -19,8 +19,8 @@ class Field:
     """
     __slots__ = ('data_type', 'optional', 'value', 'column_name')
 
-    def __init__(self, data_type: type | Link, optional: bool = False) -> None:
-        if not isinstance(data_type, type) and not isinstance(data_type, Link):
+    def __init__(self, data_type: type | LinkMetatype, optional: bool = False) -> None:
+        if not isinstance(data_type, type) and not isinstance(data_type, LinkMetatype):
             raise TypeError("Expected data_type to be a type")
         if not isinstance(optional, bool):
             raise TypeError("Expected optional to be a bool")
@@ -38,7 +38,7 @@ class Field:
         :param value:
         :return:
         """
-        if isinstance(self.data_type, Link):
+        if isinstance(self.data_type, LinkMetatype):
             return
         if isinstance(value, UserInputComponent):
             value = value.value

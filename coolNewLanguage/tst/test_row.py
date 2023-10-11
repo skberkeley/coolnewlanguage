@@ -6,7 +6,7 @@ import sqlalchemy
 import coolNewLanguage.src.cnl_type.cnl_type
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
@@ -38,7 +38,7 @@ class TestRow:
     SQLALCHEMY_TABLE_1 = Mock(spec=sqlalchemy.Table)
     SQLALCHEMY_TABLE_2 = Mock(spec=sqlalchemy.Table)
     LINK_META_ID = 58
-    LINK = Mock(spec=Link, get_link_meta_id=Mock(return_value=LINK_META_ID))
+    LINK = Mock(spec=LinkMetatype, get_link_meta_id=Mock(return_value=LINK_META_ID))
     LINK_ID = 6
 
     @pytest.fixture(autouse=True)

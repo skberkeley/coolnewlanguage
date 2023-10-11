@@ -149,13 +149,13 @@ class Tool:
         """
         from coolNewLanguage.src.util import db_utils, link_utils
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 
         table_fields = {}
         cnl_type_fields = CNLType.CNL_type_to_fields(cnl_type)
 
         for field_name, field_instance in cnl_type_fields.items():
-            if isinstance(field_instance.data_type, Link):
+            if isinstance(field_instance.data_type, LinkMetatype):
                 link_utils.register_link_metatype_on_tool(tool=self, link_meta_name=field_instance.data_type.meta_name)
             else:
                 table_fields[field_name] = field_instance
@@ -169,7 +169,7 @@ class Tool:
         :param link_meta_name:
         :return:
         """
-        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
         from coolNewLanguage.src.util.link_utils import register_link_metatype_on_tool
 
         if not isinstance(link_meta_name, str):
@@ -177,4 +177,4 @@ class Tool:
 
         register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
 
-        return Link(name=link_meta_name)
+        return LinkMetatype(name=link_meta_name)

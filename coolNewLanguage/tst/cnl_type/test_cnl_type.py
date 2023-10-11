@@ -4,7 +4,7 @@ import pytest
 
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType, A_FIELD, ANOTHER_FIELD, YET_ANOTHER_FIELD
@@ -235,7 +235,7 @@ class TestCNLType:
         # Create a CNLType with only a Link field
         class onlyLink(CNLType):
             def fields(self) -> None:
-                self.link_field = Field(data_type=Mock(spec=Link))
+                self.link_field = Field(data_type=Mock(spec=LinkMetatype))
         # Mock a row
         mock_row = MagicMock(spec=Row)
 

@@ -3,7 +3,7 @@ from typing import Any, Union, Optional
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.link_utils import get_link_id, register_new_link
@@ -186,7 +186,7 @@ class Row:
 
         return CNLType.from_row(cnl_type=cnl_type, row=self)
 
-    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: Link) -> Optional[int]:
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype) -> Optional[int]:
         """
         Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
         passed metatype. First checks to see if a matching link already exists before trying to create it. Returns the
@@ -200,7 +200,7 @@ class Row:
 
         if not isinstance(link_dst, Row) and not isinstance(link_dst, CNLType):
             raise TypeError("Expected link_dst to be a Row or a CNLType instance")
-        if not isinstance(link_metatype, Link):
+        if not isinstance(link_metatype, LinkMetatype):
             raise TypeError("Expected link_metatype to be a Link")
 
         if not process.handling_post:

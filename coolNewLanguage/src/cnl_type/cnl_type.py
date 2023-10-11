@@ -1,7 +1,7 @@
 from typing import Any, Optional, Union
 
 from coolNewLanguage.src.cnl_type.field import Field
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.exceptions.CNLError import raise_type_casting_error
 from coolNewLanguage.src.row import Row
@@ -128,7 +128,7 @@ class CNLType:
 
         # Compare the expected fields and fields present in row
         for field_name, field_instance in cnl_type_instance._custom_fields.items():
-            if isinstance(field_instance.data_type, Link):
+            if isinstance(field_instance.data_type, LinkMetatype):
                 continue
 
             if field_name not in row:
@@ -142,7 +142,7 @@ class CNLType:
 
         return cnl_type_instance
 
-    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: Link) -> Optional[int]:
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype) -> Optional[int]:
         """
         Registers a link from this CNLType instance to link_dst, which is a Row or another CNLType instance. This method
         acts as a wrapper around the Row class's link method. However, it first checks to see if this instance has a

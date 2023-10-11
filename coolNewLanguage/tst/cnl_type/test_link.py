@@ -2,7 +2,7 @@ from unittest.mock import patch, Mock
 
 import pytest
 
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.stage import process
 
 
@@ -29,7 +29,7 @@ class TestLink:
         process.handling_post = False
 
         # Do
-        link = Link(TestLink.LINK_NAME)
+        link = LinkMetatype(TestLink.LINK_NAME)
 
         # Check
         # Check that get_link_metatype_id_from_metaname wasn't called
@@ -54,7 +54,7 @@ class TestLink:
         mock_get_link_metatype_id_from_metaname.return_value = TestLink.LINK_META_ID
 
         # Do
-        link = Link(TestLink.LINK_NAME)
+        link = LinkMetatype(TestLink.LINK_NAME)
 
         # Check
         # Check that get_link_metatype_id_from_metaname was called
@@ -79,7 +79,7 @@ class TestLink:
         mock_get_link_metatype_id_from_metaname.return_value = None
         mock_register_link_metatype.return_value = TestLink.LINK_META_ID
 
-        link = Link(TestLink.LINK_NAME)
+        link = LinkMetatype(TestLink.LINK_NAME)
 
         # Check
         # Check that get_link_metatype_id_from_metaname was called
@@ -92,11 +92,11 @@ class TestLink:
 
     def test_link_name_is_not_a_string(self):
         with pytest.raises(TypeError, match="Expected name to be a string"):
-            Link(Mock())
+            LinkMetatype(Mock())
 
     @pytest.fixture
-    def link_with_no_meta_id(self) -> Link:
-        return Link(TestLink.LINK_NAME)
+    def link_with_no_meta_id(self) -> LinkMetatype:
+        return LinkMetatype(TestLink.LINK_NAME)
 
     @patch('coolNewLanguage.src.stage.process.running_tool')
     @patch('coolNewLanguage.src.cnl_type.link.register_link_metatype_on_tool')
@@ -106,7 +106,7 @@ class TestLink:
             mock_get_link_metatype_id_from_metaname: Mock,
             mock_register_link_metatype: Mock,
             mock_running_tool: Mock,
-            link_with_no_meta_id: Link
+            link_with_no_meta_id: LinkMetatype
     ):
         # Setup
         process.handling_post = True
@@ -131,7 +131,7 @@ class TestLink:
             mock_get_link_metatype_id_from_metaname: Mock,
             mock_register_link_metatype: Mock,
             mock_running_tool: Mock,
-            link_with_no_meta_id: Link
+            link_with_no_meta_id: LinkMetatype
     ):
         # Setup
         process.handling_post = True
@@ -155,7 +155,7 @@ class TestLink:
             self,
             mock_get_link_metatype_id_from_metaname: Mock,
             mock_register_link_metatype: Mock,
-            link_with_no_meta_id: Link
+            link_with_no_meta_id: LinkMetatype
     ):
         # Do
         meta_id = link_with_no_meta_id.get_link_meta_id()
@@ -174,7 +174,7 @@ class TestLink:
             self,
             mock_get_link_metatype_id_from_metaname: Mock,
             mock_register_link_metatype: Mock,
-            link_with_no_meta_id: Link
+            link_with_no_meta_id: LinkMetatype
     ):
         # Setup
         link_with_no_meta_id._hls_internal_link_meta_id = TestLink.LINK_META_ID
