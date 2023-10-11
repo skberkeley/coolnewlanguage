@@ -5,11 +5,13 @@ import sqlalchemy
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.util import db_utils
 from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
@@ -204,7 +206,7 @@ def result_template_of_row_list(rows: List[Row]) -> str:
 
 def result_template_of_list_list(rows: list[list]) -> str:
     """
-    Construct an HTML snippet of a table passed as a list of lists. Calls str() on each value to concert to HTML.
+    Construct an HTML snippet of a table passed as a list of lists. Calls str() on each value to convert to HTML.
     Assumes the first row contains column names.
     :param rows: The rows of the table to render
     :return: A string containing an HTML table with the data from rows
@@ -225,3 +227,28 @@ def result_template_of_list_list(rows: list[list]) -> str:
     )
     # Render and return template
     return template.render(col_names=col_names, rows=jinja_rows)
+
+
+def result_template_of_link(link: Link) -> str:
+    """
+    Construct an HTML snippet of a link
+    :param link: The link to render
+    :return: A string containing an HTML table with the data from the link
+    """
+    if not isinstance(link, Link):
+        raise TypeError("Expected link to be a Link")
+
+    # Get src row
+    src_row: Row = db_utils.get_row(process.running_tool, link.src_table_name, link.src_row_id)
+    src_row_html = result_template_of_row_list([src_row])
+
+    # Get dst row
+    dst_row: Row = db_utils.get_row(process.running_tool, link.dst_table_name, link.dst_row_id)
+    dst_row_html = result_template_of_row_list([dst_row])
+
+    # Get Jinja template
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.LINK_RESULT_TEMPLATE_FILENAME
+    )
+    # Render and return template
+    return template.render(src_row_html=src_row_html, dst_row_html=dst_row_html)

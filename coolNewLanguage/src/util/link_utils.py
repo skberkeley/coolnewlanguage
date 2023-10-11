@@ -3,6 +3,7 @@ from typing import Optional
 import sqlalchemy
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import get_table_from_table_name
 
@@ -162,4 +163,6 @@ def register_new_link(
         result = conn.execute(insert_stmt)
         conn.commit()
 
-    return result.inserted_primary_key[consts.LINKS_REGISTRY_TABLE_NAME]
+    link_id = result.inserted_primary_key[consts.LINKS_REGISTRY_TABLE_NAME]
+
+    return Link(link_meta_id, link_id, src_table_name, src_row_id, dst_table_name, dst_row_id)
