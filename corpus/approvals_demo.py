@@ -19,8 +19,8 @@ def main():
 
         def create_table():
             return db_utils.create_table_from_lists(
-                "Names",
-                [["First Name", "Last Name", "Age"], ["Oski", "Bear", "43"], ["Carol", "Christ", "500"]],
+                "First Names",
+                [["First Name"], ["Oski"], ["Carol"]],
                 return_existing_table=False,
                 overwrite_existing_table=True,
                 get_user_approvals=True
@@ -106,6 +106,30 @@ def main():
         results.show_results([results.Result(table, "Appended to table:")])
 
     tool.add_stage('table_append_via_CNLType', approve_table_append_via_CNLType)
+
+    same_person_link_metatype = tool.register_link_metatype("same person")
+    def approve_row_links():
+        first_name_column_1 = ColumnSelectorComponent(label="Select first name Column")
+        names_table = TableSelectorComponent(label="Select Names", columns=[first_name_column_1])
+        first_name_column_2 = ColumnSelectorComponent(label="Select first name Column")
+        first_name_table = TableSelectorComponent(label="Select First Names", columns=[first_name_column_2])
+
+        def find_and_link():
+            found_links = []
+            for row in names_table:
+                first_name = row[first_name_column_1]
+                for row2 in first_name_table:
+                    if row2[first_name_column_2] == first_name:
+                        link = row.link(row2, link_metatype=same_person_link_metatype, get_user_approvals=True)
+                        found_links.append(results.Result(link))
+                        break
+            return found_links
+
+        found_link_results = LambdaProcessor(find_and_link).result
+        approvals.get_user_approvals()
+        results.show_results(found_link_results)
+
+    tool.add_stage('row_links', approve_row_links)
 
     tool.run()
 

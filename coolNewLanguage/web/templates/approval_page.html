@@ -99,6 +99,42 @@
             </tbody>
         </table>
     </div>
+    {% elif approve_result.approve_result_type == ApproveResultType.LINK %}
+    <div>
+        <h1>Approve this link?</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="pending" checked>
+                        </label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        {{ approve_result.link_html }}
+    </div>
     {% endif %}
     {% endfor %}
     {% else %}

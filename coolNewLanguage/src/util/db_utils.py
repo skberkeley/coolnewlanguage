@@ -9,7 +9,6 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from typing import List, Tuple, Any, Iterator, Sequence, Optional
 
-from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
@@ -406,7 +405,7 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
     return results.all()
 
 
-def get_row(tool: Tool, table_name: str, row_id: int) -> Row:
+def get_row(tool: Tool, table_name: str, row_id: int) -> 'Row':
     """
     Get the row of the passed table with the passed row id
     :param tool: The tool which owns the table
@@ -414,6 +413,8 @@ def get_row(tool: Tool, table_name: str, row_id: int) -> Row:
     :param row_id: The id of the target row
     :return: A CNL Row corresponding to the desired row
     """
+    from coolNewLanguage.src.row import Row
+
     if not isinstance(tool, Tool):
         raise TypeError("Expected tool to be a Tool")
     if not isinstance(table_name, str):

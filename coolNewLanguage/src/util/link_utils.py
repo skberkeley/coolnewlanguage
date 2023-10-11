@@ -32,7 +32,7 @@ def get_link_metatype_id_from_metaname(tool: Tool, link_meta_name: str) -> Optio
     if result is None:
         return None
 
-    return result[consts.LINKS_METATYPES_LINK_META_ID]
+    return result._mapping[consts.LINKS_METATYPES_LINK_META_ID]
 
 
 def register_link_metatype_on_tool(tool: Tool, link_meta_name: str) -> Optional[int]:
@@ -58,7 +58,7 @@ def register_link_metatype_on_tool(tool: Tool, link_meta_name: str) -> Optional[
         result = conn.execute(insert_stmt)
         conn.commit()
 
-    return result.inserted_primary_key[consts.LINKS_METATYPES_LINK_META_ID]
+    return result.first()[consts.LINKS_METATYPES_LINK_META_ID]
 
 
 def get_link_id(

@@ -122,6 +122,7 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
         conn.execute(insert_stmt)
         conn.commit()
 
+
 def handle_row_approve_result(row_approve_result: RowApproveResult):
     """
     Handles a user-processed RowApproveResult

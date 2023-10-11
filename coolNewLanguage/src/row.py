@@ -3,6 +3,7 @@ from typing import Any, Union, Optional
 import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
@@ -186,13 +187,15 @@ class Row:
 
         return CNLType.from_row(cnl_type=cnl_type, row=self)
 
-    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype) -> Optional[int]:
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype, get_user_approvals: bool = False) \
+            -> Optional[int]:
         """
         Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
         passed metatype. First checks to see if a matching link already exists before trying to create it. Returns the
         id of the link. If not handling_post, does nothing and returns None instead.
         :param link_dst: The destination of the link to be created.
         :param link_metatype: The metatype of the link to be created.
+        :param get_user_approvals: Whether to get user approvals before creating the link.
         :return:
         """
         from coolNewLanguage.src.stage import process
@@ -235,6 +238,13 @@ class Row:
 
         if link_id is not None:
             return link_id
+
+        if get_user_approvals:
+            from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
+            link = Link(link_meta_id, None, src_table_name, src_row_id, dst_table_name, dst_row_id)
+            approve_result = LinkApproveResult(link=link)
+            process.approve_results.append(approve_result)
+            return
 
         return register_new_link(
             tool=tool,
