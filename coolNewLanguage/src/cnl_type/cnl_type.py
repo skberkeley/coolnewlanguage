@@ -142,19 +142,25 @@ class CNLType:
 
         return cnl_type_instance
 
-    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype) -> Optional[int]:
+    def link(
+            self,
+            link_dst: Union['Row', 'CNLType'],
+            link_metatype: LinkMetatype,
+            get_user_approvals: bool = False
+    ) -> Optional[int]:
         """
         Registers a link from this CNLType instance to link_dst, which is a Row or another CNLType instance. This method
         acts as a wrapper around the Row class's link method. However, it first checks to see if this instance has a
         backing row or not.
         :param link_dst:
         :param link_metatype:
+        :param get_user_approvals: Whether to get user approvals before committing this link to the underlying db
         :return:
         """
         if self._hls_backing_row is None:
             return None
 
-        return self._hls_backing_row.link(link_dst, link_metatype)
+        return self._hls_backing_row.link(link_dst, link_metatype, get_user_approvals)
 
     def get_field_values(self) -> dict[str, Any]:
         """

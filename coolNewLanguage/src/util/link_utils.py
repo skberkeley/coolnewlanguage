@@ -107,7 +107,7 @@ def get_link_id(
     if result is None:
         return None
 
-    return result[consts.LINKS_REGISTRY_LINK_ID]
+    return result._mapping[consts.LINKS_REGISTRY_LINK_ID]
 
 
 def register_new_link(
@@ -117,7 +117,7 @@ def register_new_link(
         src_row_id: int,
         dst_table_name: str,
         dst_row_id: int
-) -> int:
+) -> Link:
     """
     Registers a new link, which is uniquely identified by its metatype, source table and row id, and destination table
     and row id. Checks to see that the link doesn't already exist before issuing an insert statement. Returns the id of
@@ -145,7 +145,7 @@ def register_new_link(
 
     link_id = get_link_id(tool, link_meta_id, src_table_name, src_row_id, dst_table_name, dst_row_id)
     if link_id is not None:
-        return link_id
+        return Link(link_meta_id, link_id, src_table_name, src_row_id, dst_table_name, dst_row_id)
 
     table = get_table_from_table_name(tool, consts.LINKS_REGISTRY_TABLE_NAME)
     insert_stmt = sqlalchemy.insert(table)\
@@ -163,6 +163,6 @@ def register_new_link(
         result = conn.execute(insert_stmt)
         conn.commit()
 
-    link_id = result.inserted_primary_key[consts.LINKS_REGISTRY_TABLE_NAME]
+    link_id = result.inserted_primary_key[0]
 
     return Link(link_meta_id, link_id, src_table_name, src_row_id, dst_table_name, dst_row_id)

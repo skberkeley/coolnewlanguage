@@ -14,3 +14,4 @@ class LinkApproveResult(ApproveResult):
         super().__init__()
         self.approve_result_type = ApproveResultType.LINK
         self.link_html = html_utils.html_of_link(link)
+        self.link = link

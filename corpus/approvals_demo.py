@@ -108,6 +108,7 @@ def main():
     tool.add_stage('table_append_via_CNLType', approve_table_append_via_CNLType)
 
     same_person_link_metatype = tool.register_link_metatype("same person")
+
     def approve_row_links():
         first_name_column_1 = ColumnSelectorComponent(label="Select first name Column")
         names_table = TableSelectorComponent(label="Select Names", columns=[first_name_column_1])

@@ -188,7 +188,7 @@ class Row:
         return CNLType.from_row(cnl_type=cnl_type, row=self)
 
     def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype, get_user_approvals: bool = False) \
-            -> Optional[int]:
+            -> Optional[Link]:
         """
         Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
         passed metatype. First checks to see if a matching link already exists before trying to create it. Returns the
@@ -237,14 +237,14 @@ class Row:
         )
 
         if link_id is not None:
-            return link_id
+            return Link(link_meta_id, link_id, src_table_name, src_row_id, dst_table_name, dst_row_id)
 
         if get_user_approvals:
             from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
             link = Link(link_meta_id, None, src_table_name, src_row_id, dst_table_name, dst_row_id)
             approve_result = LinkApproveResult(link=link)
             process.approve_results.append(approve_result)
-            return
+            return link
 
         return register_new_link(
             tool=tool,

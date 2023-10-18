@@ -6,12 +6,13 @@ from coolNewLanguage.src import consts
 from coolNewLanguage.src.approvals.approve_result import ApproveResult
 from coolNewLanguage.src.approvals.approve_result_type import ApproveResultType
 from coolNewLanguage.src.approvals.approve_state import ApproveState
+from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
 from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util import db_utils
+from coolNewLanguage.src.util import db_utils, link_utils
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 
@@ -67,6 +68,9 @@ async def approval_handler(request: web.Request) -> web.Response:
         elif approve_result.approve_result_type == ApproveResultType.ROW:
             approve_result: RowApproveResult
             handle_row_approve_result(approve_result)
+        elif approve_result.approve_result_type == ApproveResultType.LINK:
+            approve_result: LinkApproveResult
+            handle_link_approve_result(approve_result)
 
     # If there are results to show, call show_results on them to construct the results template
     results_template: str = ""
@@ -88,6 +92,7 @@ async def approval_handler(request: web.Request) -> web.Response:
     if results_template:
         return web.Response(body=results_template, content_type=consts.AIOHTTP_HTML)
     raise web.HTTPFound(location='/')
+
 
 def handle_table_approve_result(table_approve_result: TableApproveResult):
     """
@@ -154,3 +159,30 @@ def handle_row_approve_result(row_approve_result: RowApproveResult):
     with tool.db_engine.connect() as conn:
         conn.execute(stmt)
         conn.commit()
+
+
+def handle_link_approve_result(link_approve_result: LinkApproveResult):
+    """
+    Handles a user-processed LinkApproveResult
+    Checks to see if the link was approved by the user, and commits it if so.
+    :param link_approve_result:
+    :return:
+    """
+    approve_result_name = f'approve_{link_approve_result.id}'
+    raw_approval_state = process.approval_post_body[approve_result_name]
+    approval_state = ApproveState.of_string(raw_approval_state)
+
+    if approval_state != ApproveState.APPROVED:
+        return
+
+    # Register the new link
+    tool: Tool = process.running_tool
+    link = link_approve_result.link
+    link_utils.register_new_link(
+        tool,
+        link.link_meta_id,
+        link.src_table_name,
+        link.src_row_id,
+        link.dst_table_name,
+        link.dst_row_id
+    )

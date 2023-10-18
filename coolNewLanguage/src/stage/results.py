@@ -11,7 +11,7 @@ from coolNewLanguage.src.component.table_selector_component import ColumnSelecto
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util import db_utils, html_utils
+from coolNewLanguage.src.util import db_utils, html_utils, link_utils
 from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
@@ -104,6 +104,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_column_list([value])
         case InputComponent():
             return result_template_of_value(value.value)
+        case Link():
+            return result_template_of_link(value)
         case _:
             return str(value)
 
@@ -214,4 +216,19 @@ def result_template_of_link(link: Link) -> str:
     :param link: The link to render
     :return: A string containing an HTML table with the data from the link
     """
+    # Check if link exists
+    link_id = link.link_id
+    if link_id is None:
+        link_id = link_utils.get_link_id(
+            process.running_tool,
+            link.link_meta_id,
+            link.src_table_name,
+            link.src_row_id,
+            link.dst_table_name,
+            link.dst_row_id
+        )
+    # If it doesn't, return an empty string
+    if link_id is None:
+        return ""
+
     return html_utils.html_of_link(link)
