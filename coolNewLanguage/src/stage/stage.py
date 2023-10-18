@@ -5,6 +5,7 @@ import jinja2
 from aiohttp import web
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.approvals.approve_result import ApproveResult
 from coolNewLanguage.src.component.component import Component
 from coolNewLanguage.src.component.submit_component import SubmitComponent
 from coolNewLanguage.src.stage import process, config
@@ -24,6 +25,7 @@ class Stage:
             The rendered Jinja template containing any relevant results
             Set here by show_results() so that we have access to it outside the scope of the stage_func call
     """
+    approvals_template: str = None
     results_template: str = None
 
     def __init__(self, name: str, stage_func: Callable):
@@ -117,17 +119,35 @@ class Stage:
         process.post_body = await request.post()
         process.handling_post = True
         Component.num_components = 0
+        process.curr_stage_url = self.url
+        process.cached_show_results_title = ""
+        process.cached_show_results = []
+
+        process.approve_results = []
+        process.approval_post_body = None
+        ApproveResult.num_approve_results = 0
 
         self.stage_func()
 
         process.post_body = None
         process.handling_post = False
         Component.num_components = 0
+        process.curr_stage_url = ""
 
+        # If process.get_user_approvals is set to True, redirect to the approvals page
+        if process.get_user_approvals:
+            template = Stage.approvals_template
+            Stage.approvals_template = None
+
+            process.get_user_approvals = False
+
+            return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
+
+        # If the results template is set, redirect to that
         if Stage.results_template is not None:
             template = Stage.results_template
             Stage.results_template = None
 
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
-        else:
-            raise web.HTTPFound('/')
+        # Else redirect to the home page
+        raise web.HTTPFound('/')

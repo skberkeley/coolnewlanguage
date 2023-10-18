@@ -68,13 +68,6 @@ class Cell:
             except Exception as e:
                 raise_type_casting_error(value, self.expected_type, e)
         self.val = value
-        update_cell(
-            tool=process.running_tool,
-            table=self.table,
-            column_name=self.col_name,
-            row_id=self.row_id,
-            value=value
-        )
 
     def __lshift__(self, other: Any):
         """

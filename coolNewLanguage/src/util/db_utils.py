@@ -86,7 +86,8 @@ def create_table_from_lists(
         table_name: str,
         data: list[list],
         return_existing_table: bool = True,
-        overwrite_existing_table: bool = False
+        overwrite_existing_table: bool = False,
+        get_user_approvals: bool = False
 ) -> sqlalchemy.Table:
     """
     Create and commit a table in the database of the currently running tool, populating it with data passed in as a list
@@ -98,6 +99,8 @@ def create_table_from_lists(
         exists. If such a table exists, return that table.
     :param overwrite_existing_table: A boolean describing whether to overwrite if an existing table with the same name
         already exists.
+    :param get_user_approvals: A boolean describing whether to get user approvals for the table before saving it to the
+        database.
     :return: The created sqlalchemy Table
     """
     # if not running process, exit
@@ -144,7 +147,15 @@ def create_table_from_lists(
             cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
         else:
             cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
-    table = sqlalchemy.Table(table_name, metadata, *cols)
+    table = sqlalchemy.Table(table_name, metadata, *cols, extend_existing=True)
+
+    # If get_user_approvals is on, cache the table as an ApprovalResult
+    if get_user_approvals:
+        from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+        approve_result = TableApproveResult(data, table_name, table)
+        process.approve_results.append(approve_result)
+        return table
+
     # Commit created table
     metadata.create_all(tool.db_engine)
 
@@ -392,6 +403,32 @@ def get_rows_of_table(tool: Tool, table: sqlalchemy.Table) -> Sequence[sqlalchem
         results = conn.execute(stmt)
 
     return results.all()
+
+
+def get_row(tool: Tool, table_name: str, row_id: int) -> 'Row':
+    """
+    Get the row of the passed table with the passed row id
+    :param tool: The tool which owns the table
+    :param table_name: The name of the table to get the row from
+    :param row_id: The id of the target row
+    :return: A CNL Row corresponding to the desired row
+    """
+    from coolNewLanguage.src.row import Row
+
+    if not isinstance(tool, Tool):
+        raise TypeError("Expected tool to be a Tool")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+    if not isinstance(row_id, int):
+        raise TypeError("Expected row_id to be an int")
+
+    table = get_table_from_table_name(tool, table_name)
+
+    stmt = sqlalchemy.select(table).where(table.c[DB_INTERNAL_COLUMN_ID_NAME] == row_id)
+    with tool.db_engine.connect() as conn:
+        sqlalchemy_row = conn.execute(stmt).first()
+
+    return Row(table, sqlalchemy_row)
 
 # TODO: Put all the linking stuff in one file?
 

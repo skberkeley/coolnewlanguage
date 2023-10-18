@@ -10,7 +10,7 @@ from aiohttp import web
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cnl_type.cnl_type import CNLType
 from coolNewLanguage.src.cnl_type.field import Field
-from coolNewLanguage.src.cnl_type.link import Link
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.consts import STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
     LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
@@ -222,7 +222,7 @@ class TestTool:
         # Setup
         field1, field2 = Mock(spec=Field), Mock(spec=Field)
         link_name = 'Zelda'
-        link_field = Mock(spec=Field, data_type=Mock(spec=Link, meta_name=link_name))
+        link_field = Mock(spec=Field, data_type=Mock(spec=LinkMetatype, meta_name=link_name))
         table_name = 'cool_new_table'
         # Mock MyFirstType's CNL_type_to_fields
         mock_CNL_type_to_fields.return_value = {'field1': field1, 'field2': field2, 'link_field': link_field}

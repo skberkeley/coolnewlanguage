@@ -32,11 +32,15 @@ TABLE_RESULT_TEMPLATE_FILENAME = 'table.html'
 
 CELL_LIST_RESULT_TEMPLATE_FILENAME = 'cell_list_result.html'
 
+LINK_RESULT_TEMPLATE_FILENAME = 'link_result.html'
+
 FILE_UPLOAD_COMPONENT_TEMPLATE_FILENAME = 'file_upload_component_template.html'
 
 USER_INPUT_COMPONENT_TEMPLATE_FILENAME = 'user_input_component_template.html'
 
 TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'table_selector.html'
+
+APPROVAL_PAGE_TEMPLATE_FILENAME = 'approval_page.html'
 
 LINKS_METATYPES_TABLE_NAME = "__hls_links_metatypes"
 LINKS_METATYPES_LINK_META_ID = "link_meta_id"

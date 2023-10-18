@@ -5,11 +5,13 @@ import sqlalchemy
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
+from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.util import db_utils, html_utils, link_utils
 from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
@@ -21,7 +23,7 @@ class Result:
         html_value: An HTML representation of this Result's value, to be rendered later
         label: An optional label for the value to display
     """
-    __slots__ = ('html_value', 'label')
+    __slots__ = ('value', 'label', 'html_value')
 
     def __init__(self, value: Any, label: str = ''):
         if not process.handling_post:
@@ -30,12 +32,12 @@ class Result:
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
 
-        self.html_value = result_template_of_value(value)
+        self.value = value
         self.label = label
 
     def __eq__(self, other):
         if isinstance(other, Result):
-            return self.html_value == other.html_value and self.label == other.label
+            return self.value == other.value and self.label == other.label
         return False
 
 
@@ -52,11 +54,22 @@ def show_results(results: list[Result], results_title: str = '') -> None:
         raise TypeError("Expected results_title to be a string")
 
     # we're not handling a post request, so we don't have any results to show
-    if not process.handling_post:
+    if not process.handling_post and not process.handling_user_approvals:
+        return
+
+    # if process.get_user_approvals is set to True, cache the results to show then return, since we want to collect user
+    # approvals first
+    if process.get_user_approvals:
+        process.cached_show_results = results
+        process.cached_show_results_title = results_title
         return
 
     if results_title == '':
         results_title = "Results"
+
+    # render each Result
+    for result in results:
+        result.html_value = result_template_of_value(result.value)
 
     # load the jinja template
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
@@ -91,6 +104,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_column_list([value])
         case InputComponent():
             return result_template_of_value(value.value)
+        case Link():
+            return result_template_of_link(value)
         case _:
             return str(value)
 
@@ -98,11 +113,16 @@ def result_template_of_value(value) -> str:
 def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     """
     Construct an HTML snippet of a sqlalchemy Table
+    If the table doesn't exist in the underlying db, returns an emtpy string
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected table to be a sqlalchemy Table")
+
+    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
+    if table.name not in process.running_tool.db_metadata_obj.tables:
+        return ""
 
     stmt = sqlalchemy.select(table)
 
@@ -162,33 +182,12 @@ def result_template_of_row_list(rows: List[Row]) -> str:
     :param rows: The rows from which to get the data for
     :return: A string containing an HTML table with data from the rows
     """
-    if not isinstance(rows, list):
-        raise TypeError("Expected rows to be a list")
-    if not all([isinstance(r, Row) for r in rows]):
-        raise TypeError("Expected each element of rows to be a Row")
-
-    col_names = rows[0].keys()
-    # construct rows for use in Jinja template
-    # each row should be dict[col_name --> string[val]
-    # Note: row's __getitem__ returns a Cell
-    jinja_rows = []
-    for row in rows:
-        jinja_row = {}
-        for col in col_names:
-            jinja_row[col] = str(row[col].get_val())
-        jinja_rows.append(jinja_row)
-
-    # Get Jinja template
-    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
-        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
-    )
-    # Render and return template
-    return template.render(col_names=col_names, rows=jinja_rows)
+    return html_utils.html_of_row_list(rows)
 
 
 def result_template_of_list_list(rows: list[list]) -> str:
     """
-    Construct an HTML snippet of a table passed as a list of lists. Calls str() on each value to concert to HTML.
+    Construct an HTML snippet of a table passed as a list of lists. Calls str() on each value to convert to HTML.
     Assumes the first row contains column names.
     :param rows: The rows of the table to render
     :return: A string containing an HTML table with the data from rows
@@ -209,3 +208,27 @@ def result_template_of_list_list(rows: list[list]) -> str:
     )
     # Render and return template
     return template.render(col_names=col_names, rows=jinja_rows)
+
+
+def result_template_of_link(link: Link) -> str:
+    """
+    Construct an HTML snippet of a link
+    :param link: The link to render
+    :return: A string containing an HTML table with the data from the link
+    """
+    # Check if link exists
+    link_id = link.link_id
+    if link_id is None:
+        link_id = link_utils.get_link_id(
+            process.running_tool,
+            link.link_meta_id,
+            link.src_table_name,
+            link.src_row_id,
+            link.dst_table_name,
+            link.dst_row_id
+        )
+    # If it doesn't, return an empty string
+    if link_id is None:
+        return ""
+
+    return html_utils.html_of_link(link)

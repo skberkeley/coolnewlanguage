@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Approvals for {{ stage_name }}</title>
+</head>
+<body>
+    <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
+    <input type="submit">
+    {% if approve_results|length > 0 %}
+    {% for approve_result in approve_results %}
+    {% if approve_result.approve_result_type == ApproveResultType.TABLE %}
+    <div>
+        <h1>Select rows to approve for {{ approve_result.table_name }}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                    {% for column_name in approve_result.column_names %}
+                    <th>{{ column_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in approve_result.rows %}
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="pending" checked>
+                        </label>
+                    </td>
+                    {% for value in row %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% elif approve_result.approve_result_type == ApproveResultType.ROW %}
+    <div>
+        <h1>
+            {% if approve_result.is_new_row %}
+            Approve addition of this row to {{ approve_result.table_name }}?
+            {% else %}
+            Approve changes to this row in {{ approve_result.table_name }}?
+            {% endif %}
+        </h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                    {% for column_name in approve_result.row.keys() %}
+                    <th>{{ column_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="pending" checked>
+                        </label>
+                    </td>
+                    {% for column_name in approve_result.row.keys() %}
+                    <td>{{ approve_result.row[column_name] }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% elif approve_result.approve_result_type == ApproveResultType.LINK %}
+    <div>
+        <h1>Approve this link?</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Approve</th>
+                    <th>Reject</th>
+                    <th>Pending</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <label>
+                            ✓
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="approve">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ✘
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="reject">
+                        </label>
+                    </td>
+                    <td>
+                        <label>
+                            ?
+                            <input type="radio" name="approve_{{ approve_result.id }}" value="pending" checked>
+                        </label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        {{ approve_result.link_html }}
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% else %}
+    <h1>No results to approve. Press submit to see all results.</h1>
+    {% endif %}
+    <input type="submit">
+    </form>
+</body>
+</html>

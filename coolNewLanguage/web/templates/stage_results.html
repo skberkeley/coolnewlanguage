@@ -14,7 +14,9 @@
             </p>
         </div>
         {% endif %}
+        {% if result.html_value != "" %}
         {{ result.html_value }}
+        {% endif %}
     </div>
     {% endfor %}
     <form action="/" method="get">

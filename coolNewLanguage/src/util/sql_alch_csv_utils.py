@@ -56,7 +56,7 @@ def sqlalchemy_table_from_csv_file(
     else:
         cols += [sqlalchemy.Column(f'Col {i}', sqlalchemy.String) for i in range(len(header))]
 
-    return sqlalchemy.Table(table_name, sqlalch_metadata, *cols)
+    return sqlalchemy.Table(table_name, sqlalch_metadata, *cols, extend_existing=True)
 
 
 def sqlalchemy_insert_into_table_from_csv_file(table: sqlalchemy.Table, csv_file: io.IOBase, has_header: bool = True) -> sqlalchemy.sql.expression.Insert:

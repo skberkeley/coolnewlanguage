@@ -106,17 +106,17 @@ class TableSelectorComponent(InputComponent):
         rows: Sequence[sqlalchemy.Row] = get_rows_of_table(process.running_tool, self.value)
         return TableSelectorComponent.TableSelectorIterator(table=self.value, rows=rows)
     
-    def append(self, other: Union['CNLType', dict]) -> None:
+    def append(self, other: Union['CNLType', dict], get_user_approvals: bool = False) -> None:
         """
         Appends other as a row to the Table represented by this TableSelectorComponent by emitting an insert statement
         with values gathered from the other object. Assumes that the field names present in the CNLType or the keys in
         the dict exactly match the column names in this Table. If the value in a dict is a UserInputComponent instance,
         uses that Component's value attribute as the actual value to insert into this Table.
         :param other: Either a CNLType or a dict
+        :param get_user_approvals: Whether to get user approvals before saving the append to the database
         :return:
         """
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-        from coolNewLanguage.src.component.user_input_component import UserInputComponent
 
         if not isinstance(other, CNLType) and not isinstance(other, dict):
             raise TypeError("Expected other to be a CNLType instance or a dictionary")
@@ -129,16 +129,25 @@ class TableSelectorComponent(InputComponent):
         match other:
             case CNLType():
                 other: CNLType
-                mapping = other.get_field_values()
+                mapping = other.get_field_values_with_columns()
             case dict():
                 for k, v in other.items():
+                    if k not in self.value.columns:
+                        raise ValueError(f"Cannot append value to table for unknown column {k}")
                     if isinstance(v, InputComponent):
                         mapping[k] = v.value
                     else:
                         mapping[k] = v
             case _:
                 raise TypeError("Cannot append unknown type onto table")
-            
+
+        if get_user_approvals:
+            from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
+            table_name = self.value.name
+            approve_result = RowApproveResult(row=mapping, table_name=table_name, is_new_row=True)
+            process.approve_results.append(approve_result)
+            return
+
         insert_stmt = sqlalchemy.insert(self.value).values(mapping)
         with process.running_tool.db_engine.connect() as conn:
             conn.execute(insert_stmt)

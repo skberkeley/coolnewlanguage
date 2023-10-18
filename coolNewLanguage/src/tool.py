@@ -7,6 +7,7 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
+from coolNewLanguage.src.approvals import approvals
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
@@ -84,7 +85,6 @@ class Tool:
             self.file_dir = pathlib.Path(file_dir_path)
         self.file_dir.mkdir(parents=True, exist_ok=True)
 
-
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
         Add a stage to this tool
@@ -110,12 +110,9 @@ class Tool:
         routes = [web.get('/', self.landing_page)]
 
         for stage in self.stages:
-            routes.append(
-                web.get(f'/{stage.url}', stage.handle)
-            )
-            routes.append(
-                web.post(f'/{stage.url}/post', stage.post_handler)
-            )
+            routes.append(web.get(f'/{stage.url}', stage.handle))
+            routes.append(web.post(f'/{stage.url}/post', stage.post_handler))
+            routes.append(web.post(f'/{stage.url}/approve', approvals.approval_handler))
 
         self.web_app.app.add_routes(routes)
 
@@ -152,13 +149,13 @@ class Tool:
         """
         from coolNewLanguage.src.util import db_utils, link_utils
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 
         table_fields = {}
         cnl_type_fields = CNLType.CNL_type_to_fields(cnl_type)
 
         for field_name, field_instance in cnl_type_fields.items():
-            if isinstance(field_instance.data_type, Link):
+            if isinstance(field_instance.data_type, LinkMetatype):
                 link_utils.register_link_metatype_on_tool(tool=self, link_meta_name=field_instance.data_type.meta_name)
             else:
                 table_fields[field_name] = field_instance
@@ -172,7 +169,7 @@ class Tool:
         :param link_meta_name:
         :return:
         """
-        from coolNewLanguage.src.cnl_type.link import Link
+        from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
         from coolNewLanguage.src.util.link_utils import register_link_metatype_on_tool
 
         if not isinstance(link_meta_name, str):
@@ -180,4 +177,4 @@ class Tool:
 
         register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
 
-        return Link(name=link_meta_name)
+        return LinkMetatype(name=link_meta_name)
