@@ -11,6 +11,7 @@ from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process, config
+from coolNewLanguage.src.util import db_utils, html_utils
 from coolNewLanguage.src.util.db_utils import get_table_names_from_tool, get_column_names_from_table_name, \
     get_rows_of_table
 
@@ -75,11 +76,17 @@ class TableSelectorComponent(InputComponent):
         }
         table_column_map_json = json.dumps(table_column_map)
 
+        # get table previews
+        sqlalch_tables = [db_utils.get_table_from_table_name(config.tool_under_construction, table) for table in tables]
+        table_previews = [(table.name, html_utils.html_of_table(table, 5, include_table_name=False)) for table in sqlalch_tables]
+
         return self.template.render(
             component=self, 
             tables=tables,
             table_column_map_json=table_column_map_json, 
-            column_selectors=self.columns
+            column_selectors=self.columns,
+            table_previews=table_previews,
+            zip=zip
         )
 
     class TableSelectorIterator:

@@ -3,8 +3,9 @@
 <div hidden id="{{ component.component_id }}_table_column_map">
     {{ table_column_map_json }}
 </div>
-<select required="required"
-        id="{{ component.component_id }}" name="{{ component.component_id }}"
+<select
+        hidden="hidden"
+        id="column_select_table_select_{{ component.component_id }}" name="column_select_table_select_{{ component.component_id }}"
         onchange="
             table_selector_update_column_selectors(
                 '{{ component.component_id }}',
@@ -29,4 +30,12 @@
     </select>
 {% endfor %}
 
-</br>
+{% for table_name, table in table_previews %}
+    <div>
+        <span class="table_name">
+            <input type="radio" id="{{ component.component_id }}" name="{{ component.component_id }}" value="{{ table_name }}">
+            <label for="{{ component.component_id }}">{{ table_name }}</label>
+        </span>
+        {{ table }}
+    </div>
+{% endfor %}

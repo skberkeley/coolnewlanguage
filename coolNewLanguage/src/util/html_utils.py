@@ -1,3 +1,5 @@
+from typing import Optional
+
 import jinja2
 import sqlalchemy.sql.expression
 
@@ -8,16 +10,32 @@ from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.util import db_utils
 
 
-def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select, table_name: str = "") -> str:
+def template_from_select_statement(
+        stmt: sqlalchemy.sql.expression.Select,
+        table_name: str = "",
+        num_rows: Optional[int] = None
+) -> str:
     """
     Construct an HTML table containing the results of the passed Select statement
     :param stmt: The select statement to run and render the results of
+    :param table_name: The name of the table the select statement is selecting from, to be included as part of the
+    template
+    :param num_rows: The number of rows to include in the template. If None, all rows are included
     :return: A string containing an HTML table containing the results
     """
     if not isinstance(stmt, sqlalchemy.sql.expression.Select):
         raise TypeError("Expected stmt to be a sqlalchemy Select")
+    if not isinstance(table_name, str):
+        raise TypeError("Expected table_name to be a string")
+    if num_rows is not None and not isinstance(num_rows, int):
+        raise TypeError("Expected num_rows to be an int or None")
 
     col_names = stmt.selected_columns.keys()
+
+    # if a limit is specified, add it to the select statement
+    if num_rows is not None:
+        stmt = stmt.limit(num_rows)
+
     # table contents
     with process.running_tool.db_engine.connect() as conn:
         rows = [row._mapping for row in conn.execute(stmt)]
@@ -28,6 +46,29 @@ def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select, table
     )
     # render and return it
     return template.render(col_names=col_names, rows=rows, table_name=table_name)
+
+def html_of_table(table: sqlalchemy.Table, num_rows: Optional[int] = None, include_table_name: bool = True) -> str:
+    """
+    Construct an HTML snippet of a sqlalchemy Table
+    If the table doesn't exist in the underlying db, returns an emtpy string
+    :param table: The table to construct the template for
+    :param num_rows: The number of rows to include in the template. If None, all rows are included
+    :param include_table_name: Whether to include the table name in the template
+    :return: A string containing the HTML table the table with the table's data
+    """
+    if not isinstance(table, sqlalchemy.Table):
+        raise TypeError("Expected table to be a sqlalchemy Table")
+    if num_rows is not None and not isinstance(num_rows, int):
+        raise TypeError("Expected num_rows to be an int or None")
+
+    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
+    if table.name not in process.running_tool.db_metadata_obj.tables:
+        return ""
+
+    stmt = sqlalchemy.select(table)
+
+    return template_from_select_statement(stmt, table_name=table.name if include_table_name else "", num_rows=num_rows)
+
 
 
 def html_of_row_list(rows: list[Row]) -> str:

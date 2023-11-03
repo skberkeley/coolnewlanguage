@@ -117,16 +117,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
-    if not isinstance(table, sqlalchemy.Table):
-        raise TypeError("Expected table to be a sqlalchemy Table")
-
-    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
-    if table.name not in process.running_tool.db_metadata_obj.tables:
-        return ""
-
-    stmt = sqlalchemy.select(table)
-
-    return template_from_select_statement(stmt, table_name=table.name)
+    return html_utils.html_of_table(table)
 
 
 def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> str:
