@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <title>{{ results_title }}</title>
     <link rel="stylesheet" href="/styles/table.css">
+    <link rel="stylesheet" href="/styles/results.css">
     <link rel="stylesheet" href="/styles/reset.css">
 </head>
 <body>
-    {% for result in results %}
-    <div>
-        {% if result.label != "" %}
-        <div>
-            <p>
-                {{ result.label }}
-            </p>
+    <div class="results_container">
+        <h1>{{ results_title }}</h1>
+        <div class="container">
+            {% for result in results %}
+            <div class="result">
+                {% if result.label != "" %}
+                <h2>
+                    {{ result.label }}
+                </h2>
+                {% endif %}
+                {% if result.html_value != "" %}
+                {{ result.html_value }}
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        {% endif %}
-        {% if result.html_value != "" %}
-        {{ result.html_value }}
-        {% endif %}
+        <form action="/" method="get">
+            <input type="submit" value="Go back to landing page">
+        </form>
     </div>
-    {% endfor %}
-    <form action="/" method="get">
-        <input type="submit" value="Go back to landing page">
-    </form>
 </body>
 </html>
