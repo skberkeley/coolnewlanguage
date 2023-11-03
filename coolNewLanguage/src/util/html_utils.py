@@ -8,7 +8,7 @@ from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.util import db_utils
 
 
-def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select) -> str:
+def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select, table_name: str = "") -> str:
     """
     Construct an HTML table containing the results of the passed Select statement
     :param stmt: The select statement to run and render the results of
@@ -27,7 +27,7 @@ def template_from_select_statement(stmt: sqlalchemy.sql.expression.Select) -> st
         name=consts.TABLE_RESULT_TEMPLATE_FILENAME
     )
     # render and return it
-    return template.render(col_names=col_names, rows=rows)
+    return template.render(col_names=col_names, rows=rows, table_name=table_name)
 
 
 def html_of_row_list(rows: list[Row]) -> str:
