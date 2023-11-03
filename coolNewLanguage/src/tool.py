@@ -7,7 +7,6 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.approvals import approvals
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
@@ -108,6 +107,8 @@ class Tool:
         Add a landing page route, and the requisite routes for each stage
         :return:
         """
+        from coolNewLanguage.src.approvals import approvals
+
         routes = [web.get('/', self.landing_page)]
 
         for stage in self.stages:

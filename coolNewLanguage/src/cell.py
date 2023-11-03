@@ -4,7 +4,6 @@ import sqlalchemy
 
 from coolNewLanguage.src.exceptions.CNLError import raise_type_casting_error
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.util.db_utils import get_cell_value, update_cell
 
 
 class Cell:
@@ -24,6 +23,8 @@ class Cell:
         :param expected_type: The expected type of the cell's value
         :param val: The value of the cell. If None, a query is issued to get the value
         """
+        from coolNewLanguage.src.util.db_utils import get_cell_value
+
         if not isinstance(table, sqlalchemy.Table):
             raise TypeError("Expected table to be a sqlalchemy Table")
         if not isinstance(col_name, str):

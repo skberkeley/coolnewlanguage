@@ -11,7 +11,7 @@ from coolNewLanguage.src.component.table_selector_component import ColumnSelecto
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util import db_utils, html_utils, link_utils
+from coolNewLanguage.src.util import html_utils, link_utils
 from coolNewLanguage.src.util.html_utils import template_from_select_statement
 
 
@@ -126,7 +126,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
 
     stmt = sqlalchemy.select(table)
 
-    return template_from_select_statement(stmt)
+    return template_from_select_statement(stmt, table_name=table.name)
 
 
 def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> str:
