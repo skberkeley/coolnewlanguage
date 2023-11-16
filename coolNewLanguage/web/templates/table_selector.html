@@ -25,7 +25,7 @@
 {% for column in column_selectors %}
     <select required="required" 
             id="{{ column.component_id }}" name="{{ column.component_id }}" 
-            hidden="true">
+            hidden="hidden">
         <option disabled selected hidden value="">{{ column.label }}</option>
     </select>
 {% endfor %}

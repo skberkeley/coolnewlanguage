@@ -74,8 +74,6 @@ def main():
         """
         TextComponent("Select a table and then select a column:")
         column_selector = ColumnSelectorComponent("Select a column:")
-        TableSelectorComponent(label="Select a table: ", columns=[column_selector])
-        results.show_results([results.Result(column_selector, "Selected column: ")])
 
     tool.add_stage('column_viewer', column_viewer)
 

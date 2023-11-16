@@ -1,48 +1,63 @@
 from typing import Optional
 
+import jinja2
 import sqlalchemy
 
+from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.stage import process
+from coolNewLanguage.src.stage import process, config
+from coolNewLanguage.src.util import db_utils
 
 
 class ColumnSelectorComponent(InputComponent):
+    NUM_PREVIEW_COLS = 5
+    NUM_PREVIEW_ROWS = 5
     """
-    A linked, dependent component which allows a column to be selected
-    interactively based on a given selected table
-
-    If created before their associated TableSelectorComponent, ColumnSelectors must be passed as a list when the
-    TableSelectorComponent is initialized.
-    If created after their associated TableSelectorComponent, ColumnSelectors must:
-        1. Have the register_on_table_selector(table) method called on the associated TableSelectorComponent
-        2. Be appended to the TableSelectorComponent's columns attribute
-    For convenience, the create_column_selector_from_table_selector can be used
+    A component which allows one or more columns to be selected interactively from a given selected table
 
     Attributes:
-        table_selector: The TableSelector representing the table from which a column is being selected
-        label: The label to paint onto this ColumnSelector
-        emulated_row_id: The id of the row this selector currently represents, used when during execution of certain
-            Processors
-        emulated_column: The name of the column this selector represents
-        expected_val_type: The expected type of the values contained in this column
+        label: The label to paint onto this ColumnSelectorComponent
+        num_columns: The number of columns to select
+        emulated_columns: The names of the column this selector represents
+        expected_val_types: The expected type of the values contained in this column
+        
+    Constants:
+        NUM_PREVIEW_COLS: How many columns to show in each table preview
+        NUM_PREVIEW_ROWS: How many rows to show in each table preview
     """
-    def __init__(self, label: str = "", expected_val_type: Optional[type] = None):
+    def __init__(self, label: str = "", num_columns: int = 1, expected_val_types: Optional[list[type]] = None):
         from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
-        if expected_val_type is not None and not isinstance(expected_val_type, type):
-            raise TypeError("Expected expected_val_type to be a type")
+        if not isinstance(num_columns, int):
+            raise TypeError("Expected num_columns to be an int")
+        if expected_val_types is not None and not isinstance(expected_val_types, list):
+            raise TypeError("Expected expected_val_types to be None or a list")
+        if expected_val_types is not None and all(isinstance(expected_val_type, type) for expected_val_type in expected_val_types):
+            raise TypeError("Expected expected_val_types to be a list of types")
 
-        self.table_selector: Optional[TableSelectorComponent] = None
-        self.label = label if label else "Select column..."
-        self.expected_val_type: Optional[type] = expected_val_type
-        super().__init__(expected_type=str)
-        self.emulated_column: str = self.value
+        self.label = label if label else f"Select {num_columns} column{'s' if num_columns > 1 else ''}"
+        self.num_columns = num_columns
+        self.expected_val_types = expected_val_types
+        super().__init__(expected_type=list[str])
+        self.emulated_columns: list[str] = self.value
 
     def paint(self):
-        return
+        # Load the jinja template
+        template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
+            name=consts.NEW_COLUMN_SELECTOR
+        )
+
+        tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
+        for t in tables:
+            t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
+            table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
+            t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
+
+        # Render and return the template
+        return template.render(tables=tables, num_preview_cols=self.NUM_PREVIEW_COLS, num_preview_rows=self.NUM_PREVIEW_ROWS)
 
     def register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
         from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent

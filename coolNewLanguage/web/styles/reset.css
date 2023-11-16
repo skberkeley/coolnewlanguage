@@ -3,3 +3,7 @@ body {
     position: absolute;
     inset: 0;
 }
+button {
+    background: none;
+    border: none;
+}

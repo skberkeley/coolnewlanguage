@@ -1,0 +1,24 @@
+<div class="column_select_table_select stack-h">
+    {% for table in tables %}
+    <button class="table_select_button">
+        <table class="preview">
+            <thead>
+                <tr>
+                {% for col in table["cols"][:num_preview_cols] %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in table["rows"][:num_preview_rows] %}
+                <tr>
+                    {% for col in table["cols"][:num_preview_cols] %}
+                    <td>{{ row[col] }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </button>
+    {% endfor %}
+</div>

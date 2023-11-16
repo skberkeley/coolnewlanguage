@@ -1,0 +1,10 @@
+.column_select_table_select {
+    display: flex;
+    overflow: auto;
+}
+.table_select_button {
+    padding: 0.5rem;
+}
+.table_select_button:hover {
+    background-color: #e2e8f0;
+}
