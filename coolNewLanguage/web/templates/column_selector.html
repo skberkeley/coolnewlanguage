@@ -1,6 +1,7 @@
-<div class="column_select_table_select stack-h">
+<script src="/static/column_selector.js" async></script>
+<div class="column_select_table_select stack-h" id="{{ component_id }}">
     {% for table in tables %}
-    <button class="table_select_button">
+    <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}')">
         <table class="preview">
             <thead>
                 <tr>
