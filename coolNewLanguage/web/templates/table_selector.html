@@ -1,41 +1,25 @@
-<p>{{arg}}</p>
-
-<div hidden id="{{ component.component_id }}_table_column_map">
-    {{ table_column_map_json }}
-</div>
-<select
-        hidden="hidden"
-        id="column_select_table_select_{{ component.component_id }}" name="column_select_table_select_{{ component.component_id }}"
-        onchange="
-            table_selector_update_column_selectors(
-                '{{ component.component_id }}',
-                [
-                    {% for column in column_selectors %}
-                        '{{ column.component_id }}', 
-                    {% endfor %}
-                ]
-            )"
->
-        <option disabled selected hidden value="">{{ component.label }}</option>
+<script src="/static/table_selector.js" async></script>
+<div class="table_select stack-h" id="{{ component_id }}">
     {% for table in tables %}
-        <option value="{{ table }}">{{ table }}</option>
+    <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}')">
+        <table class="preview">
+            <thead>
+                <tr>
+                {% for col in table["cols"][:num_preview_cols] %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in table["rows"][:num_preview_rows] %}
+                <tr>
+                    {% for col in table["cols"][:num_preview_cols] %}
+                    <td>{{ row[col] }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </button>
     {% endfor %}
-</select>
-
-{% for column in column_selectors %}
-    <select required="required" 
-            id="{{ column.component_id }}" name="{{ column.component_id }}" 
-            hidden="hidden">
-        <option disabled selected hidden value="">{{ column.label }}</option>
-    </select>
-{% endfor %}
-
-{% for table_name, table in table_previews %}
-    <div>
-        <span class="table_name">
-            <input type="radio" id="{{ component.component_id }}" name="{{ component.component_id }}" value="{{ table_name }}">
-            <label for="{{ component.component_id }}">{{ table_name }}</label>
-        </span>
-        {{ table }}
-    </div>
-{% endfor %}
+</div>

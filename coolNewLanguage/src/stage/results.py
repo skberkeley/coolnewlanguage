@@ -7,7 +7,7 @@ from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
+from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
