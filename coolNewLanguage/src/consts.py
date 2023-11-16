@@ -14,6 +14,8 @@ STATIC_ROUTE = '/static'
 
 STYLES_ROUTE = '/styles'
 
+GET_TABLE_ROUTE = '/_get_table'
+
 CNL_DIR = Path('coolNewLanguage')
 
 WEB_DIR = CNL_DIR.joinpath('web')

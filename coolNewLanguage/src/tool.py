@@ -109,7 +109,10 @@ class Tool:
         """
         from coolNewLanguage.src.approvals import approvals
 
-        routes = [web.get('/', self.landing_page)]
+        routes = [
+            web.get('/', self.landing_page),
+            web.get(consts.GET_TABLE_ROUTE, self.get_table)
+        ]
 
         for stage in self.stages:
             routes.append(web.get(f'/{stage.url}', stage.handle))
@@ -180,3 +183,17 @@ class Tool:
         register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
 
         return LinkMetatype(name=link_meta_name)
+
+    async def get_table(self, request: web.Request) -> web.Response:
+        from coolNewLanguage.src.util import db_utils, html_utils
+        if "table" not in request.query:
+            raise ValueError("Expected requested table name to be in request query")
+        table_name = request.query["table"]
+
+        sqlalchemy_table = db_utils.get_table_from_table_name(tool=self, table_name=table_name)
+        if sqlalchemy_table is None:
+            return web.Response(body="Table not found", status=404)
+
+        template = html_utils.html_of_table(table=sqlalchemy_table)
+
+        return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
