@@ -1,25 +1,28 @@
 <script src="/static/table_selector.js" async></script>
-<div class="table_select stack-h" id="{{ component_id }}">
-    {% for table in tables %}
-    <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}', '{{ context }}')">
-        <table class="preview">
-            <thead>
-                <tr>
-                {% for col in table["cols"][:num_preview_cols] %}
-                    <th>{{ col }}</th>
-                {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-            {% for row in table["rows"][:num_preview_rows] %}
-                <tr>
+<div class="component" id="component_{{ component_id }}">
+    <input id="input_{{ component_id }}" hidden="hidden" name="{{ component_id }}">
+    <div class="table_select stack-h" id="table_select_{{ component_id }}">
+        {% for table in tables %}
+        <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}', '{{ context }}')">
+            <table class="preview">
+                <thead>
+                    <tr>
                     {% for col in table["cols"][:num_preview_cols] %}
-                    <td>{{ row[col] }}</td>
+                        <th>{{ col }}</th>
                     {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </button>
-    {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in table["rows"][:num_preview_rows] %}
+                    <tr>
+                        {% for col in table["cols"][:num_preview_cols] %}
+                        <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </button>
+        {% endfor %}
+    </div>
 </div>

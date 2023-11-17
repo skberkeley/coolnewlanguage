@@ -13,6 +13,7 @@ from coolNewLanguage.src.util import db_utils
 def template_from_select_statement(
         stmt: sqlalchemy.sql.expression.Select,
         template: jinja2.Template,
+        component_id: str = "",
         table_name: str = "",
         num_rows: Optional[int] = None
 ) -> str:
@@ -20,6 +21,7 @@ def template_from_select_statement(
     Construct an HTML table containing the results of the passed Select statement
     :param stmt: The select statement to run and render the results of
     :param template: The template to use to render the results
+    :param component_id: The id of the component that the table is being rendered for, if for a Config component
     :param table_name: The name of the table the select statement is selecting from, to be included as part of the
     template
     :param num_rows: The number of rows to include in the template. If None, all rows are included
@@ -43,11 +45,12 @@ def template_from_select_statement(
         rows = [row._mapping for row in conn.execute(stmt)]
 
     # render and return it
-    return template.render(col_names=col_names, rows=rows, table_name=table_name)
+    return template.render(col_names=col_names, rows=rows, table_name=table_name, component_id=component_id)
 
 def html_of_table(
         table: sqlalchemy.Table,
         template: jinja2.Template,
+        component_id: str = "",
         num_rows: Optional[int] = None,
         include_table_name: bool = True
 ) -> str:
@@ -56,6 +59,7 @@ def html_of_table(
     If the table doesn't exist in the underlying db, returns an emtpy string
     :param table: The table to construct the template for
     :param template: The template to use to render the table
+    :param component_id: The id of the component that the table is being rendered for, if for a Config component
     :param num_rows: The number of rows to include in the template. If None, all rows are included
     :param include_table_name: Whether to include the table name in the template
     :return: A string containing the HTML table the table with the table's data
@@ -74,6 +78,7 @@ def html_of_table(
     return template_from_select_statement(
         stmt,
         template,
+        component_id=component_id,
         table_name=table.name if include_table_name else "",
         num_rows=num_rows
     )

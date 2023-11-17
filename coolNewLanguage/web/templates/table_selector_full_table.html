@@ -1,7 +1,7 @@
-<div class="table_select_full_table">
+<div class="table_select_full_table" id="table_select_full_table_{{ component_id }}">
     <div class="table_select_full_table_header">
         <span class="table_name">{{ table_name }}</span>
-        <button class="hide_full_table_button" type="button" onclick="hide_full_table(this)">^</button>
+        <button class="hide_full_table_button" type="button" onclick="hide_full_table('{{ component_id }}')">^</button>
     </div>
     <div class="table_div">
         <table>
@@ -23,4 +23,5 @@
             </tbody>
         </table>
     </div>
+    <button type="button" onclick="confirm_table_choice('{{ table_name }}', '{{ component_id }}')">Confirm this table choice</button>
 </div>

@@ -117,7 +117,10 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
-    return html_utils.html_of_table(table)
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+    )
+    return html_utils.html_of_table(table, template)
 
 
 def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> str:
