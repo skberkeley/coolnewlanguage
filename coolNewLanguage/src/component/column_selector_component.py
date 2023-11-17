@@ -47,7 +47,7 @@ class ColumnSelectorComponent(InputComponent):
     def paint(self):
         # Load the jinja template
         template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
-            name=consts.COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME
+            name=consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
         )
 
         tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
@@ -61,7 +61,8 @@ class ColumnSelectorComponent(InputComponent):
             tables=tables,
             num_preview_cols=self.NUM_PREVIEW_COLS,
             num_preview_rows=self.NUM_PREVIEW_ROWS,
-            component_id=self.component_id
+            component_id=self.component_id,
+            context=consts.GET_TABLE_COLUMN_SELECT
         )
 
     def register_on_table_selector(self, table_selector: 'TableSelectorComponent'):
