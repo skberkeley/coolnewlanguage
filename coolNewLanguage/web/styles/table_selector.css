@@ -1,3 +1,7 @@
+:root {
+    --th-bg: #e2e8f0;
+    --button-hover-bg: #cbd5e1;
+}
 .table_select {
     display: flex;
     overflow: auto;
@@ -6,5 +10,25 @@
     padding: 0.5rem;
 }
 .table_select_button:hover {
-    background-color: #e2e8f0;
+    background-color: var(--th-bg);
+}
+.table_select_full_table {
+    overflow: hidden;
+    height: 100%;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+.table_select_full_table_header {
+    display: flex;
+    flex-direction: row;
+}
+.hide_full_table_button {
+    background-color: var(--th-bg);
+    cursor: pointer;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+.hide_full_table_button:hover {
+    background-color: var(--button-hover-bg);
 }

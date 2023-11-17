@@ -11,13 +11,6 @@
     position: relative;
     align-self: flex-start;
 }
-.result_table {
-    overflow: hidden;
-    height: 100%;
-    max-height: 600px;
-    display: flex;
-    flex-direction: column;
-}
 .table_div {
     overflow: auto;
 }

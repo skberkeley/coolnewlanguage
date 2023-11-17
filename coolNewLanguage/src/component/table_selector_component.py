@@ -70,7 +70,8 @@ class TableSelectorComponent(InputComponent):
             tables=tables,
             num_preview_cols=self.NUM_PREVIEW_COLS,
             num_preview_rows=self.NUM_PREVIEW_ROWS,
-            component_id=self.component_id
+            component_id=self.component_id,
+            context=consts.GET_TABLE_TABLE_SELECT
         )
 
     class TableSelectorIterator:

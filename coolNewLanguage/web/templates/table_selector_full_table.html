@@ -1,0 +1,26 @@
+<div class="table_select_full_table">
+    <div class="table_select_full_table_header">
+        <span class="table_name">{{ table_name }}</span>
+        <button class="hide_full_table_button" type="button" onclick="hide_full_table(this)">^</button>
+    </div>
+    <div class="table_div">
+        <table>
+            <thead>
+                <tr>
+                {% for col in col_names %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for col in col_names %}
+                    <td>{{ row[col] }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

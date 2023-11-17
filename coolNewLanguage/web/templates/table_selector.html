@@ -1,7 +1,7 @@
 <script src="/static/table_selector.js" async></script>
 <div class="table_select stack-h" id="{{ component_id }}">
     {% for table in tables %}
-    <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}')">
+    <button class="table_select_button" type="button" onclick="show_table('{{ table["name"] }}', '{{ component_id }}', '{{ context }}')">
         <table class="preview">
             <thead>
                 <tr>

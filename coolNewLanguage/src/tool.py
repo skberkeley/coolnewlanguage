@@ -189,11 +189,24 @@ class Tool:
         if "table" not in request.query:
             raise ValueError("Expected requested table name to be in request query")
         table_name = request.query["table"]
+        if "context" not in request.query:
+            raise ValueError("Expected context to be in request query")
 
         sqlalchemy_table = db_utils.get_table_from_table_name(tool=self, table_name=table_name)
         if sqlalchemy_table is None:
             return web.Response(body="Table not found", status=404)
 
-        template = html_utils.html_of_table(table=sqlalchemy_table)
+        # select correct jinja template
+        context = request.query["context"]
+        if context == consts.GET_TABLE_TABLE_SELECT:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
+            )
+        else:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+            )
+
+        template: str = html_utils.html_of_table(table=sqlalchemy_table, template=template, include_table_name=True)
 
         return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
