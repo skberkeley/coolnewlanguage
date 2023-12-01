@@ -46,6 +46,8 @@ USER_INPUT_COMPONENT_TEMPLATE_FILENAME = 'user_input_component_template.html'
 
 TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'table_selector.html'
 
+COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'column_selector.html'
+
 APPROVAL_PAGE_TEMPLATE_FILENAME = 'approval_page.html'
 
 LINKS_METATYPES_TABLE_NAME = "__hls_links_metatypes"
@@ -64,3 +66,4 @@ GET_TABLE_TABLE_SELECT = "table_select"
 GET_TABLE_COLUMN_SELECT = "column_select"
 
 TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME = "table_selector_full_table.html"
+COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME = "column_selector_full_table.html"

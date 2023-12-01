@@ -47,14 +47,16 @@ class ColumnSelectorComponent(InputComponent):
     def paint(self):
         # Load the jinja template
         template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
-            name=consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
+            name=consts.COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME
         )
 
-        tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
-        for t in tables:
+        tables = [{"name": table_name} for table_name in
+                  db_utils.get_table_names_from_tool(config.tool_under_construction)]
+        for i, t in enumerate(tables):
             t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
             table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
             t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
+            t["transient_id"] = i
 
         # Render and return the template
         return template.render(
