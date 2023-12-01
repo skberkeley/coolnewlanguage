@@ -30,6 +30,12 @@ function confirm_table_choice(table_name, component_id, table_transient_id) {
     // set the relevant input's value
     const input = document.getElementById(`input_${component_id}`);
     input.value = table_name;
+    // get all table preview checkboxes
+    const table_preview_checkboxes = document.querySelectorAll(`input.table_preview_checkbox`);
+    // check/uncheck them appropriately
+    for (const tablePreviewCheckbox of table_preview_checkboxes) {
+        tablePreviewCheckbox.checked = tablePreviewCheckbox.id === `table_preview_checkbox_${table_transient_id}_${component_id}`;
+    }
     // hide the table
     hide_full_table(component_id, table_transient_id);
 }
