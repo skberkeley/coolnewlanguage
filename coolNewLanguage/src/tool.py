@@ -195,6 +195,9 @@ class Tool:
         if "component_id" not in request.query:
             raise ValueError("Expected component id to be in request query")
         component_id = request.query["component_id"]
+        if "table_transient_id" not in request.query:
+            raise ValueError("Expected table transient id to be in request query")
+        table_transient_id = request.query["table_transient_id"]
 
         sqlalchemy_table = db_utils.get_table_from_table_name(tool=self, table_name=table_name)
         if sqlalchemy_table is None:
@@ -205,6 +208,11 @@ class Tool:
             template: jinja2.Template = process.running_tool.jinja_environment.get_template(
                 name=consts.TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
             )
+        elif context == consts.GET_TABLE_COLUMN_SELECT:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
+
+            )
         else:
             template: jinja2.Template = process.running_tool.jinja_environment.get_template(
                 name=consts.TABLE_RESULT_TEMPLATE_FILENAME
@@ -214,7 +222,8 @@ class Tool:
             table=sqlalchemy_table,
             template=template,
             include_table_name=True,
-            component_id=component_id
+            component_id=component_id,
+            table_transient_id=table_transient_id
         )
 
         return web.Response(body=template, content_type=consts.AIOHTTP_HTML)

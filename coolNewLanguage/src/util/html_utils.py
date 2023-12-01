@@ -15,7 +15,8 @@ def template_from_select_statement(
         template: jinja2.Template,
         component_id: str = "",
         table_name: str = "",
-        num_rows: Optional[int] = None
+        num_rows: Optional[int] = None,
+        table_transient_id: str = ""
 ) -> str:
     """
     Construct an HTML table containing the results of the passed Select statement
@@ -45,12 +46,19 @@ def template_from_select_statement(
         rows = [row._mapping for row in conn.execute(stmt)]
 
     # render and return it
-    return template.render(col_names=col_names, rows=rows, table_name=table_name, component_id=component_id)
+    return template.render(
+        col_names=col_names,
+        rows=rows,
+        table_name=table_name,
+        component_id=component_id,
+        table_transient_id=table_transient_id
+    )
 
 def html_of_table(
         table: sqlalchemy.Table,
         template: jinja2.Template,
         component_id: str = "",
+        table_transient_id: str = "",
         num_rows: Optional[int] = None,
         include_table_name: bool = True
 ) -> str:
@@ -80,7 +88,8 @@ def html_of_table(
         template,
         component_id=component_id,
         table_name=table.name if include_table_name else "",
-        num_rows=num_rows
+        num_rows=num_rows,
+        table_transient_id=table_transient_id
     )
 
 

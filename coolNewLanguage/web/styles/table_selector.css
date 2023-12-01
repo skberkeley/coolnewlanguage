@@ -12,6 +12,9 @@
 .table_select_button:hover {
     background-color: var(--th-bg);
 }
+.table_select_button_selected {
+    background-color: var(--th-bg);
+}
 .table_select_full_table {
     overflow: hidden;
     height: 100%;
@@ -31,4 +34,18 @@
 }
 .hide_full_table_button:hover {
     background-color: var(--button-hover-bg);
+}
+.confirm_table_choice {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding: 0.875rem 0.625rem;
+    cursor: pointer;
+    border-width: 0.0625rem;
+    border-style: solid;
+    border-radius: 0.25rem;
+    border-color: #94a3b8;
+}
+.confirm_table_choice:hover {
+    background-color: #94a3b8;
 }

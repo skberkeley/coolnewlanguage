@@ -60,10 +60,11 @@ class TableSelectorComponent(InputComponent):
         )
 
         tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
-        for t in tables:
+        for i, t in enumerate(tables):
             t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
             table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
             t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
+            t["transient_id"] = i
 
         # Render and return the template
         return template.render(

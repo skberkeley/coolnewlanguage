@@ -1,27 +1,48 @@
-async function show_table(table_name, component_id, context) {
+async function show_table(table_name, component_id, context, table_transient_id) {
     // get the html for the table
-    const response = await fetch(`/_get_table?table=${table_name}&context=${context}&component_id=${component_id}`);
+    console.log(table_transient_id)
+    const response = await fetch(`/_get_table?table=${table_name}&context=${context}&component_id=${component_id}&table_transient_id=${table_transient_id}`);
     const table_html = await response.text();
-    // if a table is already being shown, delete it from the dom
+    // if a table is already being shown, unstyle its preview and delete it from the dom
     const table_selector_div = document.getElementById(`table_select_${component_id}`);
     const next_element = table_selector_div.nextElementSibling;
     if (next_element !== null && next_element.classList.contains("table_select_full_table")) {
         next_element.remove();
+        // get the preview element and unstyle it
+        const table_preview = table_selector_div.querySelector("button.table_select_button_selected");
+        table_preview.classList.remove("table_select_button_selected");
     }
     // inject the table into the dom
     table_selector_div.insertAdjacentHTML("afterend", table_html);
+    // style the preview of the table which was selected
+    style_table_preview_as_selected(component_id, table_transient_id);
 }
 
-function hide_full_table(component_id) {
-    // button is the button clicked to hide the table
-    const full_table_div = document.getElementById(`table_select_full_table_${component_id}`);
+function hide_full_table(component_id, table_transient_id) {
+    const full_table_div = document.getElementById(`table_select_full_table_${component_id}_table_${table_transient_id}`);
     full_table_div.remove();
+    // unstyle the preview of the table as selected
+    const button = get_table_select_button(component_id, table_transient_id);
+    button.classList.remove("table_select_button_selected");
 }
 
-function confirm_table_choice(table_name, component_id) {
+function confirm_table_choice(table_name, component_id, table_transient_id) {
     // set the relevant input's value
     const input = document.getElementById(`input_${component_id}`);
     input.value = table_name;
     // hide the table
-    hide_full_table(component_id);
+    hide_full_table(component_id, table_transient_id);
+}
+
+function style_table_preview_as_selected(component_id, table_id) {
+    // find the dom element to style
+    const button = get_table_select_button(component_id, table_id);
+    // style it
+    button.classList.add("table_select_button_selected");
+}
+
+function get_table_select_button(component_id, table_transient_id) {
+    const table_select_div_id = `table_select_${component_id}_table_${table_transient_id}`;
+    const table_select_div = document.getElementById(table_select_div_id);
+    return table_select_div.querySelector("button.table_select_button");
 }
