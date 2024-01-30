@@ -18,3 +18,9 @@ As each Component is instantiated within the SDF (for the 2nd time), each Compon
 it from the post body, setting it as an instance variable on itself.
 Then, when the stage's Processor is run, method overloading allows the Component objects to be treated like the actual 
 associated data.
+### Approvals
+If approvals are being collected, the programmer specifies this by calling the get_user_approvals() function in their SDF.
+This sets a flag that, when the stage's Processor is run, causes any changes to the underlying database to be buffered for
+user approval. These buffered changes are used to populate an HTML template for approvals which is shown to the user after
+the SDF has finished running while handling the stage's POST request. If any results are to be shown, then these are cached
+while collecting user approvals, and shown after the user has submitted their choices.
