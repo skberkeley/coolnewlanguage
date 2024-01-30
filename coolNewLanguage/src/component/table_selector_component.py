@@ -68,6 +68,7 @@ class TableSelectorComponent(InputComponent):
 
         # Render and return the template
         return template.render(
+            label=self.label,
             tables=tables,
             num_preview_cols=self.NUM_PREVIEW_COLS,
             num_preview_rows=self.NUM_PREVIEW_ROWS,
