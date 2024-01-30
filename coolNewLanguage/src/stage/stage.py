@@ -140,9 +140,6 @@ class Stage:
         if process.get_user_approvals:
             template = Stage.approvals_template
             Stage.approvals_template = None
-
-            process.get_user_approvals = False
-
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
         # If the results template is set, redirect to that
