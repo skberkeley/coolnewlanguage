@@ -77,7 +77,9 @@ def html_of_table(
     if num_rows is not None and not isinstance(num_rows, int):
         raise TypeError("Expected num_rows to be an int or None")
 
-    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
+    # Check to see if the table exists in the db
+    process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
+    process.running_tool.db_metadata_obj.reflect(process.running_tool.db_engine)
     if table.name not in process.running_tool.db_metadata_obj.tables:
         return ""
 

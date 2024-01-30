@@ -70,7 +70,7 @@ class Tool:
 
         db_path = DATA_DIR.joinpath(f'{self.url}.db')
         # create an engine with a sqlite database
-        self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
+        self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
         self.db_engine.connect()
         self.db_metadata_obj: sqlalchemy.MetaData = sqlalchemy.MetaData()

@@ -117,6 +117,12 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
+    # Check to see if the table exists in the db
+    process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
+    process.running_tool.db_metadata_obj.reflect(process.running_tool.db_engine)
+    if table.name not in process.running_tool.db_metadata_obj.tables:
+        return ""
+
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
         name=consts.TABLE_RESULT_TEMPLATE_FILENAME
     )
