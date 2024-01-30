@@ -35,7 +35,7 @@ class ColumnSelectorComponent(InputComponent):
             raise TypeError("Expected num_columns to be an int")
         if expected_val_types is not None and not isinstance(expected_val_types, list):
             raise TypeError("Expected expected_val_types to be None or a list")
-        if expected_val_types is not None and all(isinstance(expected_val_type, type) for expected_val_type in expected_val_types):
+        if expected_val_types is not None and not all(isinstance(expected_val_type, type) for expected_val_type in expected_val_types):
             raise TypeError("Expected expected_val_types to be a list of types")
 
         self.label = label if label else f"Select {num_columns} column{'s' if num_columns > 1 else ''}"
