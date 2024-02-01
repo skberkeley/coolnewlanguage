@@ -1,0 +1,7 @@
+:root {
+    --col_sel_selected_column_bg: #cbd5e1;
+}
+
+.col_sel_selected_column {
+    background-color: var(--col_sel_selected_column_bg);
+}

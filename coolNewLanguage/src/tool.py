@@ -211,7 +211,6 @@ class Tool:
         elif context == consts.GET_TABLE_COLUMN_SELECT:
             template: jinja2.Template = process.running_tool.jinja_environment.get_template(
                 name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
-
             )
         else:
             template: jinja2.Template = process.running_tool.jinja_environment.get_template(

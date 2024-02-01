@@ -15,6 +15,12 @@ class ColumnSelectorComponent(InputComponent):
     NUM_PREVIEW_ROWS = 5
     """
     A component which allows one or more columns to be selected interactively from a given selected table
+    
+    Frontend:
+    The initial view of the ColumnSelectorComponent is identical to that of the TableSelectorComponent. When the user 
+    selects a table from the previews, a request is made (defined in column_selector.js) which returns the full table,
+    which the user then selects columns from. These selected columns are submitted when the stage's POST request is made. 
+    The initial template is defined in column_selector.html, while the full table's template is defined in column_selector_full_table.html
 
     Attributes:
         label: The label to paint onto this ColumnSelectorComponent
@@ -27,8 +33,6 @@ class ColumnSelectorComponent(InputComponent):
         NUM_PREVIEW_ROWS: How many rows to show in each table preview
     """
     def __init__(self, label: str = "", num_columns: int = 1, expected_val_types: Optional[list[type]] = None):
-        from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
-
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
         if not isinstance(num_columns, int):
@@ -41,8 +45,10 @@ class ColumnSelectorComponent(InputComponent):
         self.label = label if label else f"Select {num_columns} column{'s' if num_columns > 1 else ''}"
         self.num_columns = num_columns
         self.expected_val_types = expected_val_types
-        super().__init__(expected_type=list[str])
-        self.emulated_columns: list[str] = self.value
+        super().__init__(expected_type=dict)
+        if self.value is not None:
+            self.table_name = self.value['table_name']
+            self.emulated_columns: list[str] = self.value['columns']
 
     def paint(self):
         # Load the jinja template

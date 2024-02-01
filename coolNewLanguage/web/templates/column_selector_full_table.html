@@ -8,7 +8,9 @@
             <thead>
                 <tr>
                 {% for col in col_names %}
-                    <th>{{ col }}</th>
+                    <th class="col_{{ loop.index0 }}" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}')">
+                        {{ col }}
+                    </th>
                 {% endfor %}
                 </tr>
             </thead>
@@ -16,7 +18,9 @@
             {% for row in rows %}
                 <tr>
                     {% for col in col_names %}
-                    <td>{{ row[col] }}</td>
+                        <td class="col_{{ loop.index0 }}" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}')">
+                            {{ row[col] }}
+                        </td>
                     {% endfor %}
                 </tr>
             {% endfor %}
@@ -24,8 +28,8 @@
         </table>
     </div>
     <div>
-        <button class="confirm_table_choice" type="button" onclick="confirm_table_choice('{{ table_name }}', '{{ component_id }}', {{ table_transient_id }})">
-            Confirm this table choice
+        <button class="confirm_column_choices" type="button" onclick="//TODO">
+            Confirm your column choices
         </button>
     </div>
 </div>
