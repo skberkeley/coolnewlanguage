@@ -1,4 +1,4 @@
-async function show_table(table_name, component_id, context, table_transient_id) {
+async function table_sel_show_table(table_name, component_id, context, table_transient_id) {
     // get the html for the table
     console.log(table_transient_id)
     const response = await fetch(`/_get_table?table=${table_name}&context=${context}&component_id=${component_id}&table_transient_id=${table_transient_id}`);
@@ -15,18 +15,18 @@ async function show_table(table_name, component_id, context, table_transient_id)
     // inject the table into the dom
     table_selector_div.insertAdjacentHTML("afterend", table_html);
     // style the preview of the table which was selected
-    style_table_preview_as_selected(component_id, table_transient_id);
+    table_sel_style_table_preview_as_selected(component_id, table_transient_id);
 }
 
-function hide_full_table(component_id, table_transient_id) {
+function table_sel_hide_full_table(component_id, table_transient_id) {
     const full_table_div = document.getElementById(`table_select_full_table_${component_id}_table_${table_transient_id}`);
     full_table_div.remove();
     // unstyle the preview of the table as selected
-    const button = get_table_select_button(component_id, table_transient_id);
+    const button = table_sel_get_table_select_button(component_id, table_transient_id);
     button.classList.remove("table_select_button_selected");
 }
 
-function confirm_table_choice(table_name, component_id, table_transient_id) {
+function table_sel_confirm_table_choice(table_name, component_id, table_transient_id) {
     // set the relevant input's value
     const input = document.getElementById(`input_${component_id}`);
     input.value = table_name;
@@ -37,17 +37,17 @@ function confirm_table_choice(table_name, component_id, table_transient_id) {
         tablePreviewCheckbox.checked = tablePreviewCheckbox.id === `table_preview_checkbox_${table_transient_id}_${component_id}`;
     }
     // hide the table
-    hide_full_table(component_id, table_transient_id);
+    table_sel_hide_full_table(component_id, table_transient_id);
 }
 
-function style_table_preview_as_selected(component_id, table_id) {
+function table_sel_style_table_preview_as_selected(component_id, table_id) {
     // find the dom element to style
-    const button = get_table_select_button(component_id, table_id);
+    const button = table_sel_get_table_select_button(component_id, table_id);
     // style it
     button.classList.add("table_select_button_selected");
 }
 
-function get_table_select_button(component_id, table_transient_id) {
+function table_sel_get_table_select_button(component_id, table_transient_id) {
     const table_select_div_id = `table_select_${component_id}_table_${table_transient_id}`;
     const table_select_div = document.getElementById(table_select_div_id);
     return table_select_div.querySelector("button.table_select_button");

@@ -1,7 +1,7 @@
 // Maps component ids to maps of {"table": table_name, "columns": Set([column_name, ...])}
 let temp_col_sel_choices = new Map();
 
-async function show_table(table_name, component_id, context, table_transient_id) {
+async function col_sel_show_table(table_name, component_id, context, table_transient_id) {
     // get the html for the table
     console.log(table_transient_id)
     const response = await fetch(`/_get_table?table=${table_name}&context=${context}&component_id=${component_id}&table_transient_id=${table_transient_id}`);
@@ -18,47 +18,47 @@ async function show_table(table_name, component_id, context, table_transient_id)
     // inject the table into the dom
     table_selector_div.insertAdjacentHTML("afterend", table_html);
     // style the preview of the table which was selected
-    style_table_preview_as_selected(component_id, table_transient_id);
+    col_sel_style_table_preview_as_selected(component_id, table_transient_id);
     // add the table being shown as the temporary table choice for the component being interacted
     temp_col_sel_choices.set(component_id, new Map());
     temp_col_sel_choices.get(component_id).set("table", table_name);
 }
 
-function hide_full_table(component_id, table_transient_id) {
+function col_sel_hide_full_table(component_id, table_transient_id) {
     const full_table_div = document.getElementById(`column_select_full_table_${component_id}_table_${table_transient_id}`);
     full_table_div.remove();
     // unstyle the preview of the table as selected
-    const button = get_table_select_button(component_id, table_transient_id);
+    const button = col_sel_get_table_select_button(component_id, table_transient_id);
     button.classList.remove("table_select_button_selected");
 }
 
-function style_table_preview_as_selected(component_id, table_id) {
+function col_sel_style_table_preview_as_selected(component_id, table_id) {
     // find the dom element to style
-    const button = get_table_select_button(component_id, table_id);
+    const button = col_sel_get_table_select_button(component_id, table_id);
     // style it
     button.classList.add("table_select_button_selected");
 }
 
-function get_table_select_button(component_id, table_transient_id) {
+function col_sel_get_table_select_button(component_id, table_transient_id) {
     const table_select_div_id = `table_select_${component_id}_table_${table_transient_id}`;
     const table_select_div = document.getElementById(table_select_div_id);
     return table_select_div.querySelector("button.table_select_button");
 }
 
-function toggle_table_cell_selected_status(node) {
+function col_sel_toggle_table_cell_selected_status(node) {
     const selected_class_name = "col_sel_selected_column";
     node.classList.toggle(selected_class_name);
 }
 
 // Toggles a column as being selected or not selected within a column selector's full table view
 // Adds the column name to the list of temporary choices for the relevant column
-function toggle_column_selection(col_name, col_index, component_id, table_transient_id) {
-    console.log(`toggle_column_selection: ${col_name}`)
+function col_sel_toggle_column_selection(col_name, col_index, component_id, table_transient_id) {
+    console.log(`col_sel_toggle_column_selection: ${col_name}`)
     // query select all the cells in this column
     const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
     // toggle them as being selected
     for (const node of col_cells) {
-        toggle_table_cell_selected_status(node);
+        col_sel_toggle_table_cell_selected_status(node);
     }
     // add the column name to the list of temporary choices
     const temp_choices = temp_col_sel_choices.get(component_id);
@@ -74,7 +74,7 @@ function toggle_column_selection(col_name, col_index, component_id, table_transi
     }
 }
 
-function toggle_column_as_hovered(col_index, component_id, table_transient_id) {
+function col_sel_toggle_column_as_hovered(col_index, component_id, table_transient_id) {
     const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
     const hovered_class_name = "col_sel_hovered_column";
     for (const node of col_cells) {
@@ -82,7 +82,7 @@ function toggle_column_as_hovered(col_index, component_id, table_transient_id) {
     }
 }
 
-function toggle_column_as_unhovered(col_index, component_id, table_transient_id) {
+function col_sel_toggle_column_as_unhovered(col_index, component_id, table_transient_id) {
     const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
     const hovered_class_name = "col_sel_hovered_column";
     for (const node of col_cells) {
@@ -90,7 +90,7 @@ function toggle_column_as_unhovered(col_index, component_id, table_transient_id)
     }
 }
 
-function confirm_column_choices(component_id, transient_table_id) {
+function col_sel_confirm_column_choices(component_id, transient_table_id) {
     // Moves transient column choices to confirmed column choices
     const transient_choices = temp_col_sel_choices.get(component_id);
     const table_name_input = document.getElementById(`input_${component_id}_table_name`);
@@ -111,7 +111,7 @@ function confirm_column_choices(component_id, transient_table_id) {
     // Clears transient column choices
     temp_col_sel_choices.delete(component_id);
     // Hides full table view
-    hide_full_table(component_id, transient_table_id);
+    col_sel_hide_full_table(component_id, transient_table_id);
     // Show the confirmed choices
     const selected_table_p = document.getElementById(`col_sel_selected_table_${component_id}`);
     selected_table_p.hidden = false;

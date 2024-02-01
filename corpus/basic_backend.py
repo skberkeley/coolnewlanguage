@@ -84,6 +84,23 @@ def main():
 
     tool.add_stage('column_viewer', column_viewer)
 
+    def column_viewer_with_table():
+        """
+        Stage to select and view a column of a table. To test, access this stage after uploading a csv, select a table,
+        and then select a column. Verify that metadata columns (those beginning with '__') are not selectable.
+        :return:
+        """
+        TextComponent("Select a table and then select a column:")
+        table = TableSelectorComponent()
+        column_selector = ColumnSelectorComponent("Select a column:")
+        results.show_results(
+            [
+                results.Result(table, "Selected table: "),
+                results.Result(column_selector, "Selected column: ")
+            ]
+        )
+    tool.add_stage('column_viewer_with_table', column_viewer_with_table)
+
     tool.run()
 
 
