@@ -1,3 +1,4 @@
+// Maps component ids to maps of {"table": table_name, "columns": Set([column_name, ...])}
 let temp_col_sel_choices = new Map();
 
 async function show_table(table_name, component_id, context, table_transient_id) {
@@ -24,7 +25,7 @@ async function show_table(table_name, component_id, context, table_transient_id)
 }
 
 function hide_full_table(component_id, table_transient_id) {
-    const full_table_div = document.getElementById(`table_select_full_table_${component_id}_table_${table_transient_id}`);
+    const full_table_div = document.getElementById(`column_select_full_table_${component_id}_table_${table_transient_id}`);
     full_table_div.remove();
     // unstyle the preview of the table as selected
     const button = get_table_select_button(component_id, table_transient_id);
@@ -87,4 +88,28 @@ function toggle_column_as_unhovered(col_index, component_id, table_transient_id)
     for (const node of col_cells) {
         node.classList.remove(hovered_class_name);
     }
+}
+
+function confirm_column_choices(component_id, transient_table_id) {
+    // Moves transient column choices to confirmed column choices
+    const transient_choices = temp_col_sel_choices.get(component_id);
+    const table_name_input = document.getElementById(`input_${component_id}_table_name`);
+    table_name_input.value = transient_choices.get("table");
+    // Remove any existing column choice inputs
+    const existing_col_choice_inputs = document.querySelectorAll(`input[name=${component_id}_columns]`);
+    for (const input of existing_col_choice_inputs) {
+        input.remove();
+    }
+    // Add new column choice inputs
+    for (const col_choice of transient_choices.get("columns")) {
+        const input = document.createElement("input");
+        input.hidden = true;
+        input.name = `${component_id}_columns`;
+        input.value = col_choice;
+        table_name_input.insertAdjacentElement("afterend", input);
+    }
+    // Clears transient column choices
+    temp_col_sel_choices.delete(component_id);
+    // Hides full table view
+    hide_full_table(component_id, transient_table_id);
 }
