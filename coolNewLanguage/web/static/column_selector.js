@@ -1,8 +1,5 @@
 let temp_col_sel_choices = new Map();
 
-// hovering functionality
-
-
 async function show_table(table_name, component_id, context, table_transient_id) {
     // get the html for the table
     console.log(table_transient_id)
@@ -49,11 +46,7 @@ function get_table_select_button(component_id, table_transient_id) {
 
 function toggle_table_cell_selected_status(node) {
     const selected_class_name = "col_sel_selected_column";
-    if (node.classList.contains(selected_class_name)) {
-        node.classList.remove(selected_class_name);
-    } else {
-        node.classList.add(selected_class_name);
-    }
+    node.classList.toggle(selected_class_name);
 }
 
 // Toggles a column as being selected or not selected within a column selector's full table view
@@ -61,7 +54,7 @@ function toggle_table_cell_selected_status(node) {
 function toggle_column_selection(col_name, col_index, component_id, table_transient_id) {
     console.log(`toggle_column_selection: ${col_name}`)
     // query select all the cells in this column
-    const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`)
+    const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
     // toggle them as being selected
     for (const node of col_cells) {
         toggle_table_cell_selected_status(node);
@@ -77,5 +70,21 @@ function toggle_column_selection(col_name, col_index, component_id, table_transi
         }
     } else {
         temp_choices.set("columns", new Set([col_name]));
+    }
+}
+
+function toggle_column_as_hovered(col_index, component_id, table_transient_id) {
+    const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
+    const hovered_class_name = "col_sel_hovered_column";
+    for (const node of col_cells) {
+        node.classList.add(hovered_class_name);
+    }
+}
+
+function toggle_column_as_unhovered(col_index, component_id, table_transient_id) {
+    const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`);
+    const hovered_class_name = "col_sel_hovered_column";
+    for (const node of col_cells) {
+        node.classList.remove(hovered_class_name);
     }
 }

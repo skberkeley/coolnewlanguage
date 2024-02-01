@@ -8,7 +8,7 @@
             <thead>
                 <tr>
                 {% for col in col_names %}
-                    <th class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
+                    <th class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerenter="toggle_column_as_hovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerout="toggle_column_as_unhovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
                         {{ col }}
                     </th>
                 {% endfor %}
@@ -18,7 +18,7 @@
             {% for row in rows %}
                 <tr>
                     {% for col in col_names %}
-                        <td class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
+                        <td class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerenter="toggle_column_as_hovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerout="toggle_column_as_unhovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
                             {{ row[col] }}
                         </td>
                     {% endfor %}
