@@ -112,4 +112,12 @@ function confirm_column_choices(component_id, transient_table_id) {
     temp_col_sel_choices.delete(component_id);
     // Hides full table view
     hide_full_table(component_id, transient_table_id);
+    // Show the confirmed choices
+    const selected_table_p = document.getElementById(`col_sel_selected_table_${component_id}`);
+    selected_table_p.hidden = false;
+    selected_table_p.innerText = `Selected table: ${table_name_input.value}`;
+    const selected_columns_p = document.getElementById(`col_sel_selected_columns_${component_id}`);
+    selected_columns_p.hidden = false;
+    const selected_columns = Array.from(transient_choices.get("columns")).join(", ");
+    selected_columns_p.innerText = `Selected columns: ${selected_columns}`;
 }
