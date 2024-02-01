@@ -73,8 +73,14 @@ def main():
         :return:
         """
         TextComponent("Select a table and then select a column:")
-        column_selector = ColumnSelectorComponent("Select a column:")
-        results.show_results([results.Result(column_selector, "Selected column: ")])
+        column_selector1 = ColumnSelectorComponent("Select a column:")
+        column_selector2 = ColumnSelectorComponent("Select another column:")
+        results.show_results(
+            [
+                results.Result(column_selector1, "Selected column: "),
+                results.Result(column_selector2, "Selected column: ")
+            ]
+        )
 
     tool.add_stage('column_viewer', column_viewer)
 

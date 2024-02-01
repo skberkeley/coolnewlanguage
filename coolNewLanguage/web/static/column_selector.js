@@ -1,5 +1,8 @@
 let temp_col_sel_choices = new Map();
 
+// hovering functionality
+
+
 async function show_table(table_name, component_id, context, table_transient_id) {
     // get the html for the table
     console.log(table_transient_id)
@@ -55,10 +58,10 @@ function toggle_table_cell_selected_status(node) {
 
 // Toggles a column as being selected or not selected within a column selector's full table view
 // Adds the column name to the list of temporary choices for the relevant column
-function toggle_column_selection(col_name, col_index, component_id) {
+function toggle_column_selection(col_name, col_index, component_id, table_transient_id) {
     console.log(`toggle_column_selection: ${col_name}`)
     // query select all the cells in this column
-    const col_cells = document.querySelectorAll(`th.col_${col_index}, td.col_${col_index}`)
+    const col_cells = document.querySelectorAll(`#column_select_full_table_${component_id}_table_${table_transient_id} .col_${col_index}`)
     // toggle them as being selected
     for (const node of col_cells) {
         toggle_table_cell_selected_status(node);

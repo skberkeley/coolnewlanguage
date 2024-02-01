@@ -1,4 +1,4 @@
-<div class="table_select_full_table" id="table_select_full_table_{{ component_id }}_table_{{ table_transient_id }}">
+<div class="table_select_full_table" id="column_select_full_table_{{ component_id }}_table_{{ table_transient_id }}">
     <div class="table_select_full_table_header">
         <span class="table_name">{{ table_name }}</span>
         <button class="hide_full_table_button" type="button" onclick="hide_full_table('{{ component_id }}', {{ table_transient_id }})">^</button>
@@ -8,7 +8,7 @@
             <thead>
                 <tr>
                 {% for col in col_names %}
-                    <th class="col_{{ loop.index0 }}" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}')">
+                    <th class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
                         {{ col }}
                     </th>
                 {% endfor %}
@@ -18,7 +18,7 @@
             {% for row in rows %}
                 <tr>
                     {% for col in col_names %}
-                        <td class="col_{{ loop.index0 }}" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}')">
+                        <td class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
                             {{ row[col] }}
                         </td>
                     {% endfor %}
