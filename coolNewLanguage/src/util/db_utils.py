@@ -279,26 +279,26 @@ def get_table_from_table_name(tool: Tool, table_name: str) -> Optional[sqlalchem
     return table
 
 
-def iterate_over_column(tool: Tool, table: sqlalchemy.Table, column_name: str) -> Iterator[Tuple[int, Any]]:
+def iterate_over_columns(tool: Tool, table: sqlalchemy.Table, column_names: list[str]) -> Iterator[Tuple[int, Any]]:
     """
-    Iterate over the column with the passed column
+    Iterate over the table with the passed columns, yielding the values of the passed columns for each row
     :param tool: The tool containing the associated table
-    :param table: The sqlalchemy Table containing the column of interest
-    :param column_name: The name of the column to iterate over
-    :return: Yields a tuple of form (row_id, value)
+    :param table: The sqlalchemy Table containing the columns of interest
+    :param column_names: The names of the columns to iterate over
+    :return: Yields a tuple of form (row_id, values, ...)
     """
     if not isinstance(tool, Tool):
         raise TypeError("Expected tool to be a Tool")
     if not isinstance(table, sqlalchemy.Table):
         raise TypeError("Expected table to be a sqlalchemy Table")
-    if not isinstance(column_name, str):
-        raise TypeError("Expected column name to be a string")
+    if not isinstance(column_names, list) or not all(isinstance(col_name, str) for col_name in column_names):
+        raise TypeError("Expected column_names to be a list of strings")
 
     engine = tool.db_engine
     id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
-    target_column = table.c[column_name]
+    target_columns = [table.c[column_name] for column_name in column_names]
 
-    query = sqlalchemy.select(id_column, target_column)
+    query = sqlalchemy.select(id_column, *target_columns)
     with engine.connect() as conn:
         query_result = conn.execute(query)
     yield from query_result

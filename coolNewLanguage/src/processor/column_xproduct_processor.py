@@ -5,7 +5,7 @@ from coolNewLanguage.src.processor.processor import Processor
 from coolNewLanguage.src.stage import process
 from itertools import product
 
-from coolNewLanguage.src.util.db_utils import iterate_over_column
+from coolNewLanguage.src.util.db_utils import iterate_over_columns
 
 
 class ColumnXProductProcessor(Processor):
@@ -29,7 +29,7 @@ class ColumnXProductProcessor(Processor):
 
         if process.handling_post:
             iterators = [
-                iterate_over_column(tool=process.running_tool, table=c.table_selector.value, column_name=c.value)
+                iterate_over_columns(tool=process.running_tool, table=c.table_selector.value, column_names=c.value)
                 for c in columns
             ]
             

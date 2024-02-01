@@ -104,7 +104,7 @@ function col_sel_confirm_column_choices(component_id, transient_table_id) {
     for (const col_choice of transient_choices.get("columns")) {
         const input = document.createElement("input");
         input.hidden = true;
-        input.name = `${component_id}_columns`;
+        input.name = component_id;
         input.value = col_choice;
         table_name_input.insertAdjacentElement("afterend", input);
     }

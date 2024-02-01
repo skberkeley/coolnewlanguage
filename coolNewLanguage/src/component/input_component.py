@@ -22,7 +22,8 @@ class InputComponent(Component):
         self.expected_type = expected_type
 
         if process.handling_post:
-            self.value = process.post_body[self.component_id]
+            values = process.post_body.getall(self.component_id)
+            self.value = values if len(values) > 1 else values[0]
         else:
             self.value = None
 
