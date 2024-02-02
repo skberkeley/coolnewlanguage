@@ -6,7 +6,7 @@ from coolNewLanguage.src.stage import process
 
 class LambdaProcessor(Processor):
     """
-    A processor which executes a lambda function passed to the Processor
+    A processor which executes a function passed to the Processor
     """
     def __init__(self, func: Callable):
         """

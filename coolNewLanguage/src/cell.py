@@ -100,3 +100,6 @@ class Cell:
             except Exception as e:
                 raise_type_casting_error(self.val, self.expected_type, e)
         return self.val
+
+    def __hash__(self):
+        return hash(self.val)
