@@ -6,7 +6,7 @@
         {% for table in tables %}
         <div id="table_select_{{ component_id }}_table_{{ table["transient_id"] }}">
             <div style="display: flex;">
-                <input type="checkbox" class="table_preview_checkbox" id="table_preview_checkbox_{{ table["transient_id"] }}_{{ component_id }}" onclick="confirm_table_choice('{{ table["name"] }}', '{{ component_id }}', '{{ table["transient_id"] }}')">
+                <input type="checkbox" class="table_preview_checkbox" id="table_preview_checkbox_{{ table["transient_id"] }}_{{ component_id }}" onclick="table_sel_confirm_table_choice('{{ table["name"] }}', '{{ component_id }}', '{{ table["transient_id"] }}')">
                 <label class="table_preview_label" for="table_preview_checkbox_{{ table["name"] }}_{{ component_id }}">{{ table["name"] }}</label>
             </div>
             <button class="table_select_button" type="button" onclick="table_sel_show_table('{{ table["name"] }}', '{{ component_id }}', '{{ context }}', '{{ table["transient_id"] }}')">

@@ -41,8 +41,7 @@ class Row:
         self.row_id: int = self.row_mapping[DB_INTERNAL_COLUMN_ID_NAME]
         self.cell_mapping: dict[str, Cell] = {}
 
-    def __getitem__(self, item: Union[str, 'ColumnSelectorComponent']) -> Cell:
-        from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
+    def __getitem__(self, item: str) -> Cell:
         """
         Get an item in this row using a column name, returning a Cell
         If item is a ColumnSelectorComponent, then use the column name instead
@@ -51,11 +50,10 @@ class Row:
                      Cell is being requested
         :return: A Cell containing the value corresponding to the passed column
         """
-        if not isinstance(item, str) and not isinstance(item, ColumnSelectorComponent):
-            raise TypeError("Expected item to be a string or ColumnSelectorComponent")
+        if not isinstance(item, str):
+            raise TypeError("Expected item to be a string")
 
-        col_name = item.emulated_column if isinstance(item, ColumnSelectorComponent) else item
-        expected_type = item.expected_val_type if isinstance(item, ColumnSelectorComponent) else None
+        col_name = item
 
         # if the desired item does not yet exist as a Cell, create a new Cell, adding it to cell_mapping
         if col_name not in self.cell_mapping:
@@ -64,33 +62,22 @@ class Row:
                 table=self.table,
                 col_name=col_name,
                 row_id=self.row_id,
-                expected_type=expected_type,
                 val=val
             )
 
         cell = self.cell_mapping[col_name]
 
-        if expected_type is not None and cell.expected_type != expected_type:
-            cell.expected_type = expected_type
-
         return self.cell_mapping[col_name]
 
-    def __setitem__(self, key: Union[str, 'ColumnSelectorComponent'], value: Any) -> None:
-        from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
+    def __setitem__(self, key: str, value: Any) -> None:
         """
         Assign to a cell in this row, using key as the column name and value as the new value
         :param key: The column name to assign to
         :param value: The value to assign
         :return:
         """
-        if not isinstance(key, str) and not isinstance(key, ColumnSelectorComponent):
-            raise TypeError("Expected key to be a string or a ColumnSelectorComponent")
-
-        if isinstance(key, ColumnSelectorComponent):
-            expected_type = key.expected_type
-            key = key.emulated_column
-        else:
-            expected_type = None
+        if not isinstance(key, str):
+            raise TypeError("Expected key to be a string")
 
         # Check that key is a valid column name
         if key not in self.row_mapping:
@@ -103,14 +90,10 @@ class Row:
                 table=self.table,
                 col_name=key,
                 row_id=self.row_id,
-                expected_type=expected_type,
                 val=self.row_mapping[key]
             )
 
         cell = self.cell_mapping[key]
-        # Update cell's expected type if relevant
-        if expected_type is not None and cell.expected_type != expected_type:
-            cell.expected_type = expected_type
         cell.set(value)
 
     def keys(self):

@@ -105,6 +105,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_value(value.value)
         case Link():
             return result_template_of_link(value)
+        case [*links] if all(isinstance(l, Link) for l in links):
+            return "\n".join(result_template_of_link(l) for l in links)
         case _:
             return str(value)
 

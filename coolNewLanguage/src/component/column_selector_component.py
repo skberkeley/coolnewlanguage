@@ -66,6 +66,7 @@ class ColumnSelectorComponent(InputComponent):
 
         # Render and return the template
         return template.render(
+            label=self.label,
             tables=tables,
             num_preview_cols=self.NUM_PREVIEW_COLS,
             num_preview_rows=self.NUM_PREVIEW_ROWS,
@@ -95,22 +96,23 @@ class ColumnSelectorComponent(InputComponent):
 
             self.row_id_val_pairs = iterate_over_columns(process.running_tool, table, col_names)
 
-        def __next__(self) -> list[Cell]:
+        def __next__(self) -> dict[str, Cell]:
             try:
                 vals = self.row_id_val_pairs.__next__()
             except StopIteration:
                 raise StopIteration
 
-            return [
-                Cell(
-                    table=self.table,
-                    col_name=self.col_names[i],
-                    row_id=vals[0],
-                    expected_type=self.expected_types[i],
-                    val=val
-                )
-                for i, val in enumerate(vals[1:])
-            ]
+            return {
+                self.col_names[i + 1] :
+                    Cell(
+                        table=self.table,
+                        col_name=self.col_names[i + 1],
+                        row_id=vals[0],
+                        expected_type=self.expected_types[i + 1],
+                        val=val
+                    )
+                for i, val in enumerate(vals)
+            }
 
     def __iter__(self) -> ColumnSelectorIterator:
         """
