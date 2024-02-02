@@ -53,6 +53,19 @@ def main():
 
     tool.add_stage('all_table_viewer', all_table_viewer)
 
+    def two_table_viewer():
+        """
+        Stage to select and view a table, including CNL-created metadata tables. To test, access this stage and verify
+        that metadata tables (those beginning with '__') are viewable too.
+        :return:
+        """
+        TextComponent("Select a table: ")
+        table1 = TableSelectorComponent()
+        table2 = TableSelectorComponent()
+        results.show_results([results.Result(table1, "Selected table1: "), results.Result(table2, "Selected table2: ")])
+
+    tool.add_stage('two_table_viewer', two_table_viewer)
+
     def column_viewer():
         """
         Stage to select and view a column of a table. To test, access this stage after uploading a csv, select a table,
@@ -60,11 +73,33 @@ def main():
         :return:
         """
         TextComponent("Select a table and then select a column:")
-        column_selector = ColumnSelectorComponent("Select a column:")
-        TableSelectorComponent(label="Select a table: ", columns=[column_selector])
-        results.show_results([results.Result(column_selector, "Selected column: ")])
+        column_selector1 = ColumnSelectorComponent("Select a column:")
+        column_selector2 = ColumnSelectorComponent("Select another column:")
+        results.show_results(
+            [
+                results.Result(column_selector1, "Selected column: "),
+                results.Result(column_selector2, "Selected column: ")
+            ]
+        )
 
     tool.add_stage('column_viewer', column_viewer)
+
+    def column_viewer_with_table():
+        """
+        Stage to select and view a column of a table. To test, access this stage after uploading a csv, select a table,
+        and then select a column. Verify that metadata columns (those beginning with '__') are not selectable.
+        :return:
+        """
+        TextComponent("Select a table and then select a column:")
+        table = TableSelectorComponent()
+        column_selector = ColumnSelectorComponent("Select a column:")
+        results.show_results(
+            [
+                results.Result(table, "Selected table: "),
+                results.Result(column_selector, "Selected column: ")
+            ]
+        )
+    tool.add_stage('column_viewer_with_table', column_viewer_with_table)
 
     tool.run()
 

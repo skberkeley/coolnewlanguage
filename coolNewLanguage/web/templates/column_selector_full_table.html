@@ -1,0 +1,35 @@
+<div class="table_select_full_table" id="column_select_full_table_{{ component_id }}_table_{{ table_transient_id }}">
+    <div class="table_select_full_table_header">
+        <span class="table_name">{{ table_name }}</span>
+        <button class="hide_full_table_button" type="button" onclick="col_sel_hide_full_table('{{ component_id }}', {{ table_transient_id }})">^</button>
+    </div>
+    <div class="table_div">
+        <table>
+            <thead>
+                <tr>
+                {% for col in col_names %}
+                    <th class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="col_sel_toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerenter="col_sel_toggle_column_as_hovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerout="col_sel_toggle_column_as_unhovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
+                        {{ col }}
+                    </th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for col in col_names %}
+                        <td class="col_{{ loop.index0 }} col_sel_full_table_cell" onclick="col_sel_toggle_column_selection('{{ col }}', '{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerenter="col_sel_toggle_column_as_hovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')" onpointerout="col_sel_toggle_column_as_unhovered('{{ loop.index0 }}', '{{ component_id }}', '{{ table_transient_id }}')">
+                            {{ row[col] }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <button class="col_sel_confirm_column_choices" type="button" onclick="col_sel_confirm_column_choices('{{ component_id }}', '{{ table_transient_id }}')">
+            Confirm your column choices
+        </button>
+    </div>
+</div>

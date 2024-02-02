@@ -7,12 +7,11 @@ from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.component.input_component import InputComponent
-from coolNewLanguage.src.component.table_selector_component import ColumnSelectorComponent
+from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util import db_utils, html_utils, link_utils
-from coolNewLanguage.src.util.html_utils import template_from_select_statement
+from coolNewLanguage.src.util import html_utils, link_utils, db_utils
 
 
 class Result:
@@ -92,7 +91,7 @@ def result_template_of_value(value) -> str:
     match value:
         case sqlalchemy.Table():
             return result_template_of_sql_alch_table(value)
-        case [*cols] if all([isinstance(c, ColumnSelectorComponent) for c in cols]):
+        case ColumnSelectorComponent() as cols:
             return result_template_of_column_list(cols)
         case [*cells] if all([isinstance(c, Cell) for c in cells]):
             return result_template_of_cell_list(cells)
@@ -117,39 +116,37 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     :param table: The table to construct the template for
     :return: A string containing the HTML table the table with the table's data
     """
-    if not isinstance(table, sqlalchemy.Table):
-        raise TypeError("Expected table to be a sqlalchemy Table")
-
-    # Check to see if the table exists in the db, since it may be newly created and all its rows may have been rejected
+    # Check to see if the table exists in the db
+    process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
+    process.running_tool.db_metadata_obj.reflect(process.running_tool.db_engine)
     if table.name not in process.running_tool.db_metadata_obj.tables:
         return ""
 
-    stmt = sqlalchemy.select(table)
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+    )
+    return html_utils.html_of_table(table, template)
 
-    return template_from_select_statement(stmt)
 
-
-def result_template_of_column_list(cols: List[ColumnSelectorComponent]) -> str:
+def result_template_of_column_list(cols: ColumnSelectorComponent) -> str:
     """
     Construct an HTML snippet of some columns, all presumably from the same table
     Note: Current implementation assumes all string data
     :param cols: The columns to construct the HTML table for
     :return: A string containing the HTML table with the data from the columns
     """
-    if not isinstance(cols, list):
-        raise TypeError("Expected cols to be a list")
-    if not all([isinstance(c, ColumnSelectorComponent) for c in cols]):
-        raise TypeError("Expected each element of cols to be a ColumnSelectorComponent")
-    if any([c.table_selector is None for c in cols]):
-        raise ValueError("Each column in cols should have an associated TableSelectorComponent")
-    if len(set([c.table_selector for c in cols])) > 1:
-        raise ValueError("Each column in cols should be associated with the same TableSelectorComponent")
+    if not isinstance(cols, ColumnSelectorComponent):
+        raise TypeError("Expected cols to be a ColumnSelectorComponent")
 
-    table: sqlalchemy.Table = cols[0].table_selector.value
-    sqlalchemy_cols = [table.c[col.emulated_column] for col in cols]
+    table: sqlalchemy.Table = db_utils.get_table_from_table_name(process.running_tool, cols.table_name)
+    sqlalchemy_cols = [table.c[col] for col in cols.emulated_columns]
     stmt = sqlalchemy.select(*sqlalchemy_cols)
 
-    return template_from_select_statement(stmt)
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+    )
+
+    return html_utils.template_from_select_statement(stmt, template, table_name=cols.table_name)
 
 
 def result_template_of_cell_list(cells: List[Cell]) -> str:

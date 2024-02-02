@@ -1,42 +1,34 @@
 import collections.abc
-from typing import List, Optional, Sequence, Iterable, Union
+from typing import Sequence, Iterable, Union
 
 import jinja2
 import sqlalchemy
-import json
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process, config
-from coolNewLanguage.src.util.db_utils import get_table_names_from_tool, get_column_names_from_table_name, \
-    get_rows_of_table
+from coolNewLanguage.src.util import db_utils
+from coolNewLanguage.src.util.db_utils import get_rows_of_table
 
 
 class TableSelectorComponent(InputComponent):
+    NUM_PREVIEW_COLS = 5
+    NUM_PREVIEW_ROWS = 5
     """
-    A component used to list and select a single table
+    A component used to list all tables and select one
 
     Attributes:
         label: The label to paint onto this TableSelectorComponent
         template: The template to use to paint this TableSelectorComponent
-        columns: A list of ColumnSelectorComponents, each of which select a column from the table associated with this
-            TableSelectorComponent
         only_user_tables: Whether only user-created tables should be selectable or CNL-created metadata tables can also
             be selected
     """
     
-    def __init__(self, label: str = "", columns: List[ColumnSelectorComponent] = None, only_user_tables: bool = True):
+    def __init__(self, label: str = "", only_user_tables: bool = True):
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
-
-        if columns is not None:
-            if not isinstance(columns, list):
-                raise TypeError("Expected columns to be a list")
-            if any([not isinstance(x, ColumnSelectorComponent) for x in columns]):
-                raise TypeError("Expected each element of columns to be a ColumnSelectorComponent")
 
         self.label = label if label != "" else "Select table..."
 
@@ -44,10 +36,6 @@ class TableSelectorComponent(InputComponent):
             self.template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
                 consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
             )
-
-        self.columns: List[ColumnSelectorComponent] = columns if columns is not None else []
-        for column in self.columns:
-            column.register_on_table_selector(self)
 
         self.only_user_tables = only_user_tables
 
@@ -64,22 +52,28 @@ class TableSelectorComponent(InputComponent):
     def paint(self) -> str:
         """
         Paint this TextComponent as a snippet of HTML
-        Also paints the ColumnSelectorComponents in self.columns
         :return: The painted TableSelectorComponent
         """
-        tool = config.tool_under_construction
-        tables = get_table_names_from_tool(tool, self.only_user_tables)
-        table_column_map = {
-            table: get_column_names_from_table_name(tool, table)
-            for table in tables
-        }
-        table_column_map_json = json.dumps(table_column_map)
+        # Load the jinja template
+        template: jinja2.Template = config.tool_under_construction.jinja_environment.get_template(
+            name=consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
+        )
 
-        return self.template.render(
-            component=self, 
+        tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
+        for i, t in enumerate(tables):
+            t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
+            table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
+            t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
+            t["transient_id"] = i
+
+        # Render and return the template
+        return template.render(
+            label=self.label,
             tables=tables,
-            table_column_map_json=table_column_map_json, 
-            column_selectors=self.columns
+            num_preview_cols=self.NUM_PREVIEW_COLS,
+            num_preview_rows=self.NUM_PREVIEW_ROWS,
+            component_id=self.component_id,
+            context=consts.GET_TABLE_TABLE_SELECT
         )
 
     class TableSelectorIterator:
@@ -162,25 +156,3 @@ class TableSelectorComponent(InputComponent):
             raise CNLError("Cannot delete a Table outside of a Processor", Exception())
 
         self.value.drop(process.running_tool.db_engine)
-
-
-def create_column_selector_from_table_selector(table: TableSelectorComponent, label: Optional[str] = None):
-    """
-    Create and return a new ColumnSelectorComponent associated with the passed TableSelectorComponent
-    Intended as a convenience method to be used to create new ColumnSelectorComponents after the associated
-    TableSelectorComponent has already been created.
-    :param table: The TableSelectorComponent to register the new ColumnSelectorComponent on
-    :param label: The optional label the created ColumnSelectorComponent will have
-    :return: A newly created ColumnSelectorComponent registered on the TableSelectorComponent
-    """
-    if not isinstance(table, TableSelectorComponent):
-        raise TypeError("Expected table to be a TableSelectorComponent")
-    if label is not None and not isinstance(label, str):
-        raise TypeError("Expected label to be a string")
-
-    col = ColumnSelectorComponent(label)
-
-    col.register_on_table_selector(table)
-    table.columns.append(col)
-
-    return col

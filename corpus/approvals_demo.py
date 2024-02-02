@@ -45,8 +45,8 @@ def main():
     tool.add_stage('append_to_table', approve_append_to_table)
 
     def approve_update_row_of_table():
-        age_column = ColumnSelectorComponent(label="Select age Column", expected_val_type=int)
-        table = TableSelectorComponent(label="Select Names", columns=[age_column])
+        age_column = ColumnSelectorComponent(label="Select age Column", expected_val_types=[int])
+        table = TableSelectorComponent(label="Select Names")
 
         def increment_age():
             for row in table:

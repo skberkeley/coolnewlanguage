@@ -31,12 +31,14 @@ class Stage:
     def __init__(self, name: str, stage_func: Callable):
         """
         Initialize this stage. The stage url is generated from the passed name
-        :param name: This stage's name
+        :param name: This stage's name. Cannot begin with an underscore
         :param template: The pre-rendered template for this stage's Config
         :param stage_func: The function used to define this stage
         """
         if not isinstance(name, str):
             raise TypeError("Expected name to be a string")
+        if name.startswith('_'):
+            raise ValueError("Stage names cannot begin with underscores")
         self.name = name
 
         if not callable(stage_func):
@@ -138,9 +140,6 @@ class Stage:
         if process.get_user_approvals:
             template = Stage.approvals_template
             Stage.approvals_template = None
-
-            process.get_user_approvals = False
-
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
         # If the results template is set, redirect to that

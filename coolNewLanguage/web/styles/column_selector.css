@@ -1,0 +1,27 @@
+:root {
+    --col_sel_selected_column_bg: #94a3b8;
+    --col_sel_hovered_column_bg: #cbd5e1;
+}
+
+.col_sel_selected_column {
+    background-color: var(--col_sel_selected_column_bg);
+}
+
+.col_sel_hovered_column {
+    background-color: var(--col_sel_hovered_column_bg);
+}
+
+.col_sel_confirm_column_choices {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding: 0.875rem 0.625rem;
+    cursor: pointer;
+    border-width: 0.0625rem;
+    border-style: solid;
+    border-radius: 0.25rem;
+    border-color: #94a3b8;
+}
+.col_sel_confirm_column_choices:hover {
+    background-color: #94a3b8;
+}

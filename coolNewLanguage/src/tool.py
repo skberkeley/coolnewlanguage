@@ -7,9 +7,8 @@ import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.approvals import approvals
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
-    LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES
+    LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
@@ -62,15 +61,19 @@ class Tool:
         self.web_app = WebApp()
         # add a handler for the web app's static files (like javascript stuff)
         self.web_app.add_static_file_handler(STATIC_ROUTE, str(STATIC_FILE_DIR))
+        self.web_app.add_static_file_handler(STYLES_ROUTE, str(STYLES_DIR))
 
         loader = jinja2.FileSystemLoader(TEMPLATES_DIR)
         # jinja environment used to render templates
         self.jinja_environment = jinja2.Environment(loader=loader)
         aiohttp_jinja2.setup(self.web_app.app, loader=loader)
 
+        # create the data directory if it doesn't exist
+        DATA_DIR.mkdir(exist_ok=True)
+
         db_path = DATA_DIR.joinpath(f'{self.url}.db')
         # create an engine with a sqlite database
-        self.db_engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
+        self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
         self.db_engine.connect()
         self.db_metadata_obj: sqlalchemy.MetaData = sqlalchemy.MetaData()
@@ -107,7 +110,12 @@ class Tool:
         Add a landing page route, and the requisite routes for each stage
         :return:
         """
-        routes = [web.get('/', self.landing_page)]
+        from coolNewLanguage.src.approvals import approvals
+
+        routes = [
+            web.get('/', self.landing_page),
+            web.get(consts.GET_TABLE_ROUTE, self.get_table)
+        ]
 
         for stage in self.stages:
             routes.append(web.get(f'/{stage.url}', stage.handle))
@@ -178,3 +186,46 @@ class Tool:
         register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
 
         return LinkMetatype(name=link_meta_name)
+
+    async def get_table(self, request: web.Request) -> web.Response:
+        from coolNewLanguage.src.util import db_utils, html_utils
+        if "table" not in request.query:
+            raise ValueError("Expected requested table name to be in request query")
+        table_name = request.query["table"]
+        if "context" not in request.query:
+            raise ValueError("Expected context to be in request query")
+        context = request.query["context"]
+        if "component_id" not in request.query:
+            raise ValueError("Expected component id to be in request query")
+        component_id = request.query["component_id"]
+        if "table_transient_id" not in request.query:
+            raise ValueError("Expected table transient id to be in request query")
+        table_transient_id = request.query["table_transient_id"]
+
+        sqlalchemy_table = db_utils.get_table_from_table_name(tool=self, table_name=table_name)
+        if sqlalchemy_table is None:
+            return web.Response(body="Table not found", status=404)
+
+        # select correct jinja template
+        if context == consts.GET_TABLE_TABLE_SELECT:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
+            )
+        elif context == consts.GET_TABLE_COLUMN_SELECT:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME
+            )
+        else:
+            template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+                name=consts.TABLE_RESULT_TEMPLATE_FILENAME
+            )
+
+        template: str = html_utils.html_of_table(
+            table=sqlalchemy_table,
+            template=template,
+            include_table_name=True,
+            component_id=component_id,
+            table_transient_id=table_transient_id
+        )
+
+        return web.Response(body=template, content_type=consts.AIOHTTP_HTML)

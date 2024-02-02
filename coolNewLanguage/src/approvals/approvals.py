@@ -54,6 +54,7 @@ async def approval_handler(request: web.Request) -> web.Response:
     :param request:
     :return:
     """
+    process.get_user_approvals = False
     process.handling_user_approvals = True
 
     # Set the post results of the user's approvals on process

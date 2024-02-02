@@ -1,0 +1,15 @@
+.stack-h > * {
+    margin-left: 0;
+    margin-right: 0;
+}
+.stack-h > * + * {
+    margin-left: 1rem;
+}
+
+.stack-v > * {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.stack-v > * + * {
+    margin-top: 1rem;
+}

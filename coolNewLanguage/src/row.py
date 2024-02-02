@@ -4,7 +4,6 @@ import sqlalchemy
 
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.link import Link
-from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.link_utils import get_link_id, register_new_link
@@ -187,7 +186,7 @@ class Row:
 
         return CNLType.from_row(cnl_type=cnl_type, row=self)
 
-    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: LinkMetatype, get_user_approvals: bool = False) \
+    def link(self, link_dst: Union['Row', 'CNLType'], link_metatype: 'LinkMetatype', get_user_approvals: bool = False) \
             -> Optional[Link]:
         """
         Links this Row to link_dst, which is either another Row or a CNLType instance. The resulting link will be of the
@@ -200,6 +199,7 @@ class Row:
         """
         from coolNewLanguage.src.stage import process
         from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+        from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 
         if not isinstance(link_dst, Row) and not isinstance(link_dst, CNLType):
             raise TypeError("Expected link_dst to be a Row or a CNLType instance")

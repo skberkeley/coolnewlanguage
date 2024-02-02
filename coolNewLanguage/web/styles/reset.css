@@ -1,0 +1,9 @@
+body {
+    margin: 0;
+    position: absolute;
+    inset: 0;
+}
+button {
+    background: none;
+    border: none;
+}
