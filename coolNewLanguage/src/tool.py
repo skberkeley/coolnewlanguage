@@ -68,6 +68,9 @@ class Tool:
         self.jinja_environment = jinja2.Environment(loader=loader)
         aiohttp_jinja2.setup(self.web_app.app, loader=loader)
 
+        # create the data directory if it doesn't exist
+        DATA_DIR.mkdir(exist_ok=True)
+
         db_path = DATA_DIR.joinpath(f'{self.url}.db')
         # create an engine with a sqlite database
         self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
