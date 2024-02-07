@@ -31,13 +31,15 @@ PYTHON_TYPE_TO_SQLALCHEMY_TYPE: dict[type, type[sqlalchemy.types.TypeEngine]] = 
 def create_table_from_csv(
         table_name: UserInputComponent | str,
         csv_file: FileUploadComponent,
-        has_header: bool = True
+        has_header: bool = True,
+        overwrite_existing: bool = True
 ) -> sqlalchemy.Table:
     """
     Create a table in the database of the tool, using the csv file as the source for the data
     :param table_name: The name to use for the table being inserted
     :param csv_file: The csv file to use as the data source
     :param has_header: Whether the passed csv file has a header or not
+    :param overwrite_existing: Whether to overwrite an existing table with the same name
     :return: The created table
     """
     if not isinstance(table_name, UserInputComponent) and not isinstance(table_name, str):
@@ -54,9 +56,16 @@ def create_table_from_csv(
         raise ValueError("User created tables cannot begin with '__'")
 
     # Check whether a table with the passed name already exists
-    tool = process.running_tool
+    tool: Tool = process.running_tool
+    metadata = tool.db_metadata_obj
     if table_name in get_table_names_from_tool(tool, True):
-        raise ValueError("A table with this name already exists")
+        table = get_table_from_table_name(tool, table_name)
+        if not overwrite_existing:
+            raise ValueError("A table with this name already exists")
+        else:
+            # drop existing table
+            table.drop(bind=tool.db_engine)
+            metadata.remove(table)
 
     if not isinstance(csv_file, FileUploadComponent):
         raise TypeError("Expected a File Upload for csv file")
@@ -86,7 +95,7 @@ def create_table_from_lists(
         table_name: str,
         data: list[list],
         return_existing_table: bool = True,
-        overwrite_existing_table: bool = False,
+        overwrite_existing_table: bool = True,
         get_user_approvals: bool = False
 ) -> sqlalchemy.Table:
     """
