@@ -17,11 +17,19 @@ class FileUploadComponent(InputComponent):
     expected_ext is enforced by the browser by adding an accept attribute to the input component
     """
 
-    def __init__(self, expected_ext: str, label: str = ''):
+    def __init__(self, expected_ext: str, label: str = '', replace_existing: bool = True):
+        """
+        Initializes a new FileUploadComponent instance
+        :param expected_ext: The expected extension for files uploaded to this Component
+        :param label: The label with instructions for the user, displayed as part of this Component
+        :param replace_existing: Whether files uploaded will replace existing files with the same name. Default True.
+        """
         if not isinstance(expected_ext, str):
             raise TypeError("Expected expected_ext to be a string")
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
+        if not isinstance(replace_existing, bool):
+            raise TypeError("Expected replace_existing to be a boolean")
 
         self.expected_ext = expected_ext
         self.label = label
@@ -42,7 +50,7 @@ class FileUploadComponent(InputComponent):
             tool = process.running_tool
             file_path = tool.file_dir.joinpath(self.value.filename)
             # check that the file doesn't already exist
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and not replace_existing:
                 raise ValueError(f"A file named {self.value.filename} already been uploaded. Please rename the file or "
                                  f"upload a file with a different name.")
             # write our own copy of the file
