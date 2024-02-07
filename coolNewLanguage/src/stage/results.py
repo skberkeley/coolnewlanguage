@@ -25,6 +25,11 @@ class Result:
     __slots__ = ('value', 'label', 'html_value')
 
     def __init__(self, value: Any, label: str = ''):
+        """
+
+        :param value: The value to display for this Result
+        :param label: An optional label to display with the value
+        """
         if not process.handling_post:
             return
 
