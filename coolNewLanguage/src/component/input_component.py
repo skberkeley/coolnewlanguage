@@ -70,3 +70,10 @@ class InputComponent(Component):
             return self.expected_type(self.value) + other.expected_type(other.value)
 
         return self.expected_type(self.value) + other
+
+    def __eq__(self, other):
+        if self.value is None:
+            return self == other
+        if isinstance(other, InputComponent):
+            other = other.expected_type(other.value)
+        return self.expected_type(self.value) == other
