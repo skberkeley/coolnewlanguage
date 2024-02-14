@@ -1,0 +1,11 @@
+<div>
+    <label>{{ label }}</label>
+    <br>
+    {% for option in options %}
+    <label>
+        <input type="radio" value = "{{ option }}" name = "{{ component_id }}" >
+        <label>{{ option }}</label>
+    </label>
+    <br>
+    {% endfor %}
+</div>
