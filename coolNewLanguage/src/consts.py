@@ -44,6 +44,8 @@ FILE_UPLOAD_COMPONENT_TEMPLATE_FILENAME = 'file_upload_component_template.html'
 
 USER_INPUT_COMPONENT_TEMPLATE_FILENAME = 'user_input_component_template.html'
 
+SELECTOR_COMPONENT_TEMPLATE_FILENAME = "selector_component_template.html"
+
 TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'table_selector.html'
 
 COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME = 'column_selector.html'
