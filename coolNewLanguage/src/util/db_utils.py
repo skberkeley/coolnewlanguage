@@ -94,7 +94,7 @@ def create_table_from_csv(
 def create_table_from_lists(
         table_name: str,
         data: list[list],
-        return_existing_table: bool = True,
+        return_existing_table: bool = False,
         overwrite_existing_table: bool = True,
         get_user_approvals: bool = False
 ) -> sqlalchemy.Table:
@@ -226,7 +226,7 @@ def create_table_if_not_exists(tool: Tool, table_name: str, fields: dict[str, 'F
 
 def get_table_names_from_tool(tool: Tool, only_user_tables: bool = True) -> List[str]:
     """
-    Get the names of the database tables associated with the passed table
+    Get the names of the database tables associated with the passed tool
     :param tool: The Tool from which to get associated table names
     :param only_user_tables: Whether to fetch only user-created tables
     :return: A list of table names

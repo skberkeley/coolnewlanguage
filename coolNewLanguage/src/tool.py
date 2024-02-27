@@ -31,10 +31,11 @@ class Tool:
         from coolNewLanguage.src.util.db_utils import db_awaken
         """
         Initialize this tool
-        Starts the web_app which forms the back end of this tool
+        Initializes the web_app which forms the back end of this tool
         Configures the Jinja environment used to render certain templates
         :param tool_name: The name of this tool, can only contain alphanumeric characters or underscores
         :param url: The url path for this tool, to be used in the future for situations with multiple tools
+        :param file_dir_path: A path to the directory in which to store files uploaded to this Tool
         """
         if not isinstance(tool_name, str):
             raise TypeError("Expected a string for Tool name")

@@ -17,7 +17,7 @@ class TableSelectorComponent(InputComponent):
     NUM_PREVIEW_COLS = 5
     NUM_PREVIEW_ROWS = 5
     """
-    A component used to list all tables and select one
+   A component used to list all tables and select one 
 
     Attributes:
         label: The label to paint onto this TableSelectorComponent
