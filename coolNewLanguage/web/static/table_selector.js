@@ -31,7 +31,7 @@ function table_sel_confirm_table_choice(table_name, component_id, table_transien
     const input = document.getElementById(`input_${component_id}`);
     input.value = table_name;
     // get all table preview checkboxes
-    const table_preview_checkboxes = document.querySelectorAll(`input.table_preview_checkbox`);
+    const table_preview_checkboxes = document.querySelectorAll(`input.table_preview_checkbox[data-component-id="${component_id}"]`);
     // check/uncheck them appropriately
     for (const tablePreviewCheckbox of table_preview_checkboxes) {
         tablePreviewCheckbox.checked = tablePreviewCheckbox.id === `table_preview_checkbox_${table_transient_id}_${component_id}`;
