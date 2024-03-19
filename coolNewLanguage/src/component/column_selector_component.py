@@ -25,7 +25,8 @@ class ColumnSelectorComponent(InputComponent):
     Attributes:
         label: The label to paint onto this ColumnSelectorComponent
         num_columns: The number of columns to select
-        emulated_columns: The names of the column this selector represents
+        table_name: The name of the table from which columns were selected
+        value: The names of the column this selector represents
         expected_val_types: The expected type of the values contained in this column
         
     Constants:
@@ -48,7 +49,7 @@ class ColumnSelectorComponent(InputComponent):
         super().__init__(expected_type=dict)
         if self.value is not None:
             self.table_name = self.value[0]
-            self.emulated_columns: list[str] = self.value[1:]
+            self.value: list[str] = self.value[1:]
 
     def paint(self):
         # Load the jinja template
