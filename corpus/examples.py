@@ -239,7 +239,7 @@ def main():
 
         def process_delete_table():
             table.delete()
-            return "Sucessfully deleted table"
+            return "Successfully deleted table"
 
         processor = LambdaProcessor(process_delete_table)
         results.show_results([results.Result(processor.result)])
