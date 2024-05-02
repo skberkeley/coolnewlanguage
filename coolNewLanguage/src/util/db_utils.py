@@ -1,3 +1,4 @@
+import csv
 import datetime
 import enum
 from pathlib import Path
@@ -32,7 +33,8 @@ def create_table_from_csv(
         table_name: UserInputComponent | str,
         csv_file: FileUploadComponent,
         has_header: bool = True,
-        overwrite_existing: bool = True
+        overwrite_existing: bool = True,
+        get_user_approvals: bool = False
 ) -> sqlalchemy.Table:
     """
     Create a table in the database of the tool, using the csv file as the source for the data
@@ -40,6 +42,7 @@ def create_table_from_csv(
     :param csv_file: The csv file to use as the data source
     :param has_header: Whether the passed csv file has a header or not
     :param overwrite_existing: Whether to overwrite an existing table with the same name
+    :param get_user_approvals: Whether to get user approvals before committing data
     :return: The created table
     """
     if not isinstance(table_name, UserInputComponent) and not isinstance(table_name, str):
@@ -80,6 +83,17 @@ def create_table_from_csv(
     metadata_obj: sqlalchemy.MetaData = tool.db_metadata_obj
     with open(csv_file.value) as f:
         table = sqlalchemy_table_from_csv_file(table_name, f, metadata_obj, has_header)
+
+    # If get_user_approvals is on, cache the table as an ApprovalResult
+    if get_user_approvals:
+        from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+        # Convert csv file to a list of lists
+        with open(csv_file.value) as f:
+            data = [row for row in csv.reader(f)]
+        approve_result = TableApproveResult(data, table_name, table)
+        process.approve_results.append(approve_result)
+        return table
+
     metadata_obj.create_all(tool.db_engine)
     # insert data
     with open(csv_file.value) as f:
