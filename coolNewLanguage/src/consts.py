@@ -69,3 +69,5 @@ GET_TABLE_COLUMN_SELECT = "column_select"
 
 TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME = "table_selector_full_table.html"
 COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME = "column_selector_full_table.html"
+
+METADATA_COLUMN_NAMES = set(["__hls_internal_id"])

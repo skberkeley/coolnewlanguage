@@ -60,7 +60,8 @@ def html_of_table(
         component_id: str = "",
         table_transient_id: str = "",
         num_rows: Optional[int] = None,
-        include_table_name: bool = True
+        include_table_name: bool = True,
+        no_metadata_cols: bool = True
 ) -> str:
     """
     Construct an HTML snippet of a sqlalchemy Table
@@ -83,7 +84,11 @@ def html_of_table(
     if table.name not in process.running_tool.db_metadata_obj.tables:
         return ""
 
-    stmt = sqlalchemy.select(table)
+    if no_metadata_cols:
+        col_names = filter(lambda c: c not in consts.METADATA_COLUMN_NAMES, table.c.keys())
+        stmt = sqlalchemy.select(table.c[tuple(col_names)])
+    else:
+        stmt = sqlalchemy.select(table)
 
     return template_from_select_statement(
         stmt,
