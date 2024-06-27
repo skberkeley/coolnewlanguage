@@ -3,7 +3,6 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util.db_utils import create_table_from_csv
@@ -21,10 +20,14 @@ def csv_upload_and_name():
     table_name = UserInputComponent(str, label="Enter table name:")
     csv_file = FileUploadComponent('csv', label="Upload a csv file:")
 
-    def create_table():
-        return create_table_from_csv(table_name, csv_file, True)
-    created_table = LambdaProcessor(create_table).result
-    results.show_results([results.Result(created_table, "Created table: ")])
+    if tool.user_input_received():
+        created_table = create_table_from_csv(table_name, csv_file, True)
+        results.show_results([results.Result(created_table, "Created table: ")])
+
+    # def create_table():
+    #     return create_table_from_csv(table_name, csv_file, True)
+    # created_table = LambdaProcessor(create_table).result
+    # results.show_results([results.Result(created_table, "Created table: ")])
 
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
@@ -36,7 +39,8 @@ def table_viewer():
     """
     TextComponent("Select a table: ")
     table = TableSelectorComponent()
-    results.show_results([results.Result(table, "Selected table: ")])
+    if tool.user_input_received():
+        results.show_results([results.Result(table, "Selected table: ")])
 
 tool.add_stage('table_viewer', table_viewer)
 
@@ -49,12 +53,13 @@ def column_viewer():
     TextComponent("Select a table and then select a column:")
     column_selector1 = ColumnSelectorComponent("Select a column:")
     column_selector2 = ColumnSelectorComponent("Select another column:")
-    results.show_results(
-        [
-            results.Result(column_selector1, "Selected column: "),
-            results.Result(column_selector2, "Selected column: ")
-        ]
-    )
+    if tool.user_input_received():
+        results.show_results(
+            [
+                results.Result(column_selector1, "Selected column: "),
+                results.Result(column_selector2, "Selected column: ")
+            ]
+        )
 
 tool.add_stage('column_viewer', column_viewer)
 
@@ -67,12 +72,13 @@ def column_viewer_with_table():
     TextComponent("Select a table and then select a column:")
     table = TableSelectorComponent()
     column_selector = ColumnSelectorComponent("Select a column:")
-    results.show_results(
-        [
-            results.Result(table, "Selected table: "),
-            results.Result(column_selector, "Selected column: ")
-        ]
-    )
+    if tool.user_input_received():
+        results.show_results(
+            [
+                results.Result(table, "Selected table: "),
+                results.Result(column_selector, "Selected column: ")
+            ]
+        )
 tool.add_stage('column_viewer_with_table', column_viewer_with_table)
 
 tool.run()

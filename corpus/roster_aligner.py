@@ -2,7 +2,6 @@ from coolNewLanguage.src.component.column_selector_component import ColumnSelect
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
 from coolNewLanguage.src.util import db_utils
@@ -15,17 +14,13 @@ def dataset_upload_stage():
     # The preamble of a stage consists of component declarations, some (or all) of which are user input fields
     file_upload_input = FileUploadComponent('csv', "Upload new data sets here:")
     dataset_name_input = UserInputComponent(str, "Enter a name for the dataset you're uploading:")
-    # Next, we use a Processor to do stuff with these inputs
-    def save_dataset():
+    if tool.user_input_received():
         saved_table = db_utils.create_table_from_csv(dataset_name_input, file_upload_input)
-        return saved_table
-    # Instantiating a Processor ensures the code is run after the user is finished inputting
-    processor = LambdaProcessor(save_dataset)
-    # We use the result property to access the return value of the function called by the LambdaProcessor
-    # To show a result later, we place it in a Result object
-    my_result = results.Result(processor.result, "Here is the saved dataset: ")
-    # To show the results, call show_results on a list of Result objects
-    results.show_results([my_result])
+        # We use the result property to access the return value of the function called by the LambdaProcessor
+        # To show a result later, we place it in a Result object
+        my_result = results.Result(saved_table, "Here is the saved dataset: ")
+        # To show the results, call show_results on a list of Result objects
+        results.show_results([my_result])
 
 # After defining the stage, we add it to our Tool
 tool.add_stage('dataset_upload', dataset_upload_stage)
@@ -42,8 +37,7 @@ def simple_column_matcher():
     c2 = ColumnSelectorComponent("Choose the column containing names from another dataset")
     t2 = TableSelectorComponent("Choose the table you picked from")
 
-    # Next we use a function to outline what should be done with those inputs
-    def do_simple_match():
+    if tool.user_input_received():
         # In this function, we build up a table of matches using a list of lists
         # The first row will contain the column names of the table we're building
         matches_table = [["Name"]]
@@ -60,14 +54,11 @@ def simple_column_matcher():
 
         # If we didn't find any matches, return a string saying so
         if len(matches_table) == 1:
-            return "No matches found"
-        # Return the matches we found so that we have access to them after this function returns
-        return matches_table
-
-    # Again, we pass the function into a LambdaProcessor
-    processor = LambdaProcessor(do_simple_match)
-    # We then display the results to the user
-    results.show_results([results.Result(processor.result)])
+            result = "No matches found"
+        else:
+            result = matches_table
+        # We then display the results to the user
+        results.show_results([results.Result(result)])
 
 tool.add_stage('simple_matcher', simple_column_matcher)
 
