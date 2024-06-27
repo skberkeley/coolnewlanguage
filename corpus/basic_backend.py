@@ -5,7 +5,6 @@ from coolNewLanguage.src.component.file_upload_component import FileUploadCompon
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
 
@@ -22,12 +21,11 @@ def csv_upload_and_name():
     table_name = UserInputComponent(str, label="Enter table name:")
     csv_file = FileUploadComponent('csv', label="Upload a csv file:")
 
-    def create_table():
+    if tool.user_input_received():
         df = pd.read_csv(csv_file.value)
         tool.tables[table_name.value] = df
-        return df
-    created_table = LambdaProcessor(create_table).result
-    results.show_results((created_table, "Created table: "))
+
+        results.show_results((df, "Created table: "))
 
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
@@ -39,7 +37,8 @@ def table_viewer():
     """
     TextComponent("Select a table: ")
     table = TableSelectorComponent()
-    results.show_results((table, "Selected table: "))
+    if tool.user_input_received():
+        results.show_results((table, "Selected table: "))
 
 tool.add_stage('table_viewer', table_viewer)
 
@@ -52,7 +51,8 @@ def column_viewer():
     TextComponent("Select a table and then select a column:")
     column_selector1 = ColumnSelectorComponent("Select a column:")
     column_selector2 = ColumnSelectorComponent("Select another column:")
-    results.show_results((column_selector1, "Selected column: "), (column_selector2, "Selected column: "))
+    if tool.user_input_received():
+        results.show_results((column_selector1, "Selected column: "), (column_selector2, "Selected column: "))
 
 tool.add_stage('column_viewer', column_viewer)
 
@@ -65,7 +65,8 @@ def column_viewer_with_table():
     TextComponent("Select a table and then select a column:")
     table = TableSelectorComponent()
     column_selector = ColumnSelectorComponent("Select a column:")
-    results.show_results((table, "Selected table: "), (column_selector, "Selected column: "))
+    if tool.user_input_received():
+        results.show_results((table, "Selected table: "), (column_selector, "Selected column: "))
 tool.add_stage('column_viewer_with_table', column_viewer_with_table)
 
 tool.run()

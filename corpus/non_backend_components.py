@@ -18,7 +18,8 @@ def main():
 
         int_user_input = UserInputComponent(int, "Enter an integer: ")
 
-        results.show_results((str_user_input, "String user input:"), (int_user_input, "Int user input:"))
+        if tool.user_input_received():
+            results.show_results((str_user_input, "String user input:"), (int_user_input, "Int user input:"))
 
     tool.add_stage('user_input_component', user_input_component)
 

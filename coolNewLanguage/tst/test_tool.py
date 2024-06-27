@@ -9,6 +9,10 @@ from aiohttp import web
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
+from coolNewLanguage.src.cnl_type.cnl_type import CNLType
+from coolNewLanguage.src.cnl_type.field import Field
+from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
+from coolNewLanguage.src.consts import TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
     LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
 import coolNewLanguage.src.tool as toolModule
@@ -244,6 +248,11 @@ class TestTool:
         # Check that web.run_app was called appropriately
         mock_run_app.assert_called_with(tool.web_app.app, port=8000)
 
+    def test_run_non_int_port(self, tool: Tool):
+        # Do, Check
+        with pytest.raises(TypeError, match="Expected port to be an int"):
+            tool.run(port=Mock())
+
     @patch('aiohttp_jinja2.render_template')
     def test_landing_page_happy_path(self, mock_render_template: Mock, tool: Tool):
         # Setup
@@ -469,3 +478,223 @@ class TestTool:
         # Check
         # Check that the correct template was fetched
         mock_get_template.assert_called_with(name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME)
+
+    TABLE_NAME = 'cool_new_table'
+    GET_TABLE_CONTEXT = 'get_table_context'
+    COMPONENT_ID = 'component_id'
+    TABLE_TRANSIENT_ID = 'table_transient_id'
+
+    @patch('coolNewLanguage.src.tool.web')
+    @patch('coolNewLanguage.src.tool.process')
+    def test_get_table_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+        # Setup
+        # Mock web.Request so that the type check doesn't error
+        mock_web.Request = web.Request
+        # Construct the request
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': TestTool.GET_TABLE_CONTEXT,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+        # Prepare to patch db_utils.get_table_from_table_name
+        mock_sqlalchemy_table = Mock()
+        mock_get_table_from_table_name = Mock(return_value=mock_sqlalchemy_table)
+        mock_db_utils = Mock(get_table_from_table_name=mock_get_table_from_table_name)
+        mock_utils = Mock(db_utils=mock_db_utils)
+        # Mock get_template behavior
+        mock_jinja_template = Mock()
+        mock_get_template = Mock(return_value=mock_jinja_template)
+        mock_jinja_environment = Mock(get_template=mock_get_template)
+        mock_running_tool = Mock(jinja_environment=mock_jinja_environment)
+        mock_process.running_tool = mock_running_tool
+        # Prepare to patch html_utils.html_of_table
+        mock_template = Mock()
+        mock_html_of_table = Mock(return_value=mock_template)
+        mock_html_utils = Mock(html_of_table=mock_html_of_table)
+        mock_utils.html_utils = mock_html_utils
+        # Mock web.Response
+        mock_response_instance = Mock()
+        mock_Response = Mock(return_value=mock_response_instance)
+        mock_web.Response = mock_Response
+
+        # Do
+        with patch.dict('sys.modules', {'coolNewLanguage.src.util': mock_utils}):
+            response = asyncio.run(tool.get_table(request))
+
+        # Check
+        # Check that get_table_from_table_name was called with the expected arguments
+        mock_get_table_from_table_name.assert_called_with(tool=tool, table_name=TestTool.TABLE_NAME)
+        # Check that the correct template was fetched
+        mock_get_template.assert_called_with(name=consts.TABLE_RESULT_TEMPLATE_FILENAME)
+        # Check that html_of_table was called with the expected arguments
+        mock_html_of_table.assert_called_with(
+            table=mock_sqlalchemy_table,
+            template=mock_jinja_template,
+            include_table_name=True,
+            component_id=TestTool.COMPONENT_ID,
+            table_transient_id=TestTool.TABLE_TRANSIENT_ID
+        )
+        # Check that the response has the expected body and content type
+        mock_Response.assert_called_with(body=mock_template, content_type=consts.AIOHTTP_HTML)
+        assert response == mock_response_instance
+
+    def test_get_table_non_web_request_request(self, tool: Tool):
+        # Do, Check
+        with pytest.raises(TypeError, match="Expected request to be an aiohttp web Request"):
+            asyncio.run(tool.get_table(Mock()))
+
+    def test_get_table_missing_table_name_query_param(self, tool: Tool):
+        # Setup
+        request = Mock(spec=web.Request)
+        request.query = {
+            'context': TestTool.GET_TABLE_CONTEXT,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+
+        # Do, Check
+        with pytest.raises(ValueError, match="Expected requested table name to be in request query"):
+            asyncio.run(tool.get_table(request))
+
+    def test_get_table_missing_context_query_param(self, tool: Tool):
+        # Setup
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+
+        # Do, Check
+        with pytest.raises(ValueError, match="Expected context to be in request query"):
+            asyncio.run(tool.get_table(request))
+
+    def test_get_table_missing_component_id_query_param(self, tool: Tool):
+        # Setup
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': TestTool.GET_TABLE_CONTEXT,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+
+        # Do, Check
+        with pytest.raises(ValueError, match="Expected component id to be in request query"):
+            asyncio.run(tool.get_table(request))
+
+    def test_get_table_missing_table_transient_id_query_param(self, tool: Tool):
+        # Setup
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': TestTool.GET_TABLE_CONTEXT,
+            'component_id': TestTool.COMPONENT_ID
+        }
+
+        # Do, Check
+        with pytest.raises(ValueError, match="Expected table transient id to be in request query"):
+            asyncio.run(tool.get_table(request))
+
+    @patch('coolNewLanguage.src.tool.web')
+    def test_get_table_table_not_found(self, mock_web: Mock, tool: Tool):
+        # Setup
+        # Mock web.Request so that the type check doesn't error
+        mock_web.Request = web.Request
+        # Construct the request
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': TestTool.GET_TABLE_CONTEXT,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+        # Prepare to patch db_utils.get_table_from_table_name
+        mock_get_table_from_table_name = Mock(return_value=None)
+        mock_db_utils = Mock(get_table_from_table_name=mock_get_table_from_table_name)
+        mock_utils = Mock(db_utils=mock_db_utils)
+        # Mock web.Response
+        mock_response_instance = Mock()
+        mock_Response = Mock(return_value=mock_response_instance)
+        mock_web.Response = mock_Response
+
+        # Do
+        with patch.dict('sys.modules', {'coolNewLanguage.src.util': mock_utils}):
+            response = asyncio.run(tool.get_table(request))
+
+        # Check
+        mock_Response.assert_called_with(body="Table not found", status=404)
+        assert response == mock_response_instance
+
+    @patch('coolNewLanguage.src.tool.web')
+    @patch('coolNewLanguage.src.tool.process')
+    def test_get_table_table_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+        # Setup
+        # Mock web.Request so that the type check doesn't error
+        mock_web.Request = web.Request
+        # Construct the request
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': consts.GET_TABLE_TABLE_SELECT,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+        # Mock get_template behavior
+        mock_get_template = Mock()
+        mock_jinja_environment = Mock(get_template=mock_get_template)
+        mock_running_tool = Mock(jinja_environment=mock_jinja_environment)
+        mock_process.running_tool = mock_running_tool
+        # Mock web.Response
+        mock_web.Response = Mock()
+
+        # Do
+        with patch.dict('sys.modules', {'coolNewLanguage.src.util': Mock()}):
+            asyncio.run(tool.get_table(request))
+
+        # Check
+        # Check that the correct template was fetched
+        mock_get_template.assert_called_with(name=consts.TABLE_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME)
+
+    @patch('coolNewLanguage.src.tool.web')
+    @patch('coolNewLanguage.src.tool.process')
+    def test_get_table_column_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+        # Setup
+        # Mock web.Request so that the type check doesn't error
+        mock_web.Request = web.Request
+        # Construct the request
+        request = Mock(spec=web.Request)
+        request.query = {
+            'table': TestTool.TABLE_NAME,
+            'context': consts.GET_TABLE_COLUMN_SELECT,
+            'component_id': TestTool.COMPONENT_ID,
+            'table_transient_id': TestTool.TABLE_TRANSIENT_ID
+        }
+        # Mock get_template behavior
+        mock_get_template = Mock()
+        mock_jinja_environment = Mock(get_template=mock_get_template)
+        mock_running_tool = Mock(jinja_environment=mock_jinja_environment)
+        mock_process.running_tool = mock_running_tool
+        # Mock web.Response
+        mock_web.Response = Mock()
+
+        # Do
+        with patch.dict('sys.modules', {'coolNewLanguage.src.util': Mock()}):
+            asyncio.run(tool.get_table(request))
+
+        # Check
+        # Check that the correct template was fetched
+        mock_get_template.assert_called_with(name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME)
+
+    @patch('coolNewLanguage.src.tool.process')
+    def test_user_input_received(self, mock_process: Mock, tool: Tool):
+        # Setup
+        mock_handling_post = Mock()
+        mock_process.handling_post = mock_handling_post
+
+        # Do
+        user_input_received = tool.user_input_received()
+
+        # Check
+        assert user_input_received == mock_handling_post
