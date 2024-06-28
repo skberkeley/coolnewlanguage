@@ -26,6 +26,7 @@ class Tool:
     url : str
     web_app : WebApp
     file_dir : Pathlib.Path - A path to the directory in which to store files uploaded to this Tool
+    state : dict - A dictionary programmers can use to share state between Stages
     """
     def __init__(self, tool_name: str, url: str = '', file_dir_path: str = ''):
         from coolNewLanguage.src.util.db_utils import db_awaken
@@ -88,6 +89,8 @@ class Tool:
         else:
             self.file_dir = pathlib.Path(file_dir_path)
         self.file_dir.mkdir(parents=True, exist_ok=True)
+
+        self.state = {}
 
     def add_stage(self, stage_name: str, stage_func: Callable):
         """

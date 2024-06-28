@@ -90,6 +90,8 @@ class TestTool:
         assert tool.file_dir == expected_file_dir
         # file_dir exists
         assert os.path.exists(expected_file_dir)
+        # tool has an empty state dictionary
+        assert tool.state == {}
 
     @patch.object(WebApp, 'add_static_file_handler')
     @patch('aiohttp_jinja2.setup')
