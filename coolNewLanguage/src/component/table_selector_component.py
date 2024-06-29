@@ -4,6 +4,7 @@ from typing import Sequence, Iterable, Union
 import jinja2
 import sqlalchemy
 
+import coolNewLanguage.src.tool
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.exceptions.CNLError import CNLError
@@ -59,10 +60,10 @@ class TableSelectorComponent(InputComponent):
             name=consts.TABLE_SELECTOR_COMPONENT_TEMPLATE_FILENAME
         )
 
-        tables = [{"name": table_name} for table_name in db_utils.get_table_names_from_tool(config.tool_under_construction)]
+        tables = [{"name": table_name} for table_name in config.tool_under_construction.get_table_names()]
         for i, t in enumerate(tables):
-            t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
-            table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
+            t['cols'] = config.tool_under_construction.get_column_names_from_table_name(t['name'])
+            table = config.tool_under_construction.get_table_from_table_name(t['name'])
             t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
             t["transient_id"] = i
 

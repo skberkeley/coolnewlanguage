@@ -155,7 +155,7 @@ def result_template_of_column_list(cols: ColumnSelectorComponent) -> str:
     if not isinstance(cols, ColumnSelectorComponent):
         raise TypeError("Expected cols to be a ColumnSelectorComponent")
 
-    table: sqlalchemy.Table = db_utils.get_table_from_table_name(process.running_tool, cols.table_name)
+    table: sqlalchemy.Table = process.running_tool.get_table_from_table_name(cols.table_name)
     sqlalchemy_cols = [table.c[col] for col in cols.value]
     stmt = sqlalchemy.select(*sqlalchemy_cols)
 

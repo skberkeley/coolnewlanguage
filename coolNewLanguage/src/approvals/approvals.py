@@ -145,7 +145,7 @@ def handle_row_approve_result(row_approve_result: RowApproveResult):
 
     # Get the table associated with this row
     tool: Tool = process.running_tool
-    table: sqlalchemy.Table = db_utils.get_table_from_table_name(tool, row_approve_result.table_name)
+    table: sqlalchemy.Table = tool.get_table_from_table_name(row_approve_result.table_name)
 
     # If the approved row is a new one, create an insert statement
     if row_approve_result.is_new_row:

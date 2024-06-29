@@ -3,6 +3,7 @@ from typing import Optional
 import jinja2
 import sqlalchemy
 
+import coolNewLanguage.src.tool
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.input_component import InputComponent
@@ -57,11 +58,10 @@ class ColumnSelectorComponent(InputComponent):
             name=consts.COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME
         )
 
-        tables = [{"name": table_name} for table_name in
-                  db_utils.get_table_names_from_tool(config.tool_under_construction)]
+        tables = [{"name": table_name} for table_name in config.tool_under_construction.get_table_names()]
         for i, t in enumerate(tables):
-            t["cols"] = db_utils.get_column_names_from_table_name(config.tool_under_construction, t["name"])
-            table = db_utils.get_table_from_table_name(config.tool_under_construction, t["name"])
+            t['cols'] = config.tool_under_construction.get_column_names_from_table_name(t['name'])
+            table = config.tool_under_construction.get_table_from_table_name(t['name'])
             t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
             t["transient_id"] = i
 
@@ -125,7 +125,7 @@ class ColumnSelectorComponent(InputComponent):
         if self.emulated_columns is None:
             raise ValueError("Expected to have associated columns to allow iteration")
 
-        table = db_utils.get_table_from_table_name(process.running_tool, self.table_name)
+        table = process.running_tool.get_table_from_table_name(self.table_name)
 
         return ColumnSelectorComponent.ColumnSelectorIterator(
             table=table,

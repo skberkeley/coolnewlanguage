@@ -1,16 +1,20 @@
 import pathlib
-from typing import Callable
+from typing import Callable, List, Optional
 
 import aiohttp_jinja2
 import jinja2
+import pandas as pd
 import sqlalchemy
 from aiohttp import web
+
+import coolNewLanguage.src.tables as tables
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
+from coolNewLanguage.src.util.sql_alch_csv_utils import filter_to_user_columns
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
 from typing import List
@@ -29,7 +33,6 @@ class Tool:
     state : dict - A dictionary programmers can use to share state between Stages
     """
     def __init__(self, tool_name: str, url: str = '', file_dir_path: str = ''):
-        from coolNewLanguage.src.util.db_utils import db_awaken
         """
         Initialize this tool
         Initializes the web_app which forms the back end of this tool
@@ -81,7 +84,7 @@ class Tool:
         self.db_metadata_obj: sqlalchemy.MetaData = sqlalchemy.MetaData()
 
         # Awakening the db creates the necessary tables required to run the tool
-        db_awaken(self)
+        self.db_awaken()
 
         # Create a directory to store uploaded files
         if file_dir_path == '':
@@ -91,6 +94,8 @@ class Tool:
         self.file_dir.mkdir(parents=True, exist_ok=True)
 
         self.state = {}
+
+        self.tables = tables.Tables(self)
 
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
@@ -192,7 +197,7 @@ class Tool:
         return LinkMetatype(name=link_meta_name)
 
     async def get_table(self, request: web.Request) -> web.Response:
-        from coolNewLanguage.src.util import db_utils, html_utils
+        from coolNewLanguage.src.util import html_utils
         if "table" not in request.query:
             raise ValueError("Expected requested table name to be in request query")
         table_name = request.query["table"]
@@ -206,7 +211,7 @@ class Tool:
             raise ValueError("Expected table transient id to be in request query")
         table_transient_id = request.query["table_transient_id"]
 
-        sqlalchemy_table = db_utils.get_table_from_table_name(tool=self, table_name=table_name)
+        sqlalchemy_table = self.get_table_from_table_name(table_name)
         if sqlalchemy_table is None:
             return web.Response(body="Table not found", status=404)
 
@@ -233,3 +238,100 @@ class Tool:
         )
 
         return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
+
+    def get_table_names(self, only_user_tables: bool = True) -> List[str]:
+        """
+        Get the names of the database tables associated with this tool
+        :param tool: The Tool from which to get associated table names
+        :param only_user_tables: Whether to fetch only user-created tables
+        :return: A list of table names
+        """
+        insp = sqlalchemy.inspect(self.db_engine)
+        all_table_names = insp.get_table_names()
+
+        if only_user_tables:
+            return list(filter(lambda table_name: not table_name.startswith('__'), all_table_names))
+        return all_table_names
+
+    def get_column_names_from_table_name(self, table_name: str, only_user_columns: bool = True) -> List[str]:
+        """
+        Get the column names of the passed table
+        :param table_name: The name of the table from which to get the column names
+        :param only_user_columns: Whether the column names should be filtered to include only user columns
+        :return:
+        """
+        if not isinstance(table_name, str):
+            raise TypeError("Expected a string for table_name")
+
+        insp: sqlalchemy.Inspector = sqlalchemy.inspect(self.db_engine)
+
+        if not insp.has_table(table_name):
+            raise ValueError("The passed tool does not have an associated table with the passed name")
+
+        columns = [str(col["name"]) for col in insp.get_columns(table_name=table_name)]
+
+        if only_user_columns:
+            return filter_to_user_columns(columns)
+        return columns
+
+    def get_table_from_table_name(self, table_name: str) -> Optional[sqlalchemy.Table]:
+        """
+        Get the sqlalchemy Table which has the given name
+        :param table_name: The name of the table which we try to get
+        :return: The Table with matching name
+        """
+        insp: sqlalchemy.Inspector = sqlalchemy.inspect(self.db_engine)
+
+        if not insp.has_table(table_name):
+            return None
+        table = sqlalchemy.Table(table_name, self.db_metadata_obj)
+        insp.reflect_table(table, None)
+
+        return table
+
+    def db_awaken(self):
+        """
+        Creates/gets necessary tables in backend, and is called when the tool is instantiated
+        Creates the LINKS_META table, which encodes the existing Link metatypes, and the LINKS table, which acts as a
+        registry of the individual links themselves.
+        :return:
+        """
+        if self.get_table_from_table_name(consts.LINKS_METATYPES_TABLE_NAME) is None:
+            cols = [
+                sqlalchemy.Column(
+                    consts.LINKS_METATYPES_LINK_META_ID,
+                    sqlalchemy.Integer,
+                    sqlalchemy.Identity(),
+                    primary_key=True),
+                sqlalchemy.Column(consts.LINKS_METATYPES_LINK_META_NAME, sqlalchemy.String, nullable=False, unique=True)
+            ]
+            links_metatypes_table = sqlalchemy.Table(consts.LINKS_METATYPES_TABLE_NAME, self.db_metadata_obj, *cols)
+            links_metatypes_table.create(self.db_engine)
+
+        if self.get_table_from_table_name(consts.LINKS_REGISTRY_TABLE_NAME) is None:
+            cols = [
+                sqlalchemy.Column(
+                    consts.LINKS_REGISTRY_LINK_ID,
+                    sqlalchemy.Integer,
+                    sqlalchemy.Identity(),
+                    primary_key=True),
+                sqlalchemy.Column(consts.LINKS_REGISTRY_LINK_META_ID, sqlalchemy.Integer, nullable=False),
+                sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_TABLE_NAME, sqlalchemy.String, nullable=False),
+                sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
+                sqlalchemy.Column(consts.LINKS_REGISTRY_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
+                sqlalchemy.Column(consts.LINKS_REGISTRY_DST_ROW_ID, sqlalchemy.Integer, nullable=False)
+            ]
+            links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, self.db_metadata_obj, *cols)
+            links_registry_table.create(self.db_engine)
+
+    def get_table_dataframe(self, table_name: str) -> Optional[pd.DataFrame]:
+        if not isinstance(table_name, str):
+            raise TypeError("Expected table_name to be a string")
+
+        table = self.get_table_from_table_name(table_name)
+
+        if table is None:
+            return None
+
+        with self.db_engine.connect() as conn:
+            return pd.read_sql(sqlalchemy.select(table), conn)

@@ -5,7 +5,6 @@ import sqlalchemy
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util.db_utils import get_table_from_table_name
 
 
 def get_link_metatype_id_from_metaname(tool: Tool, link_meta_name: str) -> Optional[int]:
@@ -21,7 +20,7 @@ def get_link_metatype_id_from_metaname(tool: Tool, link_meta_name: str) -> Optio
     if not isinstance(link_meta_name, str):
         raise TypeError("Expected link_meta_name to be a string")
 
-    links_meta = get_table_from_table_name(tool, consts.LINKS_METATYPES_TABLE_NAME)
+    links_meta = tool.get_table_from_table_name(consts.LINKS_METATYPES_TABLE_NAME)
 
     stmt = sqlalchemy.select(links_meta.c[consts.LINKS_METATYPES_LINK_META_ID])\
         .where(links_meta.c[consts.LINKS_METATYPES_LINK_META_NAME] == link_meta_name)
@@ -52,7 +51,7 @@ def register_link_metatype_on_tool(tool: Tool, link_meta_name: str) -> Optional[
     if meta_id is not None:
         return meta_id
 
-    table = get_table_from_table_name(tool, consts.LINKS_METATYPES_TABLE_NAME)
+    table = tool.get_table_from_table_name(consts.LINKS_METATYPES_TABLE_NAME)
     insert_stmt = sqlalchemy.insert(table).values({consts.LINKS_METATYPES_LINK_META_NAME: link_meta_name})
     with tool.db_engine.connect() as conn:
         result = conn.execute(insert_stmt)
@@ -92,7 +91,7 @@ def get_link_id(
     if not isinstance(dst_row_id, int):
         raise TypeError("Expected dst_row_id to be an int")
 
-    links_registry = get_table_from_table_name(tool, consts.LINKS_REGISTRY_TABLE_NAME)
+    links_registry = tool.get_table_from_table_name(consts.LINKS_REGISTRY_TABLE_NAME)
 
     stmt = sqlalchemy.select(links_registry.c[consts.LINKS_REGISTRY_LINK_ID])\
         .where(links_registry.c[consts.LINKS_REGISTRY_LINK_META_ID] == link_meta_id)\
@@ -147,7 +146,7 @@ def register_new_link(
     if link_id is not None:
         return Link(link_meta_id, link_id, src_table_name, src_row_id, dst_table_name, dst_row_id)
 
-    table = get_table_from_table_name(tool, consts.LINKS_REGISTRY_TABLE_NAME)
+    table = tool.get_table_from_table_name(consts.LINKS_REGISTRY_TABLE_NAME)
     insert_stmt = sqlalchemy.insert(table)\
         .values(
         {
