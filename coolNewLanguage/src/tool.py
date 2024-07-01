@@ -1,5 +1,5 @@
 import pathlib
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 import aiohttp_jinja2
 import jinja2
@@ -8,13 +8,13 @@ import sqlalchemy
 from aiohttp import web
 
 import coolNewLanguage.src.tables as tables
+import coolNewLanguage.src.util.sql_alch_csv_utils as sql_alch_csv_utils
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util.sql_alch_csv_utils import filter_to_user_columns
 from coolNewLanguage.src.util.str_utils import check_has_only_alphanumerics_or_underscores
 from coolNewLanguage.src.web_app import WebApp
 from typing import List
@@ -271,7 +271,7 @@ class Tool:
         columns = [str(col["name"]) for col in insp.get_columns(table_name=table_name)]
 
         if only_user_columns:
-            return filter_to_user_columns(columns)
+            return sql_alch_csv_utils.filter_to_user_columns(columns)
         return columns
 
     def get_table_from_table_name(self, table_name: str) -> Optional[sqlalchemy.Table]:
