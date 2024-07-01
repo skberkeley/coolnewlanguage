@@ -1,6 +1,7 @@
 from typing import List, Any
 
 import jinja2
+import pandas as pd
 import sqlalchemy
 
 from coolNewLanguage.src import consts
@@ -122,6 +123,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_link(value)
         case [*links] if all(isinstance(l, Link) for l in links):
             return "\n".join(result_template_of_link(l) for l in links)
+        case pd.DataFrame():
+            return result_template_of_dataframe(value)
         case _:
             return str(value)
 
@@ -246,3 +249,11 @@ def result_template_of_link(link: Link) -> str:
         return ""
 
     return html_utils.html_of_link(link)
+
+def result_template_of_dataframe(df: pd.DataFrame) -> str:
+    """
+    Construct an HTML snippet of a pandas DataFrame
+    :param df:
+    :return:
+    """
+    return df.to_html()
