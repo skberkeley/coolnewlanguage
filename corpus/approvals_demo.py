@@ -22,7 +22,7 @@ def approve_table_from_list_list():
 
     created_table = LambdaProcessor(create_table).result
     approvals.get_user_approvals()
-    results.show_results([results.Result(created_table, "Created table:")])
+    results.show_results(results.Result(created_table, "Created table:"))
 
 tool.add_stage('table_results', approve_table_from_list_list)
 
@@ -34,7 +34,7 @@ def approve_append_to_table():
 
     LambdaProcessor(append_to_names)
     approvals.get_user_approvals()
-    results.show_results([results.Result(table, "Appended to table:")])
+    results.show_results(results.Result(table, "Appended to table:"))
 
 tool.add_stage('append_to_table', approve_append_to_table)
 

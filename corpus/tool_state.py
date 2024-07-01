@@ -11,7 +11,7 @@ def get_user_word():
 
     def save_word():
         tool.state['word'] = user_input.value
-        results.show_results([results.Result(tool.state['word'], "We stored the word:")])
+        results.show_results(results.Result(tool.state['word'], "We stored the word:"))
 
     LambdaProcessor(save_word)
 

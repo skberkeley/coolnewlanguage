@@ -22,10 +22,10 @@ def dataset_upload_stage():
     # Instantiating a Processor ensures the code is run after the user is finished inputting
     processor = LambdaProcessor(save_dataset)
     # We use the result property to access the return value of the function called by the LambdaProcessor
-    # To show a result later, we place it in a Result object
+    # To show a result later, we can place it in a Result object
     my_result = results.Result(processor.result, "Here is the saved dataset: ")
     # To show the results, call show_results on a list of Result objects
-    results.show_results([my_result])
+    results.show_results(my_result)
 
 # After defining the stage, we add it to our Tool
 tool.add_stage('dataset_upload', dataset_upload_stage)
@@ -67,7 +67,7 @@ def simple_column_matcher():
     # Again, we pass the function into a LambdaProcessor
     processor = LambdaProcessor(do_simple_match)
     # We then display the results to the user
-    results.show_results([results.Result(processor.result)])
+    results.show_results(results.Result(processor.result))
 
 tool.add_stage('simple_matcher', simple_column_matcher)
 
@@ -76,7 +76,7 @@ def table_viewer():
     # Use a TableSelectorComponent so that users can select the table they want to view
     table = TableSelectorComponent("Select a table to view")
     # In this case, we don't need to do anything extra with the table, and can display it right away
-    results.show_results([results.Result(table)])
+    results.show_results(table)
 
 tool.add_stage('table_viewer', table_viewer)
 

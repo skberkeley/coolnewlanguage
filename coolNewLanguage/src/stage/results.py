@@ -45,7 +45,7 @@ class Result:
         return False
 
 
-def show_results(results: list[Result], results_title: str = '') -> None:
+def show_results(*results: Any, results_title: str = '') -> None:
     """
     Render the passed results as a rendered Jinja template, setting it on Stage when done.
     This function is called from the programmer defined stage functions, so
@@ -61,10 +61,20 @@ def show_results(results: list[Result], results_title: str = '') -> None:
     if not process.handling_post and not process.handling_user_approvals:
         return
 
+    result_objects = []
+    for result in results:
+        match result:
+            case Result():
+                result_objects.append(result)
+            case (value, str(label)):
+                result_objects.append(Result(value, label))
+            case _:
+                result_objects.append(Result(result))
+
     # if process.get_user_approvals is set to True, cache the results to show then return, since we want to collect user
     # approvals first
     if process.get_user_approvals:
-        process.cached_show_results = results
+        process.cached_show_results = result_objects
         process.cached_show_results_title = results_title
         return
 
@@ -72,7 +82,7 @@ def show_results(results: list[Result], results_title: str = '') -> None:
         results_title = "Results"
 
     # render each Result
-    for result in results:
+    for result in result_objects:
         result.html_value = result_template_of_value(result.value)
 
     # load the jinja template
@@ -82,7 +92,7 @@ def show_results(results: list[Result], results_title: str = '') -> None:
     # render the template and set it on Stage
     Stage.results_template = template.render(
         results_title=results_title,
-        results=results
+        results=result_objects
     )
 
 

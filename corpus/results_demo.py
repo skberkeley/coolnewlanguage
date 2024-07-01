@@ -18,13 +18,13 @@ def table_as_results():
             overwrite_existing_table=True
         )
     created_table = LambdaProcessor(create_table).result
-    results.show_results([results.Result(created_table, "Created table:")])
+    results.show_results(results.Result(created_table, "Created table:"))
 
 tool.add_stage('table_results', table_as_results)
 
 def column_list_as_results():
     col = ColumnSelectorComponent(label="Pick at least one column from a table")
-    results.show_results([results.Result(col)])
+    results.show_results(col)
 
 tool.add_stage('column_list_results', column_list_as_results)
 
@@ -35,7 +35,7 @@ def row_list_as_results():
         return [row for row in table]
 
     rows = LambdaProcessor(get_rows).result
-    results.show_results([results.Result(rows)])
+    results.show_results(rows)
 
 tool.add_stage('row_list_results', row_list_as_results)
 

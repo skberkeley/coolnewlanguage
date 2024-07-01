@@ -25,14 +25,19 @@ class TestResults:
         yield
 
         process.handling_post = True
+
+    @patch('coolNewLanguage.src.stage.results.result_template_of_value')
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    def test_show_results__happy_path(
+    def test_show_results_result_object_happy_path(
             self,
-            mock_running_tool: Mock
+            mock_running_tool: Mock,
+            mock_result_template_of_value: Mock
     ):
         # Setup
         # Set process.handling_post to True so show_results doesn't return early
         process.handling_post = True
+        # Mock result_template_of_value function
+        mock_result_template_of_value.return_value = TestResults.RESULT_HTML
         # Create a mock Jinja template
         mock_template = Mock(jinja2.Template)
         mock_rendered_template = Mock(spec=str)
@@ -42,13 +47,15 @@ class TestResults:
         mock_get_template = Mock(return_value=mock_template)
         mock_running_tool.jinja_environment.get_template = mock_get_template
         # Mock some results
-        mock_result = Mock(spec=Result)
-        mock_results = [mock_result]
+        mock_value = Mock()
+        mock_result = Mock(spec=Result, value=mock_value)
 
         # Do
-        show_results(mock_results, results_title=TestResults.TITLE)
+        show_results(mock_result, results_title=TestResults.TITLE)
 
         # Check
+        # Check that the passed Result object had its html_value set
+        assert mock_result.html_value == TestResults.RESULT_HTML
         # Check that the jinja template was loaded from the right file
         mock_get_template.assert_called_with(name=consts.STAGE_RESULTS_TEMPLATE_FILENAME)
         # Check that the template's render was called as expected
