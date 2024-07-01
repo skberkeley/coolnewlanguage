@@ -106,3 +106,17 @@ class Tables:
         if table_name in self._tables_to_delete:
             return False
         return table_name in self._tables or table_name in self._tables_to_save
+
+    def _flush_changes(self):
+        """
+        Flushes the changes to the underlying database. Tables to be added or modified are updated to the tool's
+        database, while tables to be deleted are dropped.
+        :return:
+        """
+        with self._tool.db_engine.connect() as conn:
+            for table_name, table in self._tables_to_save.items():
+                table.to_sql(name=table_name, con=conn, if_exists='replace')
+
+            for table_name in self._tables_to_delete:
+                table = self._tool.get_table_from_table_name(table_name)
+                table.drop(self._tool.db_engine)

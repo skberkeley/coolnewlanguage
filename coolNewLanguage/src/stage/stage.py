@@ -142,6 +142,9 @@ class Stage:
             Stage.approvals_template = None
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
+        # Flush changes cached in the running tool's Tables instance
+        process.running_tool.tables._flush_changes()
+
         # If the results template is set, redirect to that
         if Stage.results_template is not None:
             template = Stage.results_template
