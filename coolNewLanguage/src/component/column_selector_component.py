@@ -1,14 +1,13 @@
 from typing import Optional
 
 import jinja2
+import pandas as pd
 import sqlalchemy
 
-import coolNewLanguage.src.tool
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.component.input_component import InputComponent
 from coolNewLanguage.src.stage import process, config
-from coolNewLanguage.src.util import db_utils
 
 
 class ColumnSelectorComponent(InputComponent):
@@ -28,26 +27,22 @@ class ColumnSelectorComponent(InputComponent):
         num_columns: The number of columns to select
         table_name: The name of the table from which columns were selected
         value: The names of the column this selector represents
-        expected_val_types: The expected type of the values contained in this column
         
     Constants:
         NUM_PREVIEW_COLS: How many columns to show in each table preview
         NUM_PREVIEW_ROWS: How many rows to show in each table preview
     """
-    def __init__(self, label: str = "", num_columns: int = 1, expected_val_types: Optional[list[type]] = None):
+    def __init__(self, label: str = "", num_columns: int = 1):
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
         if not isinstance(num_columns, int):
             raise TypeError("Expected num_columns to be an int")
-        if expected_val_types is not None and not isinstance(expected_val_types, list):
-            raise TypeError("Expected expected_val_types to be None or a list")
-        if expected_val_types is not None and not all(isinstance(expected_val_type, type) for expected_val_type in expected_val_types):
-            raise TypeError("Expected expected_val_types to be a list of types")
 
         self.label = label if label else f"Select {num_columns} column{'s' if num_columns > 1 else ''}"
         self.num_columns = num_columns
-        self.expected_val_types = expected_val_types
-        super().__init__(expected_type=dict)
+
+        super().__init__(expected_type=pd.DataFrame)
+
         if self.value is not None:
             self.table_name = self.value[0]
             self.value: list[str] = self.value[1:]
@@ -58,19 +53,23 @@ class ColumnSelectorComponent(InputComponent):
             name=consts.COLUMN_SELECTOR_COMPONENT_TEMPLATE_FILENAME
         )
 
-        tables = [{"name": table_name} for table_name in config.tool_under_construction.get_table_names()]
-        for i, t in enumerate(tables):
-            t['cols'] = config.tool_under_construction.get_column_names_from_table_name(t['name'])
-            table = config.tool_under_construction.get_table_from_table_name(t['name'])
-            t["rows"] = db_utils.get_rows_of_table(config.tool_under_construction, table)
-            t["transient_id"] = i
+        tool_tables = config.tool_under_construction.tables
+        tables = []
+        for i, table_name in enumerate(tool_tables.get_table_names()):
+            tables.append(
+                {
+                    'name': table_name,
+                    'cols': tool_tables.get_columns_of_table(table_name),
+                    'rows': tool_tables[table_name].head(self.NUM_PREVIEW_ROWS),
+                    'transient_id': i
+                }
+            )
 
         # Render and return the template
         return template.render(
             label=self.label,
             tables=tables,
             num_preview_cols=self.NUM_PREVIEW_COLS,
-            num_preview_rows=self.NUM_PREVIEW_ROWS,
             component_id=self.component_id,
             context=consts.GET_TABLE_COLUMN_SELECT
         )

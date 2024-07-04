@@ -1,5 +1,6 @@
 import pandas as pd
 
+from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
@@ -34,5 +35,12 @@ def view_tables():
     results.show_results((table, 'Chosen table: '))
 
 tool.add_stage('view_tables', view_tables)
+
+def pick_columns():
+    cols = ColumnSelectorComponent("Pick some columns", num_columns=2)
+
+    results.show_results((cols, 'Chosen columns: '))
+
+tool.add_stage('pick_columns', pick_columns)
 
 tool.run()
