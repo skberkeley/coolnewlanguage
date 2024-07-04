@@ -29,7 +29,7 @@ class TestTableSelectorComponent:
     def test_table_selector_component_happy_path(self, mock_process: Mock):
         # Setup
         process.handling_post = True
-        process.post_body = {'component_0': TestTableSelectorComponent.TABLE_NAME}
+        process.post_body = Mock(getall=Mock(return_value=[TestTableSelectorComponent.TABLE_NAME]))
         # Mock running_tool's tables
         mock_dataframe = Mock()
         mock_process.running_tool.tables = MagicMock(__getitem__=Mock(return_value=mock_dataframe))

@@ -5,34 +5,47 @@ import pytest
 import coolNewLanguage.src.component.input_component
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
+from coolNewLanguage.src.stage import process
 
 
 class TestColumnSelectorComponent:
     LABEL = "click a gd column"
     EXPECTED_VAL_TYPE = Mock(spec=type)
     COLUMN_NAME = "a gd column"
+    TABLE_NAME = "Arthur's round one"
 
-    def test_column_selector_component_happy_path(self):
-        # Do
-        column_selector_component = ColumnSelectorComponent(
-            TestColumnSelectorComponent.LABEL,
-            TestColumnSelectorComponent.EXPECTED_VAL_TYPE
+    @patch('coolNewLanguage.src.component.column_selector_component.process')
+    def test_column_selector_component_happy_path(self, mock_process: Mock):
+        # Setup
+        process.handling_post = True
+        process.post_body = Mock(
+            getall=Mock(return_value=[TestColumnSelectorComponent.TABLE_NAME, TestColumnSelectorComponent.COLUMN_NAME])
         )
+        # Mock running_tool's tables
+        mock_filtered_dataframe = MagicMock()
+        mock_dataframe = MagicMock(__getitem__=Mock(return_value=mock_filtered_dataframe))
+        mock_process.running_tool.tables = MagicMock(__getitem__=Mock(return_value=mock_dataframe))
+
+        # Do
+        column_selector_component = ColumnSelectorComponent(TestColumnSelectorComponent.LABEL)
 
         # Check
         # Check fields
-        assert column_selector_component.table_selector is None
         assert column_selector_component.label == TestColumnSelectorComponent.LABEL
-        assert column_selector_component.expected_val_type == TestColumnSelectorComponent.EXPECTED_VAL_TYPE
-        assert column_selector_component.emulated_column == TestColumnSelectorComponent.COLUMN_NAME
+        assert column_selector_component.num_columns == 1
+        assert column_selector_component.table_name == TestColumnSelectorComponent.TABLE_NAME
+        assert column_selector_component.value == mock_filtered_dataframe
+
+        process.handling_post = False
+
 
     def test_column_selector_component_non_string_label(self):
         with pytest.raises(TypeError, match="Expected label to be a string"):
             ColumnSelectorComponent(Mock())
 
-    def test_column_selector_component_non_type_expected_val_type(self):
-        with pytest.raises(TypeError, match="Expected expected_val_type to be a type"):
-            ColumnSelectorComponent(TestColumnSelectorComponent.LABEL, Mock())
+    def test_column_selector_component_non_int_num_columns(self):
+        with pytest.raises(TypeError, match="Expected num_columns to be an int"):
+            ColumnSelectorComponent(num_columns=Mock())
 
     @pytest.fixture
     def column_selector_component(self):
