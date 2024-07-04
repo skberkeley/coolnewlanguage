@@ -1,6 +1,7 @@
 import pandas as pd
 
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
+from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
@@ -26,5 +27,12 @@ def csv_upload_and_name():
     results.show_results((created_table, "Created table: "))
 
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
+
+def view_tables():
+    table = TableSelectorComponent("Pick a table to view")
+
+    results.show_results((table, 'Chosen table: '))
+
+tool.add_stage('view_tables', view_tables)
 
 tool.run()

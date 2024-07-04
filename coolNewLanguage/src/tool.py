@@ -239,41 +239,6 @@ class Tool:
 
         return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
-    def get_table_names(self, only_user_tables: bool = True) -> List[str]:
-        """
-        Get the names of the database tables associated with this tool
-        :param tool: The Tool from which to get associated table names
-        :param only_user_tables: Whether to fetch only user-created tables
-        :return: A list of table names
-        """
-        insp = sqlalchemy.inspect(self.db_engine)
-        all_table_names = insp.get_table_names()
-
-        if only_user_tables:
-            return list(filter(lambda table_name: not table_name.startswith('__'), all_table_names))
-        return all_table_names
-
-    def get_column_names_from_table_name(self, table_name: str, only_user_columns: bool = True) -> List[str]:
-        """
-        Get the column names of the passed table
-        :param table_name: The name of the table from which to get the column names
-        :param only_user_columns: Whether the column names should be filtered to include only user columns
-        :return:
-        """
-        if not isinstance(table_name, str):
-            raise TypeError("Expected a string for table_name")
-
-        insp: sqlalchemy.Inspector = sqlalchemy.inspect(self.db_engine)
-
-        if not insp.has_table(table_name):
-            raise ValueError("The passed tool does not have an associated table with the passed name")
-
-        columns = [str(col["name"]) for col in insp.get_columns(table_name=table_name)]
-
-        if only_user_columns:
-            return sql_alch_csv_utils.filter_to_user_columns(columns)
-        return columns
-
     def get_table_from_table_name(self, table_name: str) -> Optional[sqlalchemy.Table]:
         """
         Get the sqlalchemy Table which has the given name

@@ -1,5 +1,5 @@
 import random
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch, call
 
 import pandas as pd
 import pytest
@@ -10,16 +10,23 @@ from coolNewLanguage.src.tables import Tables
 
 class TestTables:
 
-    def test_table_happy_path(self):
+    @patch('coolNewLanguage.src.tables.sqlalchemy')
+    def test_table_happy_path(self, mock_sqlalchemy: Mock):
         # Setup
-        mock_tool = Mock(spec=tool.Tool)
+        mock_tool = Mock(spec=tool.Tool, db_engine=Mock())
+        # Mock get_table_names
+        mock_inspector = Mock()
+        mock_sqlalchemy.inspect.return_value = mock_inspector
         mock_table_names = Mock()
-        mock_tool.get_table_names = Mock(return_value=mock_table_names)
+        mock_inspector.get_table_names.return_value = mock_table_names
 
         # Do
         tables = Tables(mock_tool)
 
         # Check
+        mock_sqlalchemy.inspect.assert_called_once_with(mock_tool.db_engine)
+        mock_inspector.get_table_names.assert_called_once()
+
         assert tables._tables == mock_table_names
         assert tables._tool == mock_tool
         assert tables._tables_to_save == {}
@@ -34,8 +41,9 @@ class TestTables:
             Tables(mock_tool)
 
     @pytest.fixture
-    def tables(self) -> Tables:
-        mock_tool = Mock(spec=tool.Tool)
+    @patch('coolNewLanguage.src.tables.sqlalchemy')
+    def tables(self, mock_sqlalchemy: Mock) -> Tables:
+        mock_tool = Mock(spec=tool.Tool, db_engine=Mock())
         mock_table_names = MagicMock()
         mock_tool.get_table_names = Mock(return_value=mock_table_names)
 
@@ -180,3 +188,103 @@ class TestTables:
 
         # Do/Check
         assert TestTables.TABLE_NAME not in tables
+
+    def test_table_flush_changes(self, tables: Tables):
+        # Setup
+        mock_connection = MagicMock()
+        tables._tool.db_engine.connect.return_value = mock_connection
+        tables._tables_to_save = {'1': Mock(), '2': Mock()}
+        tables._tables_to_delete = {'3', '4'}
+        # Mock tables._tool._get_table_from_table_name
+        mock_table = Mock()
+        tables._tool.get_table_from_table_name.return_value = mock_table
+
+        # Do
+        tables._flush_changes()
+
+        # Check
+        tables._tables_to_save['1'].to_sql.assert_called_once_with(
+            name='1',
+            con=mock_connection.__enter__.return_value,
+            if_exists='replace'
+        )
+        tables._tables_to_save['2'].to_sql.assert_called_once_with(
+            name='2',
+            con=mock_connection.__enter__.return_value,
+            if_exists='replace'
+        )
+
+        tables._tool.get_table_from_table_name.assert_has_calls([call('3'), call('4')], any_order=True)
+        mock_table.drop.assert_has_calls([call(tables._tool.db_engine), call(tables._tool.db_engine)])
+
+    def test_table_get_table_names_happy_path(self, tables: Tables):
+        # Setup
+        mock_table_names = ['table_1', '__table_2', 'table_3', '__table_4']
+        tables._tables = mock_table_names
+
+        # Do
+        table_names = tables.get_table_names()
+
+        # Check
+        assert table_names == ['table_1', 'table_3']
+
+
+    def test_table_get_table_names_all_tables(self, tables: Tables):
+        # Setup
+        mock_table_names = ['table_1', '__table_2', 'table_3', '__table_4']
+        tables._tables = mock_table_names
+
+        # Do
+        table_names = tables.get_table_names(False)
+
+        # Check
+        assert table_names == mock_table_names
+
+    def test_table_get_table_names_non_bool_only_user_tables(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected only_user_tables to be a boolean"):
+            tables.get_table_names(Mock())
+
+    @patch('coolNewLanguage.src.tables.sql_alch_csv_utils')
+    def test_get_columns_of_table_happy_path(self, mock_sql_alch_csv_utils: Mock, tables: Tables):
+        # Setup
+        mock_dataframe = Mock(spec=pd.DataFrame)
+        mock_columns = ['col1', 'col2', 'col3']
+        mock_dataframe.columns.tolist.return_value = mock_columns
+        tables['table_name'] = mock_dataframe
+
+        mock_sql_alch_csv_utils.filter_to_user_columns.return_value = mock_columns[:1]
+
+        # Do
+        columns = tables.get_columns_of_table('table_name')
+
+        # Check
+        assert columns == mock_columns[:1]
+
+    def test_get_columns_of_table_all_columns(self, tables: Tables):
+        # Setup
+        mock_dataframe = Mock(spec=pd.DataFrame)
+        mock_columns = ['col1', 'col2', 'col3']
+        mock_dataframe.columns.tolist.return_value = mock_columns
+        tables['table_name'] = mock_dataframe
+
+        # Do
+        columns = tables.get_columns_of_table('table_name', False)
+
+        # Check
+        assert columns == mock_columns
+
+    def test_get_columns_of_table_non_string_table_name(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected table_name to be a string"):
+            tables.get_columns_of_table(Mock())
+
+    def test_get_columns_of_table_non_bool_only_user_columns(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected only_user_columns to be a boolean"):
+            tables.get_columns_of_table('table_name', Mock())
+
+    def test_get_columns_of_table_table_not_found(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(KeyError, match="Table table_name not found"):
+            tables.get_columns_of_table('table_name')

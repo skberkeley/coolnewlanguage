@@ -1,10 +1,10 @@
 import typing
 
 import pandas as pd
+import sqlalchemy
 
-import coolNewLanguage.src.tool
 import coolNewLanguage.src.tool as toolModule
-import coolNewLanguage.src.util.db_utils as db_utils
+import coolNewLanguage.src.util.sql_alch_csv_utils as sql_alch_csv_utils
 
 
 class Tables:
@@ -25,7 +25,9 @@ class Tables:
             raise TypeError("Tool must be a Tool object")
 
         # Fetch existing table names
-        self._tables: list[str] = tool.get_table_names()
+        insp = sqlalchemy.inspect(tool.db_engine)
+        self._tables: list[str] = insp.get_table_names()
+
         self._tool: toolModule.Tool = tool
         self._tables_to_save: dict[str, pd.DataFrame] = {}
         self._tables_to_delete: set[str] = set()
@@ -44,11 +46,11 @@ class Tables:
         if not isinstance(table_name, str):
             raise TypeError("Table name must be a string")
 
-        if table_name not in self._tables:
-            raise KeyError(f"Table {table_name} not found")
-
         if table_name in self._tables_to_delete:
             raise KeyError(f"Table {table_name} was deleted")
+
+        if table_name not in self:
+            raise KeyError(f"Table {table_name} not found")
 
         # If the table was slated to be added/modified, return the cached version
         if table_name in self._tables_to_save:
@@ -120,3 +122,37 @@ class Tables:
             for table_name in self._tables_to_delete:
                 table = self._tool.get_table_from_table_name(table_name)
                 table.drop(self._tool.db_engine)
+
+    def get_table_names(self, only_user_tables: bool = True):
+        """
+        Returns the names of the tables in the tool.
+        :param only_user_tables: If True, only returns the names of user-created tables.
+        :return:
+        """
+        if not isinstance(only_user_tables, bool):
+            raise TypeError("Expected only_user_tables to be a boolean")
+
+        if only_user_tables:
+            return list(filter(lambda table_name: not table_name.startswith('__'), self._tables))
+        return self._tables
+
+    def get_columns_of_table(self, table_name: str, only_user_columns: bool = True) -> list[str]:
+        """
+        Get the column names of the passed table
+        :param table_name: The name of the table from which to get the column names
+        :param only_user_columns: Whether the column names should be filtered to include only user columns
+        :return: A list of column names
+        """
+        if not isinstance(table_name, str):
+            raise TypeError("Expected table_name to be a string")
+        if not isinstance(only_user_columns, bool):
+            raise TypeError("Expected only_user_columns to be a boolean")
+
+        if table_name not in self:
+            raise KeyError(f"Table {table_name} not found")
+
+        columns = self[table_name].columns.tolist()
+
+        if only_user_columns:
+            return sql_alch_csv_utils.filter_to_user_columns(columns)
+        return columns
