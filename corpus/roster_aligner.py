@@ -1,3 +1,5 @@
+import pandas as pd
+
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
@@ -5,7 +7,6 @@ from coolNewLanguage.src.component.user_input_component import UserInputComponen
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util import db_utils
 
 
 tool = Tool('roster_aligner')
@@ -17,8 +18,8 @@ def dataset_upload_stage():
     dataset_name_input = UserInputComponent(str, "Enter a name for the dataset you're uploading:")
     # Next, we use a Processor to do stuff with these inputs
     def save_dataset():
-        saved_table = db_utils.create_table_from_csv(dataset_name_input, file_upload_input)
-        return saved_table
+        df = pd.read_csv(file_upload_input.value)
+        tool.tables[dataset_name_input.value] = df
     # Instantiating a Processor ensures the code is run after the user is finished inputting
     processor = LambdaProcessor(save_dataset)
     # We use the result property to access the return value of the function called by the LambdaProcessor
@@ -37,32 +38,21 @@ def simple_column_matcher():
     # First, we define the inputs the user will provide using Components
     # Users select columns using ColumnSelectorComponents
     c1 = ColumnSelectorComponent("Choose the column containing names from one dataset")
-    t1 = TableSelectorComponent("Choose the table you picked from")
 
     c2 = ColumnSelectorComponent("Choose the column containing names from another dataset")
-    t2 = TableSelectorComponent("Choose the table you picked from")
 
     # Next we use a function to outline what should be done with those inputs
     def do_simple_match():
-        # In this function, we build up a table of matches using a list of lists
-        # The first row will contain the column names of the table we're building
-        matches_table = [["Name"]]
+        # In this function, we build up a DataFrame of matches
         # The code in this function is run after users have submitted their inputs
-        # This lets us do things like iterating over the rows of a table:
-        for row1 in t1:
-            # We can also index into a row of a table using column names
-            name1 = row1[c1.value[0]]
-            for row2 in t2:
-                name2 = row2[c2.value[0]]
-
-                if name1 == name2:
-                    matches_table.append([name1])
+        # This lets us do things like join the two DataFrames
+        matches = pd.merge(c1.value, c2.value, how='inner', left_on=c1.column_names, right_on=c2.column_names)
 
         # If we didn't find any matches, return a string saying so
-        if len(matches_table) == 1:
+        if len(matches) == 0:
             return "No matches found"
         # Return the matches we found so that we have access to them after this function returns
-        return matches_table
+        return matches
 
     # Again, we pass the function into a LambdaProcessor
     processor = LambdaProcessor(do_simple_match)
@@ -79,8 +69,6 @@ def table_viewer():
     results.show_results(table)
 
 tool.add_stage('table_viewer', table_viewer)
-
-
 
 # Make sure to run the tool
 tool.run()

@@ -41,6 +41,7 @@ class ColumnSelectorComponent(InputComponent):
 
         if self.value is not None:
             self.table_name: str = self.value[0]
+            self.column_names = self.value[1:]
             self.value: pd.DataFrame = process.running_tool.tables[self.table_name][self.value[1:]]
 
     def paint(self):
