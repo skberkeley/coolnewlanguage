@@ -10,15 +10,16 @@ from coolNewLanguage.src.tables import Tables
 
 class TestTables:
 
+    TABLE_NAMES = ['table_1', 'table_2', 'table_3']
+
     @patch('coolNewLanguage.src.tables.sqlalchemy')
-    def test_table_happy_path(self, mock_sqlalchemy: Mock):
+    def test_tables_happy_path(self, mock_sqlalchemy: Mock):
         # Setup
         mock_tool = Mock(spec=tool.Tool, db_engine=Mock())
         # Mock get_table_names
         mock_inspector = Mock()
         mock_sqlalchemy.inspect.return_value = mock_inspector
-        mock_table_names = Mock()
-        mock_inspector.get_table_names.return_value = mock_table_names
+        mock_inspector.get_table_names.return_value = self.TABLE_NAMES
 
         # Do
         tables = Tables(mock_tool)
@@ -27,12 +28,12 @@ class TestTables:
         mock_sqlalchemy.inspect.assert_called_once_with(mock_tool.db_engine)
         mock_inspector.get_table_names.assert_called_once()
 
-        assert tables._tables == mock_table_names
+        assert tables._tables == {'table_1', 'table_2', 'table_3'}
         assert tables._tool == mock_tool
         assert tables._tables_to_save == {}
         assert tables._tables_to_delete == set()
 
-    def test_table_non_tool_tool(self):
+    def test_tables_non_tool_tool(self):
         # Setup
         mock_tool = Mock()
 
@@ -44,12 +45,13 @@ class TestTables:
     @patch('coolNewLanguage.src.tables.sqlalchemy')
     def tables(self, mock_sqlalchemy: Mock) -> Tables:
         mock_tool = Mock(spec=tool.Tool, db_engine=Mock())
-        mock_table_names = MagicMock()
-        mock_tool.get_table_names = Mock(return_value=mock_table_names)
 
-        return Tables(mock_tool)
+        tables = Tables(mock_tool)
+        tables._tables = MagicMock()
 
-    def test_table_len(self, tables: Tables):
+        return tables
+
+    def test_tables_len(self, tables: Tables):
         # Setup
         mock_length = random.randint(0, 1000)
         tables._tables.__len__.return_value = mock_length
@@ -60,7 +62,7 @@ class TestTables:
 
     TABLE_NAME = "table_name"
 
-    def test_table_get_item_happy_path(self, tables: Tables):
+    def test_tables_get_item_happy_path(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
 
@@ -75,12 +77,12 @@ class TestTables:
         assert dataframe == mock_dataframe
         mock_get_table_dataframe.assert_called_once_with(TestTables.TABLE_NAME)
 
-    def test_table_get_item_non_string_table_name(self, tables: Tables):
+    def test_tables_get_item_non_string_table_name(self, tables: Tables):
         # Do/Check
         with pytest.raises(TypeError, match="Table name must be a string"):
             tables[None]
 
-    def test_table_get_item_table_not_found(self, tables: Tables):
+    def test_tables_get_item_table_not_found(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = False
 
@@ -88,7 +90,7 @@ class TestTables:
         with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} not found"):
             tables[TestTables.TABLE_NAME]
 
-    def test_table_get_item_table_deleted(self, tables: Tables):
+    def test_tables_get_item_table_deleted(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
         tables._tables_to_delete.add(TestTables.TABLE_NAME)
@@ -97,7 +99,7 @@ class TestTables:
         with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} was deleted"):
             tables[TestTables.TABLE_NAME]
 
-    def test_table_table_in_tables_to_save(self, tables: Tables):
+    def test_tables_table_in_tables_to_save(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
         mock_dataframe = Mock()
@@ -109,7 +111,7 @@ class TestTables:
         # Check
         assert dataframe == mock_dataframe
 
-    def test_table_set_item_happy_path(self, tables: Tables):
+    def test_tables_set_item_happy_path(self, tables: Tables):
         # Setup
         mock_dataframe = Mock(spec=pd.DataFrame)
 
@@ -122,17 +124,17 @@ class TestTables:
         assert tables._tables_to_save[TestTables.TABLE_NAME] == mock_dataframe
         assert TestTables.TABLE_NAME not in tables._tables_to_delete
 
-    def test_table_set_item_non_string_table_name(self, tables: Tables):
+    def test_tables_set_item_non_string_table_name(self, tables: Tables):
         # Do/Check
         with pytest.raises(TypeError, match="Table name must be a string"):
             tables[Mock()] = Mock(spec=pd.DataFrame)
 
-    def test_table_set_item_non_dataframe_value(self, tables: Tables):
+    def test_tables_set_item_non_dataframe_value(self, tables: Tables):
         # Do/Check
         with pytest.raises(TypeError, match="Value must be a pandas DataFrame"):
             tables[TestTables.TABLE_NAME] = Mock()
 
-    def test_table_del_item_happy_path(self, tables: Tables):
+    def test_tables_del_item_happy_path(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
         tables._tables_to_save[TestTables.TABLE_NAME] = Mock()
@@ -144,12 +146,12 @@ class TestTables:
         assert TestTables.TABLE_NAME not in tables._tables_to_save
         assert TestTables.TABLE_NAME in tables._tables_to_delete
 
-    def test_table_del_item_non_string_table_name(self, tables: Tables):
+    def test_tables_del_item_non_string_table_name(self, tables: Tables):
         # Do/Check
         with pytest.raises(TypeError, match="Table name must be a string"):
             del tables[Mock()]
 
-    def test_table_del_item_table_not_found(self, tables: Tables):
+    def test_tables_del_item_table_not_found(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = False
 
@@ -157,7 +159,7 @@ class TestTables:
         with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} not found"):
             del tables[TestTables.TABLE_NAME]
 
-    def test_table_iter(self, tables: Tables):
+    def test_tables_iter(self, tables: Tables):
         # Setup
         tables._tables = ['1', '2', '3']
         tables._tables_to_save = {'4': Mock(), '5': Mock()}
@@ -168,33 +170,62 @@ class TestTables:
         # Check
         assert table_names == {'1', '2', '3', '4', '5'}
 
-    def test_table_contains(self, tables: Tables):
+    def test_tables_contains(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
 
         # Do/Check
         assert TestTables.TABLE_NAME in tables
 
-    def test_table_contains_table_in_tables_to_save(self, tables: Tables):
+    def test_tables_contains_table_in_tables_to_save(self, tables: Tables):
         # Setup
         tables._tables_to_save[TestTables.TABLE_NAME] = Mock()
 
         # Do/Check
         assert TestTables.TABLE_NAME in tables
 
-    def test_table_contains_table_deleted(self, tables: Tables):
+    def test_tables_contains_table_deleted(self, tables: Tables):
         # Setup
         tables._tables_to_delete.add(TestTables.TABLE_NAME)
 
         # Do/Check
         assert TestTables.TABLE_NAME not in tables
 
-    def test_table_flush_changes(self, tables: Tables):
+    def test_tables_delete_table_happy_path(self, tables: Tables):
+        # Setup
+        tables._tables.__contains__.return_value = True
+        # Mock tables._tool.get_table_from_table_name
+        mock_table = Mock()
+        tables._tool.get_table_from_table_name.return_value = mock_table
+
+        # Do
+        tables._delete_table(TestTables.TABLE_NAME)
+
+        # Check
+        tables._tool.get_table_from_table_name.assert_called_once_with(TestTables.TABLE_NAME)
+        mock_table.drop.assert_called_once_with(tables._tool.db_engine)
+        tables._tables.remove.assert_called_once_with(TestTables.TABLE_NAME)
+
+    def test_tables_delete_table_non_string_table_name(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected table_name to be a string"):
+            tables._delete_table(Mock())
+
+    def test_tables_delete_table_table_name_not_in_tables(self, tables: Tables):
+        # Setup
+        tables._tables.__contains__.return_value = False
+
+        # Do/Check
+        with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} not found"):
+            tables._delete_table(TestTables.TABLE_NAME)
+
+    def test_tables_flush_changes(self, tables: Tables):
         # Setup
         mock_connection = MagicMock()
         tables._tool.db_engine.connect.return_value = mock_connection
         tables._tables_to_save = {'1': Mock(), '2': Mock()}
         tables._tables_to_delete = {'3', '4'}
+        tables._tables = {'1', '2', '3', '4'}
         # Mock tables._tool._get_table_from_table_name
         mock_table = Mock()
         tables._tool.get_table_from_table_name.return_value = mock_table
@@ -217,7 +248,7 @@ class TestTables:
         tables._tool.get_table_from_table_name.assert_has_calls([call('3'), call('4')], any_order=True)
         mock_table.drop.assert_has_calls([call(tables._tool.db_engine), call(tables._tool.db_engine)])
 
-    def test_table_get_table_names_happy_path(self, tables: Tables):
+    def test_tables_get_table_names_happy_path(self, tables: Tables):
         # Setup
         mock_table_names = ['table_1', '__table_2', 'table_3', '__table_4']
         tables._tables = mock_table_names
@@ -229,7 +260,7 @@ class TestTables:
         assert table_names == ['table_1', 'table_3']
 
 
-    def test_table_get_table_names_all_tables(self, tables: Tables):
+    def test_tables_get_table_names_all_tables(self, tables: Tables):
         # Setup
         mock_table_names = ['table_1', '__table_2', 'table_3', '__table_4']
         tables._tables = mock_table_names
@@ -240,7 +271,7 @@ class TestTables:
         # Check
         assert table_names == mock_table_names
 
-    def test_table_get_table_names_non_bool_only_user_tables(self, tables: Tables):
+    def test_tables_get_table_names_non_bool_only_user_tables(self, tables: Tables):
         # Do/Check
         with pytest.raises(TypeError, match="Expected only_user_tables to be a boolean"):
             tables.get_table_names(Mock())

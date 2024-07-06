@@ -9,11 +9,21 @@ from coolNewLanguage.src.approvals.approve_state import ApproveState
 from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
 from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+from coolNewLanguage.src.approvals.table_deletion_approve_result import TableDeletionApproveResult
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util import db_utils, link_utils
+from coolNewLanguage.src.util import link_utils
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
+
+
+"""
+A list of ApproveResults to be inspected by the user
+This list is constructed by get_user_approvals when the approval page is being built, and then consumed by the approval
+handler when the user's approvals are being processed. It allows the two functions to communicate the list of results 
+that the user is being asked to approve.
+"""
+approve_results: list[ApproveResult] = []
 
 
 def get_user_approvals():
@@ -38,8 +48,15 @@ def get_user_approvals():
         form_method = 'post'
         form_enctype = 'multipart/form-data'
 
+        tool = process.running_tool
+
+        # Construct approve_results from tool.tables
+        # Create deletion results
+        for table in tool.tables._tables_to_delete:
+            approve_results.append(TableDeletionApproveResult(table, tool.get_table_dataframe(table)))
+
         Stage.approvals_template = template.render(
-            approve_results=process.approve_results,
+            approve_results=approve_results,
             form_action=approve_handler_url,
             form_method=form_method,
             form_enctype=form_enctype
@@ -54,6 +71,9 @@ async def approval_handler(request: web.Request) -> web.Response:
     :param request:
     :return:
     """
+    if not isinstance(request, web.Request):
+        raise TypeError("Expected request to be an aiohttp web.Request")
+
     process.get_user_approvals = False
     process.handling_user_approvals = True
 
@@ -61,22 +81,24 @@ async def approval_handler(request: web.Request) -> web.Response:
     process.approval_post_body = await request.post()
 
     # Iterate through the cached ApproveResults, processing each one as appropriate
-    approve_result: ApproveResult
-    for approve_result in process.approve_results:
-        if approve_result.approve_result_type == ApproveResultType.TABLE:
-            approve_result: TableApproveResult
-            handle_table_approve_result(approve_result)
-        elif approve_result.approve_result_type == ApproveResultType.ROW:
-            approve_result: RowApproveResult
-            handle_row_approve_result(approve_result)
-        elif approve_result.approve_result_type == ApproveResultType.LINK:
-            approve_result: LinkApproveResult
-            handle_link_approve_result(approve_result)
+    for approve_result in approve_results:
+        match approve_result:
+            case TableApproveResult():
+                handle_table_approve_result(approve_result)
+            case RowApproveResult():
+                handle_row_approve_result(approve_result)
+            case LinkApproveResult():
+                handle_link_approve_result(approve_result)
+            case TableDeletionApproveResult():
+                handle_table_deletion_approve_result(approve_result)
+            case _:
+                raise ValueError(f"Unknown ApproveResult type")
 
     # If there are results to show, call show_results on them to construct the results template
     results_template: str = ""
     if process.cached_show_results:
-        results.show_results(results=process.cached_show_results, results_title=process.cached_show_results_title)
+        results.show_results(*process.cached_show_results, results_title=process.cached_show_results_title)
+        # show_results sets the results_template on Stage, so we need to cache it and then reset it
         results_template = Stage.results_template
         Stage.results_template = None
 
@@ -88,6 +110,9 @@ async def approval_handler(request: web.Request) -> web.Response:
     process.cached_show_results = []
     process.cached_show_results_title = ""
     ApproveResult.num_approve_results = 0
+
+    # Remove cached changes from tool.tables
+    process.running_tool.tables._tables_to_delete.clear()
 
     # Show the cached results or return to landing page
     if results_template:
@@ -187,3 +212,20 @@ def handle_link_approve_result(link_approve_result: LinkApproveResult):
         link.dst_table_name,
         link.dst_row_id
     )
+
+def handle_table_deletion_approve_result(table_deletion_approve_result: TableDeletionApproveResult):
+    """
+    Handles a user-processed TableDeletionApproveResult
+    Checks to see if the table deletion was approved by the user, and commits it if so.
+    :param table_deletion_approve_result:
+    :return:
+    """
+    approve_result_name = f'approve_{table_deletion_approve_result.id}'
+    raw_approval_state = process.approval_post_body[approve_result_name]
+    approval_state = ApproveState.of_string(raw_approval_state)
+
+    if approval_state != ApproveState.APPROVED:
+        return
+
+    # Drop the table
+    process.running_tool.tables._delete_table(table_deletion_approve_result.table_name)

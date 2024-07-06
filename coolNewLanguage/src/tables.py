@@ -26,7 +26,7 @@ class Tables:
 
         # Fetch existing table names
         insp = sqlalchemy.inspect(tool.db_engine)
-        self._tables: list[str] = insp.get_table_names()
+        self._tables: set[str] = set(insp.get_table_names())
 
         self._tool: toolModule.Tool = tool
         self._tables_to_save: dict[str, pd.DataFrame] = {}
@@ -109,6 +109,24 @@ class Tables:
             return False
         return table_name in self._tables or table_name in self._tables_to_save
 
+    def _delete_table(self, table_name: str):
+        """
+        Deletes a table from the tool, ignoring any potential cached changes. Intended to be used by internal HiLT code,
+        and not by HiLT programmers.
+        :param table_name:
+        :return:
+        """
+        if not isinstance(table_name, str):
+            raise TypeError("Expected table_name to be a string")
+
+        if table_name not in self._tables:
+            raise KeyError(f"Table {table_name} not found")
+
+        table = self._tool.get_table_from_table_name(table_name)
+        table.drop(self._tool.db_engine)
+
+        self._tables.remove(table_name)
+
     def _flush_changes(self):
         """
         Flushes the changes to the underlying database. Tables to be added or modified are updated to the tool's
@@ -120,8 +138,7 @@ class Tables:
                 table.to_sql(name=table_name, con=conn, if_exists='replace')
 
             for table_name in self._tables_to_delete:
-                table = self._tool.get_table_from_table_name(table_name)
-                table.drop(self._tool.db_engine)
+                self._delete_table(table_name)
 
     def get_table_names(self, only_user_tables: bool = True):
         """

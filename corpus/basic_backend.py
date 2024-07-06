@@ -8,7 +8,6 @@ from coolNewLanguage.src.component.user_input_component import UserInputComponen
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util.db_utils import create_table_from_csv
 
 
 tool = Tool('basic_backend')

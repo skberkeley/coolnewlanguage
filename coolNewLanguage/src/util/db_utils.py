@@ -1,201 +1,169 @@
-import csv
-import datetime
-import enum
-from pathlib import Path
-
-import sqlalchemy
-import pandas as pd
-
-from coolNewLanguage.src import consts
-from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
-from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from typing import List, Tuple, Any, Iterator, Sequence, Optional
-
-from coolNewLanguage.src.stage import process
-import coolNewLanguage.src.tool as toolModule
-from coolNewLanguage.src.util.sql_alch_csv_utils import sqlalchemy_table_from_csv_file, \
-    sqlalchemy_insert_into_table_from_csv_file, filter_to_user_columns, DB_INTERNAL_COLUMN_ID_NAME
-
-
-PYTHON_TYPE_TO_SQLALCHEMY_TYPE: dict[type, type[sqlalchemy.types.TypeEngine]] = {
-    bool: sqlalchemy.types.Boolean,
-    datetime.date: sqlalchemy.types.Date,
-    datetime.datetime: sqlalchemy.types.DateTime,
-    enum.Enum: sqlalchemy.types.Enum,
-    float: sqlalchemy.types.Float,
-    int: sqlalchemy.types.Integer,
-    datetime.timedelta: sqlalchemy.types.Interval,
-    str: sqlalchemy.types.String,
-    datetime.time: sqlalchemy.types.Time
-}
-
-
-def create_table_from_csv(
-        table_name: UserInputComponent | str,
-        csv_file: FileUploadComponent,
-        has_header: bool = True,
-        overwrite_existing: bool = True,
-        get_user_approvals: bool = False
-) -> sqlalchemy.Table:
-    """
-    Create a table in the database of the tool, using the csv file as the source for the data
-    :param table_name: The name to use for the table being inserted
-    :param csv_file: The csv file to use as the data source
-    :param has_header: Whether the passed csv file has a header or not
-    :param overwrite_existing: Whether to overwrite an existing table with the same name
-    :param get_user_approvals: Whether to get user approvals before committing data
-    :return: The created table
-    """
-    if not isinstance(table_name, UserInputComponent) and not isinstance(table_name, str):
-        raise TypeError("Expected a User Input or a string for table name")
-    if isinstance(table_name, UserInputComponent) and table_name.value is None:
-        raise ValueError("Expected User Input to have a value for table name")
-    if isinstance(table_name, UserInputComponent) and not isinstance(table_name.value, str):
-        raise ValueError("Expected User Input value to be a string for table name")
-
-    if isinstance(table_name, UserInputComponent):
-        table_name = table_name.value
-
-    if table_name.startswith('__'):
-        raise ValueError("User created tables cannot begin with '__'")
-
-    # Check whether a table with the passed name already exists
-    tool: toolModule.Tool = process.running_tool
-    metadata = tool.db_metadata_obj
-    if table_name in tool.get_table_names():
-        table = tool.get_table_from_table_name(table_name)
-        if not overwrite_existing:
-            raise ValueError("A table with this name already exists")
-        else:
-            # drop existing table
-            table.drop(bind=tool.db_engine)
-            metadata.remove(table)
-
-    if not isinstance(csv_file, FileUploadComponent):
-        raise TypeError("Expected a File Upload for csv file")
-    if csv_file.value is None:
-        raise ValueError("Expected File Upload to have a value for csv file")
-    if not isinstance(csv_file.value, Path):
-        raise ValueError("Expected File Upload value to be a Path to a file")
-    if not isinstance(has_header, bool):
-        raise TypeError("Expected a bool for has_header")
-
-    # create table
-    metadata_obj: sqlalchemy.MetaData = tool.db_metadata_obj
-    with open(csv_file.value) as f:
-        table = sqlalchemy_table_from_csv_file(table_name, f, metadata_obj, has_header)
-
-    # If get_user_approvals is on, cache the table as an ApprovalResult
-    if get_user_approvals:
-        from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
-        # Convert csv file to a list of lists
-        with open(csv_file.value) as f:
-            data = [row for row in csv.reader(f)]
-        approve_result = TableApproveResult(data, table_name, table)
-        process.approve_results.append(approve_result)
-        return table
-
-    metadata_obj.create_all(tool.db_engine)
-    # insert data
-    with open(csv_file.value) as f:
-        insert_stmt = sqlalchemy_insert_into_table_from_csv_file(table, f, has_header)
-    with tool.db_engine.connect() as conn:
-        conn.execute(insert_stmt)
-        conn.commit()
-
-    return table
-
-
-def create_table_from_lists(
-        table_name: str,
-        data: list[list],
-        return_existing_table: bool = False,
-        overwrite_existing_table: bool = True,
-        get_user_approvals: bool = False
-) -> sqlalchemy.Table:
-    """
-    Create and commit a table in the database of the currently running tool, populating it with data passed in as a list
-    of lists. Assumes the first row contains the column names for the table.
-
-    :param table_name: The name to give the table
-    :param data: The data to use to populate the created table, passed as a list of lists
-    :param return_existing_table: A boolean describing whether to run if an existing table with the same name already
-        exists. If such a table exists, return that table.
-    :param overwrite_existing_table: A boolean describing whether to overwrite if an existing table with the same name
-        already exists.
-    :param get_user_approvals: A boolean describing whether to get user approvals for the table before saving it to the
-        database.
-    :return: The created sqlalchemy Table
-    """
-    # if not running process, exit
-    if not process.handling_post:
-        return
-
-    if not isinstance(table_name, str):
-        raise TypeError("Expected table_name to be a string")
-
-    if table_name.startswith('__'):
-        raise ValueError("User created tables cannot begin with '__'")
-
-    # Check whether a table with the passed name already exists
-    tool: toolModule.Tool = process.running_tool
-    metadata = tool.db_metadata_obj
-    if table_name in tool.get_table_names():
-        table = tool.get_table_from_table_name(table_name)
-        if return_existing_table:
-            return table
-        if not overwrite_existing_table:
-            raise ValueError("A table with this name already exists")
-        else:
-            # drop existing table
-            table.drop(bind=tool.db_engine)
-            metadata.remove(table)
-
-    if not isinstance(data, list):
-        raise TypeError("Expected data to be a list")
-    if not all([isinstance(row, list) for row in data]):
-        raise TypeError("Expected each element of data to be a list")
-    # Check that the first row is all strings, as it should be column names
-    if not all([isinstance(column_name, str) for column_name in data[0]]):
-        raise TypeError("Expected all the elements of the first row to be a string")
-
-    # Validate the shape of data
-    if not all([len(row) == len(data[0]) for row in data]):
-        raise ValueError("Expected all rows of data to have the same length")
-
-    # Create the table
-    cols = [sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)]
-    col_names = data[0]
-    for i, col_name in enumerate(col_names):
-        if col_name == '':
-            cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
-        else:
-            cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
-    table = sqlalchemy.Table(table_name, metadata, *cols, extend_existing=True)
-
-    # If get_user_approvals is on, cache the table as an ApprovalResult
-    if get_user_approvals:
-        from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
-        approve_result = TableApproveResult(data, table_name, table)
-        process.approve_results.append(approve_result)
-        return table
-
-    # Commit created table
-    metadata.create_all(tool.db_engine)
-
-    # Construct insert statement
-    records = []
-    for row in data[1:]:
-        record = {col_name: row[i] for i, col_name in enumerate(col_names)}
-        records.append(record)
-    insert_stmt = sqlalchemy.insert(table).values(records)
-
-    # Commit insert statement
-    with tool.db_engine.connect() as conn:
-        conn.execute(insert_stmt)
-        conn.commit()
-
-    return table
+# def create_table_from_csv(
+#         table_name: UserInputComponent | str,
+#         csv_file: FileUploadComponent,
+#         has_header: bool = True,
+#         overwrite_existing: bool = True,
+#         get_user_approvals: bool = False
+# ) -> sqlalchemy.Table:
+#     """
+#     Create a table in the database of the tool, using the csv file as the source for the data
+#     :param table_name: The name to use for the table being inserted
+#     :param csv_file: The csv file to use as the data source
+#     :param has_header: Whether the passed csv file has a header or not
+#     :param overwrite_existing: Whether to overwrite an existing table with the same name
+#     :param get_user_approvals: Whether to get user approvals before committing data
+#     :return: The created table
+#     """
+#     if not isinstance(table_name, UserInputComponent) and not isinstance(table_name, str):
+#         raise TypeError("Expected a User Input or a string for table name")
+#     if isinstance(table_name, UserInputComponent) and table_name.value is None:
+#         raise ValueError("Expected User Input to have a value for table name")
+#     if isinstance(table_name, UserInputComponent) and not isinstance(table_name.value, str):
+#         raise ValueError("Expected User Input value to be a string for table name")
+#
+#     if isinstance(table_name, UserInputComponent):
+#         table_name = table_name.value
+#
+#     if table_name.startswith('__'):
+#         raise ValueError("User created tables cannot begin with '__'")
+#
+#     # Check whether a table with the passed name already exists
+#     tool: toolModule.Tool = process.running_tool
+#     metadata = tool.db_metadata_obj
+#     if table_name in tool.get_table_names():
+#         table = tool.get_table_from_table_name(table_name)
+#         if not overwrite_existing:
+#             raise ValueError("A table with this name already exists")
+#         else:
+#             # drop existing table
+#             table.drop(bind=tool.db_engine)
+#             metadata.remove(table)
+#
+#     if not isinstance(csv_file, FileUploadComponent):
+#         raise TypeError("Expected a File Upload for csv file")
+#     if csv_file.value is None:
+#         raise ValueError("Expected File Upload to have a value for csv file")
+#     if not isinstance(csv_file.value, Path):
+#         raise ValueError("Expected File Upload value to be a Path to a file")
+#     if not isinstance(has_header, bool):
+#         raise TypeError("Expected a bool for has_header")
+#
+#     # create table
+#     metadata_obj: sqlalchemy.MetaData = tool.db_metadata_obj
+#     with open(csv_file.value) as f:
+#         table = sqlalchemy_table_from_csv_file(table_name, f, metadata_obj, has_header)
+#
+#     # If get_user_approvals is on, cache the table as an ApprovalResult
+#     if get_user_approvals:
+#         from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+#         # Convert csv file to a list of lists
+#         with open(csv_file.value) as f:
+#             data = [row for row in csv.reader(f)]
+#         approve_result = TableApproveResult(data, table_name, table)
+#         process.approve_results.append(approve_result)
+#         return table
+#
+#     metadata_obj.create_all(tool.db_engine)
+#     # insert data
+#     with open(csv_file.value) as f:
+#         insert_stmt = sqlalchemy_insert_into_table_from_csv_file(table, f, has_header)
+#     with tool.db_engine.connect() as conn:
+#         conn.execute(insert_stmt)
+#         conn.commit()
+#
+#     return table
+#
+#
+# def create_table_from_lists(
+#         table_name: str,
+#         data: list[list],
+#         return_existing_table: bool = False,
+#         overwrite_existing_table: bool = True,
+#         get_user_approvals: bool = False
+# ) -> sqlalchemy.Table:
+#     """
+#     Create and commit a table in the database of the currently running tool, populating it with data passed in as a list
+#     of lists. Assumes the first row contains the column names for the table.
+#
+#     :param table_name: The name to give the table
+#     :param data: The data to use to populate the created table, passed as a list of lists
+#     :param return_existing_table: A boolean describing whether to run if an existing table with the same name already
+#         exists. If such a table exists, return that table.
+#     :param overwrite_existing_table: A boolean describing whether to overwrite if an existing table with the same name
+#         already exists.
+#     :param get_user_approvals: A boolean describing whether to get user approvals for the table before saving it to the
+#         database.
+#     :return: The created sqlalchemy Table
+#     """
+#     # if not running process, exit
+#     if not process.handling_post:
+#         return
+#
+#     if not isinstance(table_name, str):
+#         raise TypeError("Expected table_name to be a string")
+#
+#     if table_name.startswith('__'):
+#         raise ValueError("User created tables cannot begin with '__'")
+#
+#     # Check whether a table with the passed name already exists
+#     tool: toolModule.Tool = process.running_tool
+#     metadata = tool.db_metadata_obj
+#     if table_name in tool.get_table_names():
+#         table = tool.get_table_from_table_name(table_name)
+#         if return_existing_table:
+#             return table
+#         if not overwrite_existing_table:
+#             raise ValueError("A table with this name already exists")
+#         else:
+#             # drop existing table
+#             table.drop(bind=tool.db_engine)
+#             metadata.remove(table)
+#
+#     if not isinstance(data, list):
+#         raise TypeError("Expected data to be a list")
+#     if not all([isinstance(row, list) for row in data]):
+#         raise TypeError("Expected each element of data to be a list")
+#     # Check that the first row is all strings, as it should be column names
+#     if not all([isinstance(column_name, str) for column_name in data[0]]):
+#         raise TypeError("Expected all the elements of the first row to be a string")
+#
+#     # Validate the shape of data
+#     if not all([len(row) == len(data[0]) for row in data]):
+#         raise ValueError("Expected all rows of data to have the same length")
+#
+#     # Create the table
+#     cols = [sqlalchemy.Column(DB_INTERNAL_COLUMN_ID_NAME, sqlalchemy.Integer, sqlalchemy.Identity(), primary_key=True)]
+#     col_names = data[0]
+#     for i, col_name in enumerate(col_names):
+#         if col_name == '':
+#             cols.append(sqlalchemy.Column(f'Col {i}', sqlalchemy.String))
+#         else:
+#             cols.append(sqlalchemy.Column(col_name, sqlalchemy.String))
+#     table = sqlalchemy.Table(table_name, metadata, *cols, extend_existing=True)
+#
+#     # If get_user_approvals is on, cache the table as an ApprovalResult
+#     if get_user_approvals:
+#         from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
+#         approve_result = TableApproveResult(data, table_name, table)
+#         process.approve_results.append(approve_result)
+#         return table
+#
+#     # Commit created table
+#     metadata.create_all(tool.db_engine)
+#
+#     # Construct insert statement
+#     records = []
+#     for row in data[1:]:
+#         record = {col_name: row[i] for i, col_name in enumerate(col_names)}
+#         records.append(record)
+#     insert_stmt = sqlalchemy.insert(table).values(records)
+#
+#     # Commit insert statement
+#     with tool.db_engine.connect() as conn:
+#         conn.execute(insert_stmt)
+#         conn.commit()
+#
+#     return table
 
 # def iterate_over_columns(tool: toolModule.Tool, table: sqlalchemy.Table, column_names: list[str]) -> Iterator[Tuple[int, Any]]:
 #     """
