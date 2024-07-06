@@ -41,6 +41,7 @@ class TestTableSelectorComponent:
         # Check fields
         assert table_selector_component.label == TestTableSelectorComponent.LABEL
         assert table_selector_component.only_user_tables
+        assert table_selector_component.table_name == TestTableSelectorComponent.TABLE_NAME
         # Check that the value was set to the dataframe of the table
         assert table_selector_component.value == mock_dataframe
 

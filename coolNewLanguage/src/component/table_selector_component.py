@@ -33,8 +33,8 @@ class TableSelectorComponent(InputComponent):
 
         # replace value with the chosen table's dataframe if handling post
         if process.handling_post:
-            table_name = self.value
-            self.value = process.running_tool.tables[table_name]
+            self.table_name = self.value
+            self.value = process.running_tool.tables[self.table_name]
 
     def paint(self) -> str:
         """
