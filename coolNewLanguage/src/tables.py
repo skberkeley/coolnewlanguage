@@ -17,6 +17,12 @@ class Tables:
     If a table is added/modified multiple times, then only the last change is saved.
     If a table is added/modified and then accessed, the modified version is returned.
     If a table is deleted and then accessed, a KeyError is raised.
+
+    _tables: A set of the table names currently saved in the Tool's database
+    _tool: The Tool object to which the tables belong
+    _tables_to_save: A dictionary of the tables to be added/modified, with the table name as the keys and the pandas
+    DataFrame as the values
+    _tables_to_delete: A set of the table names to be deleted
     """
     __slots__ = ('_tables', '_tool', '_tables_to_save', '_tables_to_delete')
 
@@ -109,6 +115,29 @@ class Tables:
             return False
         return table_name in self._tables or table_name in self._tables_to_save
 
+    def _save_table(self, table_name: str, df: pd.DataFrame, conn: typing.Optional[sqlalchemy.Connection] = None):
+        """
+        Saves a table to the tool, ignoring any potential cached changes. Intended to be used by internal HiLT code, and
+        not by HiLT programmers.
+        :param table_name:
+        :param df:
+        :return:
+        """
+        if not isinstance(table_name, str):
+            raise TypeError("Expected table_name to be a string")
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("Expected df to be a pandas DataFrame")
+        if conn is not None and not isinstance(conn, sqlalchemy.Connection):
+            raise TypeError("Expected conn to be a sqlalchemy Connection object or None")
+
+        if conn:
+            df.to_sql(name=table_name, con=conn, if_exists='replace')
+        else:
+            with self._tool.db_engine.connect() as conn:
+                df.to_sql(name=table_name, con=conn, if_exists='replace')
+
+        self._tables.add(table_name)
+
     def _delete_table(self, table_name: str):
         """
         Deletes a table from the tool, ignoring any potential cached changes. Intended to be used by internal HiLT code,
@@ -135,10 +164,18 @@ class Tables:
         """
         with self._tool.db_engine.connect() as conn:
             for table_name, table in self._tables_to_save.items():
-                table.to_sql(name=table_name, con=conn, if_exists='replace')
+                self._save_table(table_name, table, conn)
 
-            for table_name in self._tables_to_delete:
-                self._delete_table(table_name)
+        for table_name in self._tables_to_delete:
+            self._delete_table(table_name)
+
+    def _clear_changes(self):
+        """
+        Clears the cached changes to the tables. Intended to be used by internal HiLT code, and not by HiLT programmers.
+        :return:
+        """
+        self._tables_to_save.clear()
+        self._tables_to_delete.clear()
 
     def get_table_names(self, only_user_tables: bool = True):
         """

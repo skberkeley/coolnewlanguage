@@ -3,6 +3,7 @@ from unittest.mock import Mock, MagicMock, patch, call
 
 import pandas as pd
 import pytest
+import sqlalchemy
 
 import coolNewLanguage.src.tool as tool
 from coolNewLanguage.src.tables import Tables
@@ -191,6 +192,57 @@ class TestTables:
         # Do/Check
         assert TestTables.TABLE_NAME not in tables
 
+    def test_save_table_with_connection_happy_path(self, tables: Tables):
+        # Setup
+        mock_connection = Mock(spec=sqlalchemy.Connection)
+        mock_dataframe = Mock(spec=pd.DataFrame)
+
+        # Do
+        tables._save_table(TestTables.TABLE_NAME, mock_dataframe, mock_connection)
+
+        # Check
+        mock_dataframe.to_sql.assert_called_once_with(
+            name=TestTables.TABLE_NAME,
+            con=mock_connection,
+            if_exists='replace'
+        )
+
+        tables._tables.add.assert_called_once_with(TestTables.TABLE_NAME)
+
+    def test_save_table_no_connection_happy_path(self, tables: Tables):
+        # Setup
+        # Mock tables._tool._db_engine.connect
+        mock_connection = MagicMock()
+        tables._tool.db_engine.connect.return_value = mock_connection
+        mock_dataframe = Mock(spec=pd.DataFrame)
+
+        # Do
+        tables._save_table(TestTables.TABLE_NAME, mock_dataframe)
+
+        # Check
+        mock_dataframe.to_sql.assert_called_once_with(
+            name=TestTables.TABLE_NAME,
+            con=mock_connection.__enter__.return_value,
+            if_exists='replace'
+        )
+
+        tables._tables.add.assert_called_once_with(TestTables.TABLE_NAME)
+
+    def test_save_table_non_string_table_name(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected table_name to be a string"):
+            tables._save_table(Mock(), Mock(spec=pd.DataFrame))
+
+    def test_save_table_non_dataframe_df(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected df to be a pandas DataFrame"):
+            tables._save_table(TestTables.TABLE_NAME, Mock())
+
+    def test_save_table_non_connection_conn(self, tables: Tables):
+        # Do/Check
+        with pytest.raises(TypeError, match="Expected conn to be a sqlalchemy Connection object or None"):
+            tables._save_table(TestTables.TABLE_NAME, Mock(spec=pd.DataFrame), Mock())
+
     def test_tables_delete_table_happy_path(self, tables: Tables):
         # Setup
         tables._tables.__contains__.return_value = True
@@ -219,7 +271,9 @@ class TestTables:
         with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} not found"):
             tables._delete_table(TestTables.TABLE_NAME)
 
-    def test_tables_flush_changes(self, tables: Tables):
+    @patch('coolNewLanguage.src.tables.Tables._delete_table')
+    @patch('coolNewLanguage.src.tables.Tables._save_table')
+    def test_tables_flush_changes(self, mock_save_table: MagicMock, mock_delete_table: MagicMock, tables: Tables):
         # Setup
         mock_connection = MagicMock()
         tables._tool.db_engine.connect.return_value = mock_connection
@@ -234,19 +288,27 @@ class TestTables:
         tables._flush_changes()
 
         # Check
-        tables._tables_to_save['1'].to_sql.assert_called_once_with(
-            name='1',
-            con=mock_connection.__enter__.return_value,
-            if_exists='replace'
-        )
-        tables._tables_to_save['2'].to_sql.assert_called_once_with(
-            name='2',
-            con=mock_connection.__enter__.return_value,
-            if_exists='replace'
+        mock_save_table.assert_has_calls(
+            [
+                call('1', tables._tables_to_save['1'], mock_connection.__enter__.return_value),
+                call('2', tables._tables_to_save['2'], mock_connection.__enter__.return_value)
+            ],
+            any_order=True
         )
 
-        tables._tool.get_table_from_table_name.assert_has_calls([call('3'), call('4')], any_order=True)
-        mock_table.drop.assert_has_calls([call(tables._tool.db_engine), call(tables._tool.db_engine)])
+        mock_delete_table.assert_has_calls([call('3'), call('4')], any_order=True)
+
+    def test_clear_changes(self, tables: Tables):
+        # Setup
+        tables._tables_to_save = {'1': Mock(), '2': Mock()}
+        tables._tables_to_delete = {'3', '4'}
+
+        # Do
+        tables._clear_changes()
+
+        # Check
+        assert tables._tables_to_save == {}
+        assert tables._tables_to_delete == set()
 
     def test_tables_get_table_names_happy_path(self, tables: Tables):
         # Setup

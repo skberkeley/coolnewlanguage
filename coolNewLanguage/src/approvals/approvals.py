@@ -51,9 +51,15 @@ def get_user_approvals():
         tool = process.running_tool
 
         # Construct approve_results from tool.tables
+        approve_results.clear()
         # Create deletion results
         for table in tool.tables._tables_to_delete:
             approve_results.append(TableDeletionApproveResult(table, tool.get_table_dataframe(table)))
+        # Create table approve results
+        for table, df in tool.tables._tables_to_save.items():
+            approve_results.append(TableApproveResult(table, df))
+        # Clear the cached changes since they're now in approve_results
+        tool.tables._clear_changes()
 
         Stage.approvals_template = template.render(
             approve_results=approve_results,
@@ -129,30 +135,22 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
     """
     # Filter the rows that were approved
     approved_rows = []
-    for i, row in enumerate(table_approve_result.rows):
-        approve_result_name = f'approve_{table_approve_result.id}_{i + 1}'
+    for index, _ in table_approve_result.dataframe.iterrows():
+        approve_result_name = f'approve_{table_approve_result.id}_{index}'
         raw_approval_state = process.approval_post_body[approve_result_name]
         approval_state = ApproveState.of_string(raw_approval_state)
         if approval_state == ApproveState.APPROVED:
-            approved_rows.append(row)
+            approved_rows.append(index)
 
     # If there were no approved rows, then return early
     if len(approved_rows) == 0:
         return
 
-    # Create the associated table in the db
-    tool: Tool = process.running_tool
-    tool.db_metadata_obj.create_all(tool.db_engine, [table_approve_result.sqlalchemy_table])
+    # Filter the dataframe to only include the approved rows
+    df = table_approve_result.dataframe.loc[approved_rows]
 
-    # Construct an insert statement for the approved rows
-    records = [{col_name: row[i] for i, col_name in enumerate(table_approve_result.column_names)} for row in approved_rows]
-    insert_stmt = sqlalchemy.insert(table_approve_result.sqlalchemy_table).values(records)
-
-    # Execute the constructed insert statement
-    with tool.db_engine.connect() as conn:
-        conn.execute(insert_stmt)
-        conn.commit()
-
+    # Save the dataframe using tool.tables
+    process.running_tool.tables._save_table(table_approve_result.table_name, df)
 
 def handle_row_approve_result(row_approve_result: RowApproveResult):
     """

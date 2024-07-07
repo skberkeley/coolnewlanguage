@@ -17,6 +17,7 @@ def approve_table_from_list_list():
         tool.tables["Names"] = df
 
     LambdaProcessor(create_table)
+    approvals.get_user_approvals()
 
 tool.add_stage('table_results', approve_table_from_list_list)
 

@@ -144,6 +144,7 @@ class Stage:
 
         # Flush changes cached in the running tool's Tables instance
         process.running_tool.tables._flush_changes()
+        process.running_tool.tables._clear_changes()
 
         # If the results template is set, redirect to that
         if Stage.results_template is not None:

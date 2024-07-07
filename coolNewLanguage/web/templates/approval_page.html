@@ -60,28 +60,28 @@
                 </tr>
             </thead>
             <tbody>
-                {% for row in approve_result.rows %}
+                {% for index, row in approve_result.dataframe.iterrows() %}
                 <tr>
                     <td>
                         <label>
                             ✓
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="approve">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="approve">
                         </label>
                     </td>
                     <td>
                         <label>
                             ✘
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="reject">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="reject">
                         </label>
                     </td>
                     <td>
                         <label>
                             ?
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ loop.index }}" value="pending" checked>
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="pending" checked>
                         </label>
                     </td>
-                    {% for value in row %}
-                    <td>{{ value }}</td>
+                    {% for column_name in approve_result.column_names %}
+                    <td>{{ row[column_name] }}</td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
