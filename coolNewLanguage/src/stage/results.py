@@ -1,6 +1,7 @@
 from typing import List, Any
 
 import jinja2
+import pandas as pd
 import sqlalchemy
 
 from coolNewLanguage.src import consts
@@ -106,22 +107,20 @@ def result_template_of_value(value) -> str:
     match value:
         case sqlalchemy.Table():
             return result_template_of_sql_alch_table(value)
-        case ColumnSelectorComponent() as cols:
-            return result_template_of_column_list(cols)
         case [*cells] if all([isinstance(c, Cell) for c in cells]):
             return result_template_of_cell_list(cells)
         case [*rows] if all([isinstance(r, Row) for r in rows]):
             return result_template_of_row_list(rows)
         case [*rows] if all([isinstance(r, list) for r in rows]):
             return result_template_of_list_list(rows)
-        case ColumnSelectorComponent():
-            return result_template_of_column_list([value])
         case InputComponent():
             return result_template_of_value(value.value)
         case Link():
             return result_template_of_link(value)
         case [*links] if all(isinstance(l, Link) for l in links):
             return "\n".join(result_template_of_link(l) for l in links)
+        case pd.DataFrame():
+            return result_template_of_dataframe(value)
         case _:
             return str(value)
 
@@ -155,7 +154,7 @@ def result_template_of_column_list(cols: ColumnSelectorComponent) -> str:
     if not isinstance(cols, ColumnSelectorComponent):
         raise TypeError("Expected cols to be a ColumnSelectorComponent")
 
-    table: sqlalchemy.Table = db_utils.get_table_from_table_name(process.running_tool, cols.table_name)
+    table: sqlalchemy.Table = process.running_tool.get_table_from_table_name(cols.table_name)
     sqlalchemy_cols = [table.c[col] for col in cols.value]
     stmt = sqlalchemy.select(*sqlalchemy_cols)
 
@@ -246,3 +245,11 @@ def result_template_of_link(link: Link) -> str:
         return ""
 
     return html_utils.html_of_link(link)
+
+def result_template_of_dataframe(df: pd.DataFrame) -> str:
+    """
+    Construct an HTML snippet of a pandas DataFrame
+    :param df:
+    :return:
+    """
+    return df.to_html()

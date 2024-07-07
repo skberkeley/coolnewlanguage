@@ -1,3 +1,5 @@
+import pandas as pd
+
 from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
 from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
 from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
@@ -6,7 +8,6 @@ from coolNewLanguage.src.component.user_input_component import UserInputComponen
 from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util.db_utils import create_table_from_csv
 
 
 tool = Tool('basic_backend')
@@ -22,7 +23,9 @@ def csv_upload_and_name():
     csv_file = FileUploadComponent('csv', label="Upload a csv file:")
 
     def create_table():
-        return create_table_from_csv(table_name, csv_file, True)
+        df = pd.read_csv(csv_file.value)
+        tool.tables[table_name.value] = df
+        return df
     created_table = LambdaProcessor(create_table).result
     results.show_results((created_table, "Created table: "))
 

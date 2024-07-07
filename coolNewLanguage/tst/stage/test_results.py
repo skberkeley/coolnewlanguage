@@ -68,60 +68,93 @@ class TestResults:
         # Reset process.handling_post as part of cleanup
         process.handling_post = False
 
-    def test_show_results_non_string_results_title(self):
-        # Do, Check
-        with pytest.raises(TypeError, match="Expected results_title to be a string"):
-            show_results([], results_title=Mock())
-
+    @patch('coolNewLanguage.src.stage.results.result_template_of_value')
     @patch('coolNewLanguage.src.stage.process.running_tool')
-    def test_show_results_not_handling_post(
-            self,
-            mock_running_tool: Mock
-    ):
-        # Setup
-        # Mock the Jinja get_template method
-        mock_running_tool.jinja_environment = Mock()
-        mock_running_tool.jinja_environment.get_template = Mock()
-
-        # Do
-        show_results([], results_title=TestResults.TITLE)
-
-        # Check
-        # Check that get_template wasn't called
-        mock_running_tool.jinja_environment.get_template.assert_not_called()
-
-    @patch('coolNewLanguage.src.stage.process.running_tool')
-    def test_show_results_empty_results_title(self, mock_running_tool: Mock):
+    def test_show_results_tuple_result_happy_path(self, mock_running_tool: Mock, mock_result_template_of_value: Mock):
         # Setup
         # Set process.handling_post to True so show_results doesn't return early
         process.handling_post = True
+        # Mock result_template_of_value function
+        mock_result_template_of_value.return_value = TestResults.RESULT_HTML
         # Create a mock Jinja template
-        mock_template = Mock(jinja2.Template)
-        mock_rendered_template = Mock(spec=str)
-        mock_template.render = Mock(return_value=mock_rendered_template)
+        mock_render = Mock()
+        mock_template = Mock(spec=jinja2.Template, render=mock_render)
         # Mock the Jinja get_template method
-        mock_running_tool.jinja_environment = Mock()
-        mock_get_template = Mock(return_value=mock_template)
-        mock_running_tool.jinja_environment.get_template = mock_get_template
-        # Mock some results
-        mock_result = Mock(spec=Result)
-        mock_results = [mock_result]
+        mock_running_tool.jinja_environment = Mock(get_template=Mock(return_value=mock_template))
 
         # Do
-        show_results(mock_results)
+        mock_value = Mock()
+        show_results((mock_value, TestResults.LABEL), results_title=TestResults.TITLE)
 
         # Check
-        # Check that the jinja template was loaded from the right file
-        mock_get_template.assert_called_with(name=consts.STAGE_RESULTS_TEMPLATE_FILENAME)
-        # Check that the template's render was called as expected
-        mock_template.render.assert_called_with(
-            results_title="Results",
-            results=[mock_result]
-        )
-        # Check that the rendered template was set on Stage
-        assert Stage.results_template == mock_rendered_template
-        # Reset process.handling_post as part of cleanup
+        # Check result_template_of_value was called with the correct arguments
+        mock_result_template_of_value.assert_called_with(mock_value)
+        # Check template.render was called with the correct arguments
+        expected_result = Result(mock_value, TestResults.LABEL)
+        expected_result.html_value = TestResults.RESULT_HTML
+        mock_render.assert_called_with(results_title=TestResults.TITLE, results=[expected_result])
+
+    @patch('coolNewLanguage.src.stage.results.result_template_of_value')
+    @patch('coolNewLanguage.src.stage.process.running_tool')
+    def test_show_results_tuple_result_happy_path(self, mock_running_tool: Mock, mock_result_template_of_value: Mock):
+        # Setup
+        # Set process.handling_post to True so show_results doesn't return early
+        process.handling_post = True
+        # Mock result_template_of_value function
+        mock_result_template_of_value.return_value = TestResults.RESULT_HTML
+        # Create a mock Jinja template
+        mock_render = Mock()
+        mock_template = Mock(spec=jinja2.Template, render=mock_render)
+        # Mock the Jinja get_template method
+        mock_running_tool.jinja_environment = Mock(get_template=Mock(return_value=mock_template))
+
+        # Do
+        mock_value = Mock()
+        show_results(mock_value)
+
+        # Check
+        # Check result_template_of_value was called with the correct arguments
+        mock_result_template_of_value.assert_called_with(mock_value)
+        # Check template.render was called with the correct arguments
+        expected_result = Result(mock_value)
+        expected_result.html_value = TestResults.RESULT_HTML
+        mock_render.assert_called_with(results_title='Results', results=[expected_result])
+
+    def test_show_results_non_string_results_title(self):
+        # Do, Check
+        with pytest.raises(TypeError, match="Expected results_title to be a string"):
+            show_results(results_title=Mock())
+
+    def test_show_results_not_handling_post(self):
+        # Setup
+        # Set to handling_post and handling_user_approvals to False so show_results returns early
         process.handling_post = False
+        process.handling_user_approvals = False
+
+        # Do
+        show_results(results_title=TestResults.TITLE)
+
+        # Check
+        # Check that Stage.results_template is still None
+        assert Stage.results_template is None
+
+    def test_show_results_approvals_set(self):
+        # Setup
+        process.handling_post = True
+        # Set process.get_user_approvals to True so show_results caches the results
+        process.get_user_approvals = True
+
+        # Do
+        mock_value = Mock()
+        result = Result(mock_value, TestResults.LABEL)
+        results.show_results(result, results_title=TestResults.TITLE)
+
+        # Check
+        assert process.cached_show_results == [result]
+        assert process.cached_show_results_title == TestResults.TITLE
+        assert Stage.results_template is None
+
+        process.get_user_approvals = False
 
     @patch('coolNewLanguage.src.stage.results.template_from_select_statement')
     @patch('sqlalchemy.select')
@@ -218,4 +251,15 @@ class TestResults:
                 {TestResults.COL_NAME1: "Carol", TestResults.COL_NAME2: "Christ"}
             ]
         )
+        assert TestResults.RESULT_HTML == result_html
+
+    def test_result_template_of_dataframe(self):
+        # Setup
+        # Mock dataframe
+        mock_df = Mock(to_html=Mock(return_value=TestResults.RESULT_HTML))
+
+        # Do
+        result_html = results.result_template_of_dataframe(mock_df)
+
+        # Check
         assert TestResults.RESULT_HTML == result_html

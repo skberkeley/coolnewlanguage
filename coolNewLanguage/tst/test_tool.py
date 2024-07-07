@@ -1,22 +1,19 @@
 import asyncio
 import os.path
 import pathlib
-from unittest.mock import patch, Mock, NonCallableMock, call
+from unittest.mock import patch, Mock, NonCallableMock, call, MagicMock
 
 import pytest
 import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
-from coolNewLanguage.src.cnl_type.cnl_type import CNLType
-from coolNewLanguage.src.cnl_type.field import Field
-from coolNewLanguage.src.cnl_type.link_metatype import LinkMetatype
 from coolNewLanguage.src.consts import TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
     LANDING_PAGE_STAGES
 from coolNewLanguage.src.stage import process
-from coolNewLanguage.src.tool import Tool
+import coolNewLanguage.src.tool as toolModule
+Tool = toolModule.Tool
 from coolNewLanguage.src.web_app import WebApp
-from coolNewLanguage.tst.cnl_type.cnl_type_test_utils import MyFirstType
 
 
 class TestTool:
@@ -27,6 +24,7 @@ class TestTool:
     STAGE_URL = "the_wizard_of_woz"
     FILE_DIR_PATH = "a/real/path"
 
+    @patch('coolNewLanguage.src.tool.tables')
     @patch('aiohttp_jinja2.setup')
     @patch('jinja2.Environment')
     @patch('jinja2.FileSystemLoader')
@@ -36,6 +34,7 @@ class TestTool:
                              mock_FileSystemLoader: Mock,
                              mock_Environment: Mock,
                              mock_aiohttp_jinja2_setup: Mock,
+                             mock_tables_module: Mock,
                              tmp_path: pathlib.Path,
                              monkeypatch):
         # Setup
@@ -43,9 +42,12 @@ class TestTool:
         mock_environment = mock_Environment.return_value
         # Monkey patch DATA_DIR so that the database is created in tmp_path
         monkeypatch.setattr('coolNewLanguage.src.tool.DATA_DIR', tmp_path)
-        # Monkey patch db_utils.db_awaken so that we can verify it was called
+        # Monkey patch the db_awaken method so that it doesn't actually do anything
         mock_db_awaken = Mock()
-        monkeypatch.setattr('coolNewLanguage.src.util.db_utils.db_awaken', mock_db_awaken)
+        monkeypatch.setattr('coolNewLanguage.src.tool.Tool.db_awaken', mock_db_awaken)
+        # Mock the Tables class
+        mock_tables = Mock()
+        mock_tables_module.Tables = Mock(return_value=mock_tables)
 
         # Do
         tool = Tool(tool_name=TestTool.TOOL_NAME, url=TestTool.TOOL_URL)
@@ -84,7 +86,7 @@ class TestTool:
         # metadata obj was created
         assert isinstance(tool.db_metadata_obj, sqlalchemy.MetaData)
         # db_awaken was called
-        mock_db_awaken.assert_called_with(tool)
+        mock_db_awaken.assert_called_with()
         # file_dir was set correctly
         expected_file_dir = consts.FILES_DIR.joinpath(TestTool.TOOL_NAME)
         assert tool.file_dir == expected_file_dir
@@ -92,6 +94,9 @@ class TestTool:
         assert os.path.exists(expected_file_dir)
         # tool has an empty state dictionary
         assert tool.state == {}
+        # tool has a Tables instance
+        assert tool.tables is mock_tables
+        mock_tables_module.Tables.assert_called_with(tool)
 
     @patch.object(WebApp, 'add_static_file_handler')
     @patch('aiohttp_jinja2.setup')
@@ -171,11 +176,14 @@ class TestTool:
 
 
     @pytest.fixture
+    @patch('coolNewLanguage.src.tool.tables')
     @patch.object(WebApp, 'add_static_file_handler')
-    def tool(self, mock_add_static_file_handler: Mock, tmp_path: pathlib.Path, monkeypatch) -> Tool:
+    def tool(self, mock_add_static_file_handler: Mock, mock_tables_module: Mock, tmp_path: pathlib.Path, monkeypatch) -> Tool:
         # Monkey patch DATA_DIR so that the database is created in tmp_path
         monkeypatch.setattr('coolNewLanguage.src.tool.DATA_DIR', tmp_path)
         monkeypatch.setattr('coolNewLanguage.src.tool.STATIC_FILE_DIR', tmp_path)
+
+        mock_tables_module.Tables = Mock(return_value=MagicMock())
 
         return Tool(tool_name=TestTool.TOOL_NAME, url=TestTool.TOOL_URL)
 
@@ -256,36 +264,6 @@ class TestTool:
         with pytest.raises(TypeError, match="Expected request to be an aiohttp web Request"):
             asyncio.run(tool.landing_page(Mock()))
 
-    @patch('coolNewLanguage.src.util.link_utils.register_link_metatype_on_tool')
-    @patch('coolNewLanguage.src.util.db_utils.create_table_if_not_exists')
-    @patch.object(CNLType, 'CNL_type_to_fields')
-    def test_create_table(
-            self,
-            mock_CNL_type_to_fields: Mock,
-            mock_create_table_if_not_exists: Mock,
-            mock_register_link_metatype: Mock,
-            tool: Tool):
-        # Setup
-        field1, field2 = Mock(spec=Field), Mock(spec=Field)
-        link_name = 'Zelda'
-        link_field = Mock(spec=Field, data_type=Mock(spec=LinkMetatype, meta_name=link_name))
-        table_name = 'cool_new_table'
-        # Mock MyFirstType's CNL_type_to_fields
-        mock_CNL_type_to_fields.return_value = {'field1': field1, 'field2': field2, 'link_field': link_field}
-
-        # Do
-        tool.create_table(table_name, MyFirstType)
-
-        # Check
-        # Check that create table was called
-        mock_create_table_if_not_exists.assert_called_with(
-            tool=tool,
-            table_name=table_name,
-            fields={'field1': field1, 'field2': field2}
-        )
-        # Check that register_link_metatype was called
-        mock_register_link_metatype.assert_called_with(tool=tool, link_meta_name=link_name)
-
     TABLE_NAME = 'cool_new_table'
     GET_TABLE_CONTEXT = 'get_table_context'
     COMPONENT_ID = 'component_id'
@@ -293,7 +271,7 @@ class TestTool:
 
     @patch('coolNewLanguage.src.tool.web')
     @patch('coolNewLanguage.src.tool.process')
-    def test_get_table_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+    def test_get_table_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool, monkeypatch):
         # Setup
         # Mock web.Request so that the type check doesn't error
         mock_web.Request = web.Request
@@ -305,11 +283,13 @@ class TestTool:
             'component_id': TestTool.COMPONENT_ID,
             'table_transient_id': TestTool.TABLE_TRANSIENT_ID
         }
-        # Prepare to patch db_utils.get_table_from_table_name
+        # Monkeypatch get_table_from_table_name so that it returns a mock sqlalchemy table
         mock_sqlalchemy_table = Mock()
         mock_get_table_from_table_name = Mock(return_value=mock_sqlalchemy_table)
-        mock_db_utils = Mock(get_table_from_table_name=mock_get_table_from_table_name)
-        mock_utils = Mock(db_utils=mock_db_utils)
+        monkeypatch.setattr(
+            'coolNewLanguage.src.tool.Tool.get_table_from_table_name',
+            mock_get_table_from_table_name
+        )
         # Mock get_template behavior
         mock_jinja_template = Mock()
         mock_get_template = Mock(return_value=mock_jinja_template)
@@ -320,7 +300,7 @@ class TestTool:
         mock_template = Mock()
         mock_html_of_table = Mock(return_value=mock_template)
         mock_html_utils = Mock(html_of_table=mock_html_of_table)
-        mock_utils.html_utils = mock_html_utils
+        mock_utils = Mock(html_utils=mock_html_utils)
         # Mock web.Response
         mock_response_instance = Mock()
         mock_Response = Mock(return_value=mock_response_instance)
@@ -332,7 +312,7 @@ class TestTool:
 
         # Check
         # Check that get_table_from_table_name was called with the expected arguments
-        mock_get_table_from_table_name.assert_called_with(tool=tool, table_name=TestTool.TABLE_NAME)
+        mock_get_table_from_table_name.assert_called_with(TestTool.TABLE_NAME)
         # Check that the correct template was fetched
         mock_get_template.assert_called_with(name=consts.TABLE_RESULT_TEMPLATE_FILENAME)
         # Check that html_of_table was called with the expected arguments
@@ -400,7 +380,7 @@ class TestTool:
             asyncio.run(tool.get_table(request))
 
     @patch('coolNewLanguage.src.tool.web')
-    def test_get_table_table_not_found(self, mock_web: Mock, tool: Tool):
+    def test_get_table_table_not_found(self, mock_web: Mock, tool: Tool, monkeypatch):
         # Setup
         # Mock web.Request so that the type check doesn't error
         mock_web.Request = web.Request
@@ -412,18 +392,15 @@ class TestTool:
             'component_id': TestTool.COMPONENT_ID,
             'table_transient_id': TestTool.TABLE_TRANSIENT_ID
         }
-        # Prepare to patch db_utils.get_table_from_table_name
-        mock_get_table_from_table_name = Mock(return_value=None)
-        mock_db_utils = Mock(get_table_from_table_name=mock_get_table_from_table_name)
-        mock_utils = Mock(db_utils=mock_db_utils)
+        # Monkey patch get_table_from_table_name
+        monkeypatch.setattr('coolNewLanguage.src.tool.Tool.get_table_from_table_name', Mock(return_value=None))
         # Mock web.Response
         mock_response_instance = Mock()
         mock_Response = Mock(return_value=mock_response_instance)
         mock_web.Response = mock_Response
 
         # Do
-        with patch.dict('sys.modules', {'coolNewLanguage.src.util': mock_utils}):
-            response = asyncio.run(tool.get_table(request))
+        response = asyncio.run(tool.get_table(request))
 
         # Check
         mock_Response.assert_called_with(body="Table not found", status=404)
@@ -431,7 +408,7 @@ class TestTool:
 
     @patch('coolNewLanguage.src.tool.web')
     @patch('coolNewLanguage.src.tool.process')
-    def test_get_table_table_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+    def test_get_table_table_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool, monkeypatch):
         # Setup
         # Mock web.Request so that the type check doesn't error
         mock_web.Request = web.Request
@@ -443,6 +420,8 @@ class TestTool:
             'component_id': TestTool.COMPONENT_ID,
             'table_transient_id': TestTool.TABLE_TRANSIENT_ID
         }
+        # Monkey patch get_table_from_table_name
+        monkeypatch.setattr('coolNewLanguage.src.tool.Tool.get_table_from_table_name', Mock())
         # Mock get_template behavior
         mock_get_template = Mock()
         mock_jinja_environment = Mock(get_template=mock_get_template)
@@ -461,7 +440,7 @@ class TestTool:
 
     @patch('coolNewLanguage.src.tool.web')
     @patch('coolNewLanguage.src.tool.process')
-    def test_get_table_column_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool):
+    def test_get_table_column_select_happy_path(self, mock_process: Mock, mock_web: Mock, tool: Tool, monkeypatch):
         # Setup
         # Mock web.Request so that the type check doesn't error
         mock_web.Request = web.Request
@@ -473,6 +452,8 @@ class TestTool:
             'component_id': TestTool.COMPONENT_ID,
             'table_transient_id': TestTool.TABLE_TRANSIENT_ID
         }
+        # Monkey patch get_table_from_table_name
+        monkeypatch.setattr('coolNewLanguage.src.tool.Tool.get_table_from_table_name', Mock())
         # Mock get_template behavior
         mock_get_template = Mock()
         mock_jinja_environment = Mock(get_template=mock_get_template)

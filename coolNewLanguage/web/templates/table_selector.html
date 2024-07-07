@@ -19,7 +19,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for row in table["rows"][:num_preview_rows] %}
+                    {% for _, row in table["rows"].iterrows() %}
                         <tr>
                             {% for col in table["cols"][:num_preview_cols] %}
                             <td>{{ row[col] }}</td>

@@ -15,8 +15,6 @@ Attributes:
     get_user_approvals: bool
         Whether the stage currently being processed is one that requires user approvals, in which case we cache changes
         to the db inside approve_results
-    approve_results: list[ApproveResult]
-        A list of cached changes to the db, in the form of ApproveResult objects
     curr_stage_url: str
         The url of the stage currently being processed, used to generate the url which approval results are sent to
     approval_post_body: dict
@@ -34,7 +32,6 @@ running_tool: 'Tool' = None
 handling_post: bool = False
 post_body: dict = None
 get_user_approvals: bool = False
-approve_results: list['ApproveResult'] = []
 curr_stage_url: str = ""
 approval_post_body: dict = None
 cached_show_results: list['Result'] = []
