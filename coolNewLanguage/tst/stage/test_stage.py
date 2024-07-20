@@ -1,6 +1,6 @@
 import asyncio
 import urllib.parse
-from unittest.mock import Mock, patch, NonCallableMock, AsyncMock
+from unittest.mock import Mock, patch, NonCallableMock, AsyncMock, MagicMock
 
 import jinja2
 import pytest
@@ -8,7 +8,7 @@ from aiohttp import web
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.component.component import Component
-from coolNewLanguage.src.stage import config, process
+from coolNewLanguage.src.stage import config
 from coolNewLanguage.src.stage.stage import Stage
 
 
@@ -36,6 +36,11 @@ class TestStage:
         # Do, Check
         with pytest.raises(TypeError, match="Expected stage_func to be callable"):
             Stage(TestStage.STAGE_NAME, NonCallableMock())
+
+    def test_stage_name_starts_with_underscore(self):
+        # Do, Check
+        with pytest.raises(ValueError, match="Stage names cannot begin with underscores"):
+            Stage(f"_{TestStage.STAGE_NAME}", TestStage.STAGE_FUNC)
 
     @pytest.fixture
     @patch('urllib.parse.quote')
@@ -109,7 +114,14 @@ class TestStage:
         return Mock(spec=web.Request)
 
     @patch.object(web, 'Response')
-    def test_post_handler_results_is_set_happy_path(self, mock_Response: Mock, stage: Stage, mock_request: Mock):
+    @patch('coolNewLanguage.src.stage.stage.process')
+    def test_post_handler_results_is_set_happy_path(
+            self,
+            mock_process: MagicMock,
+            mock_Response: Mock,
+            stage: Stage,
+            mock_request: Mock
+    ):
         # Setup
         # Mock the mock request's post method
         mock_post = AsyncMock()
@@ -128,16 +140,19 @@ class TestStage:
         # Check post body is inspected
         mock_post.assert_called()
         # Check post body, handling_post, num_components are reset
-        assert process.post_body is None
-        assert not process.handling_post
+        assert mock_process.post_body is None
+        assert not mock_process.handling_post
         assert Component.num_components == 0
+        # Check table changes were flushed
+        mock_process.running_tool.tables._flush_changes.assert_called_once()
         # Check that Stage.results_template was reset to None
         assert Stage.results_template is None
         # Check that web.Response was called and returned
         mock_Response.assert_called_with(body=mock_results_template, content_type=consts.AIOHTTP_HTML)
         assert response == mock_response_instance
 
-    def test_post_handler_no_results_set_happy_path(self, stage: Stage, mock_request: Mock):
+    @patch('coolNewLanguage.src.stage.stage.process')
+    def test_post_handler_no_results_set_happy_path(self, mock_process: MagicMock, stage: Stage, mock_request: Mock):
         # Setup
         # Mock the mock request's post method
         mock_post = AsyncMock()
@@ -153,11 +168,40 @@ class TestStage:
         # Check post body is inspected
         mock_post.assert_called()
         # Check post body, handling_post, num_components are reset
-        assert process.post_body is None
-        assert not process.handling_post
+        assert mock_process.post_body is None
+        assert not mock_process.handling_post
         assert Component.num_components == 0
         # Check raised redirect's location
         assert e.value.location == '/'
+
+    @patch.object(web, 'Response')
+    @patch('coolNewLanguage.src.stage.stage.process')
+    def test_post_handler_approvals_template_set_happy_path(
+            self,
+            mock_process: MagicMock,
+            mock_Response: MagicMock,
+            stage: Stage,
+            mock_request: Mock
+    ):
+        # Setup
+        # Mock Stage.approvals_template
+        mock_approvals_template = Mock()
+        Stage.approvals_template = mock_approvals_template
+        # Mock web.Response return value
+        mock_response_instance = Mock(spec=web.Response)
+        mock_Response.return_value = mock_response_instance
+
+        # Do, Check
+        response = asyncio.run(stage.post_handler(Mock(spec=web.Request)))
+
+        # Check
+        # Check that Stage.approvals_template was reset to None
+        assert Stage.approvals_template is None
+        # Check that cached table changes were cleared
+        mock_process.running_tool.tables._clear_changes.assert_called_once()
+        # Check that web.Response was called and returned
+        mock_Response.assert_called_with(body=mock_approvals_template, content_type=consts.AIOHTTP_HTML)
+        assert response == mock_response_instance
 
     def test_post_handler_request_is_not_web_request(self, stage: Stage):
         # Do, Check

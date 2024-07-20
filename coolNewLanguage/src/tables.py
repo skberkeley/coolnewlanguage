@@ -55,14 +55,18 @@ class Tables:
         if table_name in self._tables_to_delete:
             raise KeyError(f"Table {table_name} was deleted")
 
+        # If the table was slated to be added/modified, return the cached version
+        if table_name in self._tables_to_save:
+            df = self._tables_to_save[table_name]
+            df.name = table_name
+            return df
+
         if table_name not in self:
             raise KeyError(f"Table {table_name} not found")
 
-        # If the table was slated to be added/modified, return the cached version
-        if table_name in self._tables_to_save:
-            return self._tables_to_save[table_name]
-
-        return self._tool.get_table_dataframe(table_name)
+        df = self._tool.get_table_dataframe(table_name)
+        df.name = table_name
+        return df
 
     def __setitem__(self, table_name: str, value: pd.DataFrame):
         """
@@ -168,6 +172,8 @@ class Tables:
 
         for table_name in self._tables_to_delete:
             self._delete_table(table_name)
+
+        self._clear_changes()
 
     def _clear_changes(self):
         """

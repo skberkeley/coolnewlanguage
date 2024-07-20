@@ -12,9 +12,6 @@ Attributes:
     post_body: dict
         The body of the post request being handled
         Used by InputComponents to bind the results of input from users
-    get_user_approvals: bool
-        Whether the stage currently being processed is one that requires user approvals, in which case we cache changes
-        to the db inside approve_results
     curr_stage_url: str
         The url of the stage currently being processed, used to generate the url which approval results are sent to
     approval_post_body: dict
@@ -31,7 +28,6 @@ Attributes:
 running_tool: 'Tool' = None
 handling_post: bool = False
 post_body: dict = None
-get_user_approvals: bool = False
 curr_stage_url: str = ""
 approval_post_body: dict = None
 cached_show_results: list['Result'] = []
