@@ -10,7 +10,6 @@ from aiohttp import web
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import TEMPLATES_DIR, LANDING_PAGE_TEMPLATE_FILENAME,\
     LANDING_PAGE_STAGES
-from coolNewLanguage.src.stage import process
 import coolNewLanguage.src.tool as toolModule
 Tool = toolModule.Tool
 from coolNewLanguage.src.web_app import WebApp
@@ -211,9 +210,10 @@ class TestTool:
         with pytest.raises(TypeError, match="Expected stage_func to be callable"):
             tool.add_stage(TestTool.STAGE_NAME, NonCallableMock())
 
+    @patch('coolNewLanguage.src.tool.process')
     @patch('coolNewLanguage.src.tool.web.run_app')
     @patch('aiohttp.web.Application.add_routes')
-    def test_run(self, mock_add_routes: Mock, mock_run_app: Mock, tool: Tool):
+    def test_run(self, mock_add_routes: MagicMock, mock_run_app: MagicMock, mock_process: MagicMock, tool: Tool):
         # Setup
         # Add a Mock stage to the tool
         mock_stage = Mock(url=TestTool.STAGE_URL)
@@ -240,9 +240,14 @@ class TestTool:
         # Check that add_routes was called with the expected routes
         mock_add_routes.assert_called_with(routes)
         # Check that tool has been assigned to process.running_tool
-        assert process.running_tool is tool
+        assert mock_process.running_tool is tool
         # Check that web.run_app was called appropriately
         mock_run_app.assert_called_with(tool.web_app.app, port=8000)
+
+    def test_run_non_int_port(self, tool: Tool):
+        # Do, Check
+        with pytest.raises(TypeError, match="Expected port to be an int"):
+            tool.run(port=Mock())
 
     @patch('aiohttp_jinja2.render_template')
     def test_landing_page_happy_path(self, mock_render_template: Mock, tool: Tool):
@@ -469,3 +474,20 @@ class TestTool:
         # Check
         # Check that the correct template was fetched
         mock_get_template.assert_called_with(name=consts.COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME)
+
+    def test_get_table_non_web_request_request(self, tool: Tool):
+        # Do, Check
+        with pytest.raises(TypeError, match="Expected request to be an aiohttp web Request"):
+            asyncio.run(tool.get_table(Mock()))
+
+    @patch('coolNewLanguage.src.tool.process')
+    def test_user_input_received(self, mock_process: Mock, tool: Tool):
+        # Setup
+        mock_handling_post = Mock()
+        mock_process.handling_post = mock_handling_post
+
+        # Do
+        user_input_received = tool.user_input_received()
+
+        # Check
+        assert user_input_received == mock_handling_post

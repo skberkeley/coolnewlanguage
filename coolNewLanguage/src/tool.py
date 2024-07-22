@@ -100,8 +100,6 @@ class Tool:
     def add_stage(self, stage_name: str, stage_func: Callable):
         """
         Add a stage to this tool
-        Pre-render the stage's Config by running stage_func, and having each Component paint itself and append to
-        a template list
         :param stage_name: The name of this stage
         :param stage_func: The function used to define this stage
         :return:
@@ -113,13 +111,16 @@ class Tool:
         new_stage = Stage(stage_name, stage_func)
         self.stages.append(new_stage)
 
-    def run(self):
+    def run(self, port: int = 8000):
         """
         Run this tool using aiohttp
         Add a landing page route, and the requisite routes for each stage
         :return:
         """
         from coolNewLanguage.src.approvals import approvals
+
+        if not isinstance(port, int):
+            raise TypeError("Expected port to be an int")
 
         routes = [
             web.get('/', self.landing_page),
@@ -135,7 +136,7 @@ class Tool:
 
         process.running_tool = self
 
-        web.run_app(self.web_app.app, port=8000)
+        web.run_app(self.web_app.app, port=port)
 
     async def landing_page(self, request: web.Request) -> web.Response:
         """
@@ -198,6 +199,9 @@ class Tool:
 
     async def get_table(self, request: web.Request) -> web.Response:
         from coolNewLanguage.src.util import html_utils
+
+        if not isinstance(request, web.Request):
+            raise TypeError("Expected request to be an aiohttp web Request")
         if "table" not in request.query:
             raise ValueError("Expected requested table name to be in request query")
         table_name = request.query["table"]
@@ -238,6 +242,15 @@ class Tool:
         )
 
         return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
+
+    @staticmethod
+    def user_input_received() -> bool:
+        """
+        Returns True if the user has entered input, False otherwise
+        Returns process.handling_post
+        :return:
+        """
+        return process.handling_post
 
     def get_table_from_table_name(self, table_name: str) -> Optional[sqlalchemy.Table]:
         """

@@ -72,9 +72,9 @@ def show_results(*results: Any, results_title: str = '') -> None:
             case _:
                 result_objects.append(Result(result))
 
-    # if process.get_user_approvals is set to True, cache the results to show then return, since we want to collect user
+    # if there is a rendered approvals template, cache the results to show then return, since we want to collect user
     # approvals first
-    if process.get_user_approvals:
+    if Stage.approvals_template is not None:
         process.cached_show_results = result_objects
         process.cached_show_results_title = results_title
         return
@@ -119,6 +119,8 @@ def result_template_of_value(value) -> str:
             return result_template_of_link(value)
         case [*links] if all(isinstance(l, Link) for l in links):
             return "\n".join(result_template_of_link(l) for l in links)
+        case pd.DataFrame(name=table_name):
+            return result_template_of_dataframe(process.running_tool.tables[table_name])
         case pd.DataFrame():
             return result_template_of_dataframe(value)
         case _:

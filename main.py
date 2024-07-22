@@ -20,26 +20,27 @@ def csv_upload_and_name():
     table_name = UserInputComponent(str, label="Enter table name:")
     csv_file = FileUploadComponent('csv', label="Upload a csv file:")
 
-    def create_table():
+    if tool.user_input_received():
         df = pd.read_csv(csv_file.value)
         tool.tables[table_name.value] = df
-        return df
-    created_table = LambdaProcessor(create_table).result
-    results.show_results((created_table, "Created table: "))
+
+        results.show_results((df, "Created table: "))
 
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
 def view_tables():
     table = TableSelectorComponent("Pick a table to view")
 
-    results.show_results((table, 'Chosen table: '))
+    if tool.user_input_received():
+        results.show_results((table, 'Chosen table: '))
 
 tool.add_stage('view_tables', view_tables)
 
 def pick_columns():
     cols = ColumnSelectorComponent("Pick some columns", num_columns=2)
 
-    results.show_results((cols, 'Chosen columns: '))
+    if tool.user_input_received():
+        results.show_results((cols, 'Chosen columns: '))
 
 tool.add_stage('pick_columns', pick_columns)
 

@@ -136,15 +136,18 @@ class Stage:
         Component.num_components = 0
         process.curr_stage_url = ""
 
-        # If process.get_user_approvals is set to True, redirect to the approvals page
-        if process.get_user_approvals:
+        # If an approvals page has been constructed, redirect to it
+        if Stage.approvals_template is not None:
             template = Stage.approvals_template
             Stage.approvals_template = None
+
+            # Clear the running Tool's pending changes since they're about to be presented for approval
+            process.running_tool.tables._clear_changes()
+
             return web.Response(body=template, content_type=consts.AIOHTTP_HTML)
 
         # Flush changes cached in the running tool's Tables instance
         process.running_tool.tables._flush_changes()
-        process.running_tool.tables._clear_changes()
 
         # If the results template is set, redirect to that
         if Stage.results_template is not None:

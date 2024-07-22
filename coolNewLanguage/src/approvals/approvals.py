@@ -10,6 +10,7 @@ from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
 from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.approvals.table_deletion_approve_result import TableDeletionApproveResult
+from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.tool import Tool
@@ -35,8 +36,7 @@ def get_user_approvals():
     :return:
     """
     if config.building_template:
-        process.get_user_approvals = True
-        return
+        raise CNLError("get_user_approvals was called in an unexpected place. Did you forget to check if user input was received?")
 
     if process.handling_post:
         template: jinja2.Template = process.running_tool.jinja_environment.get_template(
@@ -58,8 +58,6 @@ def get_user_approvals():
         # Create table approve results
         for table, df in tool.tables._tables_to_save.items():
             approve_results.append(TableApproveResult(table, df))
-        # Clear the cached changes since they're now in approve_results
-        tool.tables._clear_changes()
 
         Stage.approvals_template = template.render(
             approve_results=approve_results,
@@ -80,7 +78,6 @@ async def approval_handler(request: web.Request) -> web.Response:
     if not isinstance(request, web.Request):
         raise TypeError("Expected request to be an aiohttp web.Request")
 
-    process.get_user_approvals = False
     process.handling_user_approvals = True
 
     # Set the post results of the user's approvals on process

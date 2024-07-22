@@ -2,7 +2,7 @@ from typing import Any
 
 
 class CNLError(Exception):
-    def __init__(self, message, error: Exception):
+    def __init__(self, message, error: Exception = None):
         super().__init__(message)
         self.error = error
 

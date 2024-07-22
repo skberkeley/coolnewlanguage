@@ -10,6 +10,7 @@ from coolNewLanguage.src.approvals.approvals import get_user_approvals
 from coolNewLanguage.src.approvals.approve_result_type import ApproveResultType
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.approvals.table_deletion_approve_result import TableDeletionApproveResult
+from coolNewLanguage.src.exceptions.CNLError import CNLError
 
 
 class TestApprovals:
@@ -82,8 +83,6 @@ class TestApprovals:
         # Check that the approve_results were constructed correctly
         expected_approve_results = mock_table_deletion_approve_results + mock_table_approve_results
         assert approvals.approve_results == expected_approve_results
-        # Check that the tables cached cached changes were cleared
-        mock_process.running_tool.tables._clear_changes.assert_called_once()
         # Check that the template was rendered correctly
         mock_template.render.assert_called_once_with(
             approve_results=expected_approve_results,
@@ -106,11 +105,10 @@ class TestApprovals:
         mock_config.building_template = True
 
         # Do
-        get_user_approvals()
+        with pytest.raises(CNLError, match="get_user_approvals was called in an unexpected place. Did you forget to check if user input was received?"):
+            get_user_approvals()
 
         # Check
-        # Check that get_user_approvals was set to True
-        assert mock_process.get_user_approvals
         # Check that approve_results was not modified
         assert approvals.approve_results == []
 
@@ -153,8 +151,6 @@ class TestApprovals:
         response = asyncio.run(approvals.approval_handler(mock_request))
 
         # Check
-        # Check that get_user_approvals was set to False
-        assert not mock_process.get_user_approvals
         # Check that request.post was called
         mock_request.post.assert_called_once()
         # Check that handle_table_deletion_approve_result was called with the correct argument

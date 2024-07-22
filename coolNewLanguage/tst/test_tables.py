@@ -76,6 +76,7 @@ class TestTables:
 
         # Check
         assert dataframe == mock_dataframe
+        assert dataframe.name == TestTables.TABLE_NAME
         mock_get_table_dataframe.assert_called_once_with(TestTables.TABLE_NAME)
 
     def test_tables_get_item_non_string_table_name(self, tables: Tables):
@@ -111,6 +112,7 @@ class TestTables:
 
         # Check
         assert dataframe == mock_dataframe
+        assert dataframe.name == TestTables.TABLE_NAME
 
     def test_tables_set_item_happy_path(self, tables: Tables):
         # Setup
@@ -271,9 +273,16 @@ class TestTables:
         with pytest.raises(KeyError, match=f"Table {TestTables.TABLE_NAME} not found"):
             tables._delete_table(TestTables.TABLE_NAME)
 
+    @patch('coolNewLanguage.src.tables.Tables._clear_changes')
     @patch('coolNewLanguage.src.tables.Tables._delete_table')
     @patch('coolNewLanguage.src.tables.Tables._save_table')
-    def test_tables_flush_changes(self, mock_save_table: MagicMock, mock_delete_table: MagicMock, tables: Tables):
+    def test_tables_flush_changes(
+            self,
+            mock_save_table: MagicMock,
+            mock_delete_table: MagicMock,
+            mock_clear_changes: MagicMock,
+            tables: Tables
+    ):
         # Setup
         mock_connection = MagicMock()
         tables._tool.db_engine.connect.return_value = mock_connection
@@ -297,6 +306,8 @@ class TestTables:
         )
 
         mock_delete_table.assert_has_calls([call('3'), call('4')], any_order=True)
+
+        mock_clear_changes.assert_called_once()
 
     def test_clear_changes(self, tables: Tables):
         # Setup
