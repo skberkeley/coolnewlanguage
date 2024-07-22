@@ -16,6 +16,7 @@ def approve_table_from_list_list():
         tool.tables["Names"] = df
 
         approvals.get_user_approvals()
+        results.show_results((tool.tables["Names"], "Created table: "))
 
 tool.add_stage('table_results', approve_table_from_list_list)
 

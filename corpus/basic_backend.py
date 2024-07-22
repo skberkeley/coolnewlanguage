@@ -27,6 +27,7 @@ def csv_upload_and_name():
 
         results.show_results((df, "Created table: "))
 
+
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
 def table_viewer():
