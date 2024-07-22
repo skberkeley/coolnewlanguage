@@ -1,6 +1,5 @@
 from coolNewLanguage.src.component.text_component import TextComponent
 from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.processor.lamda_processor import LambdaProcessor
 from coolNewLanguage.src.stage import results
 from coolNewLanguage.src.tool import *
 
@@ -9,11 +8,10 @@ tool = Tool("cool_tool")
 def get_user_word():
     user_input = UserInputComponent(str, label="Enter a word")
 
-    def save_word():
+    if tool.user_input_received():
         tool.state['word'] = user_input.value
-        results.show_results(results.Result(tool.state['word'], "We stored the word:"))
 
-    LambdaProcessor(save_word)
+        results.show_results(results.Result(tool.state['word'], "We stored the word:"))
 
 tool.add_stage('get_user_word', get_user_word)
 
