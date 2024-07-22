@@ -17,7 +17,6 @@ from coolNewLanguage.src.web_app import WebApp
 
 class TestTool:
     TOOL_NAME = "OSKI_TOOL"
-    TOOL_URL = "OSKI"
     STAGE_NAME = "The Wizard of Woz"
     STAGE_FUNC = Mock()
     STAGE_URL = "the_wizard_of_woz"
@@ -49,15 +48,13 @@ class TestTool:
         mock_tables_module.Tables = Mock(return_value=mock_tables)
 
         # Do
-        tool = Tool(tool_name=TestTool.TOOL_NAME, url=TestTool.TOOL_URL)
+        tool = Tool(tool_name=TestTool.TOOL_NAME)
 
         # Check
         # tool name same
         assert tool.tool_name == TestTool.TOOL_NAME
         # stages empty
         assert len(tool.stages) == 0
-        # url is same
-        assert tool.url == TestTool.TOOL_URL
         # tool has a web app
         assert isinstance(tool.web_app, WebApp)
         # web app's add static file handler method was called
@@ -80,7 +77,7 @@ class TestTool:
         # db engine was created
         assert isinstance(tool.db_engine, sqlalchemy.Engine)
         # sqlite file was created
-        expected_db_path = tmp_path.joinpath(f'{TestTool.TOOL_URL}.db')
+        expected_db_path = tmp_path.joinpath(f'{TestTool.TOOL_NAME}.db')
         assert os.path.exists(expected_db_path)
         # metadata obj was created
         assert isinstance(tool.db_metadata_obj, sqlalchemy.MetaData)
@@ -97,51 +94,15 @@ class TestTool:
         assert tool.tables is mock_tables
         mock_tables_module.Tables.assert_called_with(tool)
 
-    @patch.object(WebApp, 'add_static_file_handler')
-    @patch('aiohttp_jinja2.setup')
-    @patch('jinja2.Environment')
-    @patch('jinja2.FileSystemLoader')
-    def test_tool_no_url_happy_path(
-            self,
-            mock_FileSystemLoader: Mock,
-            mock_Environment: Mock,
-            mock_aiohttp_jinja2_setup: Mock,
-            mock_add_static_file_handler: Mock,
-            tmp_path: pathlib.Path,
-            monkeypatch
-    ):
-        # Setup
-        # Monkey patch DATA_DIR so that the database is created in tmp_path
-        monkeypatch.setattr('coolNewLanguage.src.tool.DATA_DIR', tmp_path)
-        monkeypatch.setattr('coolNewLanguage.src.tool.STATIC_FILE_DIR', tmp_path)
-
-        # Do
-        tool = Tool(tool_name=TestTool.TOOL_NAME)
-
-        # Check
-        assert tool.url == TestTool.TOOL_NAME
-        expected_db_path = tmp_path.joinpath(f'{TestTool.TOOL_NAME}.db')
-        assert os.path.exists(expected_db_path)
-
     def test_tool_non_string_tool_name(self):
         # Do, Check
         with pytest.raises(TypeError, match="Expected a string for Tool name"):
-            Tool(tool_name=Mock(), url=TestTool.TOOL_URL)
-
-    def test_tool_non_string_url(self):
-        # Do, Check
-        with pytest.raises(TypeError, match="Expected a string for Tool url"):
-            Tool(tool_name=TestTool.TOOL_NAME, url=Mock())
+            Tool(tool_name=Mock())
 
     def test_tool_invalid_tool_name(self):
         # Do, Check
         with pytest.raises(ValueError, match="Tool name can only contain alphanumeric characters and underscores"):
-            Tool(tool_name="tool name with forbidden characters!", url=TestTool.TOOL_URL)
-
-    def test_tool_invalid_url(self):
-        # Do, Check
-        with pytest.raises(ValueError, match="Tool url can only contain alphanumeric characters and underscores"):
-            Tool(tool_name=TestTool.TOOL_NAME, url='not a      v a l i d      url')
+            Tool(tool_name="tool name with forbidden characters!")
 
     @patch.object(WebApp, 'add_static_file_handler')
     @patch('aiohttp_jinja2.setup')
@@ -184,7 +145,7 @@ class TestTool:
 
         mock_tables_module.Tables = Mock(return_value=MagicMock())
 
-        return Tool(tool_name=TestTool.TOOL_NAME, url=TestTool.TOOL_URL)
+        return Tool(tool_name=TestTool.TOOL_NAME)
 
     @patch('coolNewLanguage.src.tool.Stage')
     def test_add_stage_happy_path(self, mock_Stage: Mock, tool: Tool):

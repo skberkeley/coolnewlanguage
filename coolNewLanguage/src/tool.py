@@ -27,12 +27,11 @@ class Tool:
     Attributes:
     tool_name : str
     stages : list[Stage]
-    url : str
     web_app : WebApp
     file_dir : Pathlib.Path - A path to the directory in which to store files uploaded to this Tool
     state : dict - A dictionary programmers can use to share state between Stages
     """
-    def __init__(self, tool_name: str, url: str = '', file_dir_path: str = ''):
+    def __init__(self, tool_name: str, file_dir_path: str = ''):
         """
         Initialize this tool
         Initializes the web_app which forms the back end of this tool
@@ -46,10 +45,6 @@ class Tool:
         # This restriction on tool names allows them to be used as the URL paths
         if not check_has_only_alphanumerics_or_underscores(tool_name):
             raise ValueError("Tool name can only contain alphanumeric characters and underscores")
-        if not isinstance(url, str):
-            raise TypeError("Expected a string for Tool url")
-        if len(url) > 0 and not check_has_only_alphanumerics_or_underscores(url):
-            raise ValueError("Tool url can only contain alphanumeric characters and underscores")
         if not isinstance(file_dir_path, str):
             raise TypeError("Expected file_dir_path to be a string")
 
@@ -57,11 +52,6 @@ class Tool:
         self.tool_name = tool_name
 
         self.stages: List[Stage] = []
-
-        if url == '':
-            self.url = tool_name
-        else:
-            self.url = url
 
         self.web_app = WebApp()
         # add a handler for the web app's static files (like javascript stuff)
@@ -76,7 +66,7 @@ class Tool:
         # create the data directory if it doesn't exist
         DATA_DIR.mkdir(exist_ok=True)
 
-        db_path = DATA_DIR.joinpath(f'{self.url}.db')
+        db_path = DATA_DIR.joinpath(f'{tool_name}.db')
         # create an engine with a sqlite database
         self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
