@@ -48,6 +48,18 @@
     {% elif approve_result.approve_result_type == ApproveResultType.TABLE %}
     <div>
         <h1>Select rows to approve for {{ approve_result.table_name }}</h1>
+        <h2> Batch operations: </h2>
+        <h3>
+            <label>
+                Approve all
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" value="approve">
+            </label>
+            <br>
+            <label>
+                Manual selection
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" value="ignore" checked>
+            </label>
+        </h3>
         <table>
             <thead>
                 <tr>

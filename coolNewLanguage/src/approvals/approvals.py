@@ -132,12 +132,23 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
     """
     # Filter the rows that were approved
     approved_rows = []
-    for index, _ in table_approve_result.dataframe.iterrows():
-        approve_result_name = f'approve_{table_approve_result.id}_{index}'
-        raw_approval_state = process.approval_post_body[approve_result_name]
-        approval_state = ApproveState.of_string(raw_approval_state)
-        if approval_state == ApproveState.APPROVED:
-            approved_rows.append(index)
+
+    # Check which batch option was checked
+    approve_batch = f'approve_{table_approve_result.id}_batch'
+    raw_batch_state = process.approval_post_body[approve_batch]
+    approval_state = ApproveState.of_string(raw_batch_state)
+    # If batch approve, then add all indexes to approved_rows
+    if approval_state == ApproveState.APPROVED:
+        approved_rows = [index for index, _ in table_approve_result.dataframe.iterrows()]
+
+    # Otherwise, check row individually.
+    else:
+        for index, _ in table_approve_result.dataframe.iterrows():
+            approve_result_name = f'approve_{table_approve_result.id}_{index}'
+            raw_approval_state = process.approval_post_body[approve_result_name]
+            approval_state = ApproveState.of_string(raw_approval_state)
+            if approval_state == ApproveState.APPROVED:
+                approved_rows.append(index)
 
     # If there were no approved rows, then return early
     if len(approved_rows) == 0:
