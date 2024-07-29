@@ -52,12 +52,12 @@
         <h3>
             <label>
                 Approve all
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" value="approve">
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="selectAll">
             </label>
             <br>
             <label>
                 Manual selection
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" value="ignore" checked>
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked>
             </label>
         </h3>
         <table>
@@ -77,19 +77,19 @@
                     <td>
                         <label>
                             ✓
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="approve">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="approve">
                         </label>
                     </td>
                     <td>
                         <label>
                             ✘
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="reject">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="reject">
                         </label>
                     </td>
                     <td>
                         <label>
                             ?
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="pending" checked>
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="pending" checked>
                         </label>
                     </td>
                     {% for column_name in approve_result.column_names %}
@@ -98,6 +98,34 @@
                 </tr>
                 {% endfor %}
             </tbody>
+            <script>
+            // Function to handle batch radio button selection
+            function handleRadioControl() {
+                const selectAllRadio = document.getElementById('selectAll');
+                const manualRadio = document.getElementById('manualSelection');
+                const allRadios = document.querySelectorAll('input[type="radio"].input');
+
+                if (selectAllRadio.checked) {
+                    // Select all radio buttons
+                    allRadios.forEach(radio => {
+                        if (radio.value === "approve") {
+                    	radio.checked = true;
+                    }
+                    });
+                } else if (manualRadio.checked) {
+                    // Shift all radio buttons to pending
+                    allRadios.forEach(radio => {
+                	    if (radio.value === "pending") {
+                    	radio.checked = true;
+                    }
+                    });
+            }
+        }
+
+        // Add event listeners to control radio buttons
+        document.getElementById('selectAll').addEventListener('change', handleRadioControl);
+        document.getElementById('manualSelection').addEventListener('change', handleRadioControl);
+    </script>
         </table>
     </div>
     {% elif approve_result.approve_result_type == ApproveResultType.ROW %}
