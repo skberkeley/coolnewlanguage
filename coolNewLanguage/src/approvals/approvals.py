@@ -132,6 +132,7 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
     """
     # Filter the rows that were approved
     approved_rows = []
+
     for index, _ in table_approve_result.dataframe.iterrows():
         approve_result_name = f'approve_{table_approve_result.id}_{index}'
         raw_approval_state = process.approval_post_body[approve_result_name]

@@ -120,7 +120,10 @@ def result_template_of_value(value) -> str:
         case [*links] if all(isinstance(l, Link) for l in links):
             return "\n".join(result_template_of_link(l) for l in links)
         case pd.DataFrame(name=table_name):
-            return result_template_of_dataframe(process.running_tool.tables[table_name])
+            try:
+                return result_template_of_dataframe(process.running_tool.tables[table_name])
+            except:
+                return f"Table \"{table_name}\" not found, possibly because all its rows were rejected or left pending, resulting in the table not being created."
         case pd.DataFrame():
             return result_template_of_dataframe(value)
         case _:
