@@ -57,7 +57,12 @@
             </label>
             <br>
             <label>
-                Manual selection
+                Reject all
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="rejectAll" onchange="handleRadioControl()">
+            </label>
+            <br>
+            <label>
+                Set all to pending
                 <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked onchange="handleRadioControl()">
             </label>
         </h3>
