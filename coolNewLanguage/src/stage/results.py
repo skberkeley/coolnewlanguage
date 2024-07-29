@@ -123,7 +123,7 @@ def result_template_of_value(value) -> str:
             try:
                 return result_template_of_dataframe(process.running_tool.tables[table_name])
             except:
-                return "Table " + table_name + " not found. May be caused by user rejecting all rows or leaving all rows pending during table creation, thus resulting the table not being created."
+                return f"Table \"{table_name}\" not found, possibly because all its rows were rejected or left pending, resulting in the table not being created."
         case pd.DataFrame():
             return result_template_of_dataframe(value)
         case _:
