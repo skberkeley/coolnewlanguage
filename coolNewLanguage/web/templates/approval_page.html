@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Approvals for {{ stage_name }}</title>
+    <script src="/static/approvals.js" async></script>
 </head>
 <body>
     <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
@@ -52,12 +53,12 @@
         <h3>
             <label>
                 Approve all
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="selectAll">
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="approveAll" onchange="handleRadioControl()">
             </label>
             <br>
             <label>
                 Manual selection
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked>
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked onchange="handleRadioControl()">
             </label>
         </h3>
         <table>
@@ -98,34 +99,6 @@
                 </tr>
                 {% endfor %}
             </tbody>
-            <script>
-            // Function to handle batch radio button selection
-            function handleRadioControl() {
-                const selectAllRadio = document.getElementById('selectAll');
-                const manualRadio = document.getElementById('manualSelection');
-                const allRadios = document.querySelectorAll('input[type="radio"].input');
-
-                if (selectAllRadio.checked) {
-                    // Select all radio buttons
-                    allRadios.forEach(radio => {
-                        if (radio.value === "approve") {
-                    	radio.checked = true;
-                    }
-                    });
-                } else if (manualRadio.checked) {
-                    // Shift all radio buttons to pending
-                    allRadios.forEach(radio => {
-                	    if (radio.value === "pending") {
-                    	radio.checked = true;
-                    }
-                    });
-            }
-        }
-
-        // Add event listeners to control radio buttons
-        document.getElementById('selectAll').addEventListener('change', handleRadioControl);
-        document.getElementById('manualSelection').addEventListener('change', handleRadioControl);
-    </script>
         </table>
     </div>
     {% elif approve_result.approve_result_type == ApproveResultType.ROW %}
