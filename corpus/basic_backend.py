@@ -19,7 +19,7 @@ def csv_upload_and_name():
     :return:
     """
     table_name = UserInputComponent(str, label="Enter table name:")
-    csv_file = FileUploadComponent('csv', label="Upload a csv file:")
+    csv_file = FileUploadComponent('.csv', label="Upload a csv file:")
 
     if tool.user_input_received():
         df = pd.read_csv(csv_file.value)
