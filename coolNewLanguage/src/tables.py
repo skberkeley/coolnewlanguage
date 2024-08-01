@@ -135,10 +135,10 @@ class Tables:
             raise TypeError("Expected conn to be a sqlalchemy Connection object or None")
 
         if conn:
-            df.to_sql(name=table_name, con=conn, if_exists='replace')
+            df.to_sql(name=table_name, con=conn, if_exists='replace', index=False)
         else:
             with self._tool.db_engine.connect() as conn:
-                df.to_sql(name=table_name, con=conn, if_exists='replace')
+                df.to_sql(name=table_name, con=conn, if_exists='replace', index=False)
 
         self._tables.add(table_name)
 
