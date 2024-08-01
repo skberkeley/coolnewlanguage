@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Approvals for {{ stage_name }}</title>
+    <script src="/static/approvals.js" async></script>
 </head>
 <body>
     <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
@@ -48,6 +49,23 @@
     {% elif approve_result.approve_result_type == ApproveResultType.TABLE %}
     <div>
         <h1>Select rows to approve for {{ approve_result.table_name }}</h1>
+        <h2> Batch operations: </h2>
+        <h3>
+            <label>
+                Approve all
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="approveAll" onchange="handleRadioControl()">
+            </label>
+            <br>
+            <label>
+                Reject all
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="rejectAll" onchange="handleRadioControl()">
+            </label>
+            <br>
+            <label>
+                Set all to pending
+                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked onchange="handleRadioControl()">
+            </label>
+        </h3>
         <table>
             <thead>
                 <tr>
@@ -65,19 +83,19 @@
                     <td>
                         <label>
                             ✓
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="approve">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="approve">
                         </label>
                     </td>
                     <td>
                         <label>
                             ✘
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="reject">
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="reject">
                         </label>
                     </td>
                     <td>
                         <label>
                             ?
-                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" value="pending" checked>
+                            <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="pending" checked>
                         </label>
                     </td>
                     {% for column_name in approve_result.column_names %}
