@@ -1,15 +1,8 @@
 import pandas as pd
 
-from coolNewLanguage.src.component.column_selector_component import ColumnSelectorComponent
-from coolNewLanguage.src.component.file_upload_component import FileUploadComponent
-from coolNewLanguage.src.component.table_selector_component import TableSelectorComponent
-from coolNewLanguage.src.component.text_component import TextComponent
-from coolNewLanguage.src.component.user_input_component import UserInputComponent
-from coolNewLanguage.src.stage import results
-from coolNewLanguage.src.tool import Tool
+import coolNewLanguage.src as hilt
 
-
-tool = Tool('basic_backend')
+tool = hilt.Tool('basic_backend')
 
 def csv_upload_and_name():
     """
@@ -18,14 +11,14 @@ def csv_upload_and_name():
     an error is shown regarding uploading a file with the same name.
     :return:
     """
-    table_name = UserInputComponent(str, label="Enter table name:")
-    csv_file = FileUploadComponent('.csv', label="Upload a csv file:")
+    table_name = hilt.UserInputComponent(str, label="Enter table name:")
+    csv_file = hilt.FileUploadComponent('.csv', label="Upload a csv file:")
 
     if tool.user_input_received():
         df = pd.read_csv(csv_file.value)
         tool.tables[table_name.value] = df
 
-        results.show_results((df, "Created table: "))
+        hilt.results.show_results((df, "Created table: "))
 
 
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
@@ -36,10 +29,10 @@ def table_viewer():
     all uploaded tables are viewable, and no hidden ones are.
     :return:
     """
-    TextComponent("Select a table: ")
-    table = TableSelectorComponent()
+    hilt.TextComponent("Select a table: ")
+    table = hilt.TableSelectorComponent()
     if tool.user_input_received():
-        results.show_results((table, "Selected table: "))
+        hilt.results.show_results((table, "Selected table: "))
 
 tool.add_stage('table_viewer', table_viewer)
 
@@ -49,11 +42,11 @@ def column_viewer():
     and then select a column. Verify that metadata columns (those beginning with '__') are not selectable.
     :return:
     """
-    TextComponent("Select a table and then select a column:")
-    column_selector1 = ColumnSelectorComponent("Select a column:")
-    column_selector2 = ColumnSelectorComponent("Select another column:")
+    hilt.TextComponent("Select a table and then select a column:")
+    column_selector1 = hilt.ColumnSelectorComponent("Select a column:")
+    column_selector2 = hilt.ColumnSelectorComponent("Select another column:")
     if tool.user_input_received():
-        results.show_results((column_selector1, "Selected column: "), (column_selector2, "Selected column: "))
+        hilt.results.show_results((column_selector1, "Selected column: "), (column_selector2, "Selected column: "))
 
 tool.add_stage('column_viewer', column_viewer)
 
@@ -63,11 +56,11 @@ def column_viewer_with_table():
     and then select a column. Verify that metadata columns (those beginning with '__') are not selectable.
     :return:
     """
-    TextComponent("Select a table and then select a column:")
-    table = TableSelectorComponent()
-    column_selector = ColumnSelectorComponent("Select a column:")
+    hilt.TextComponent("Select a table and then select a column:")
+    table = hilt.TableSelectorComponent()
+    column_selector = hilt.ColumnSelectorComponent("Select a column:")
     if tool.user_input_received():
-        results.show_results((table, "Selected table: "), (column_selector, "Selected column: "))
+        hilt.results.show_results((table, "Selected table: "), (column_selector, "Selected column: "))
 tool.add_stage('column_viewer_with_table', column_viewer_with_table)
 
 tool.run()
