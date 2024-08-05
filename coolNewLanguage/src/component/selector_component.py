@@ -10,9 +10,7 @@ class SelectorComponent(InputComponent):
     """
     A component which captures input from a choice of radio buttons
     """
-    def __init__(self, expected_type: type, options, label: str = ""):
-        if not isinstance(expected_type, type):
-            raise TypeError("Expected expected_type to be a type")
+    def __init__(self, options, label: str = ""):
         if not all(isinstance(option, str) for option in options):
             raise TypeError("Expected options to be a list of strings")
         if not isinstance(label, str):
@@ -22,7 +20,7 @@ class SelectorComponent(InputComponent):
         self.label = label if label != "" else "Select an option below: "
         self.options = options
 
-        super().__init__(expected_type)
+        super().__init__(str)
 
         if self.value is None:
             return
