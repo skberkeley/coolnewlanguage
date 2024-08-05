@@ -17,6 +17,7 @@ class UserInputComponent(InputComponent):
             raise TypeError("Expected label to be a string")
         # assign these first so that we can paint if needed
         self.label = label
+        self.expected_type = expected_type
 
         super().__init__(expected_type)
 
