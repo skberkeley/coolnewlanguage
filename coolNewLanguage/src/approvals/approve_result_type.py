@@ -6,3 +6,4 @@ class ApproveResultType(Enum):
     ROW = "Row"
     LINK = "Link"
     TABLE_DELETION = "Table Deletion"
+    TABLE_SCHEMA_CHANGE = "Table Schema Change"

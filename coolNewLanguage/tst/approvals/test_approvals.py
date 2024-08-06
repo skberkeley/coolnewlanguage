@@ -49,7 +49,7 @@ class TestApprovals:
         mock_TableDeletionApproveResult.side_effect = mock_table_deletion_approve_results
         # Mock tool.get_table_dataframe
         mock_dataframes = {'table1': Mock(), 'table2': Mock()}
-        mock_process.running_tool.get_table_dataframe.side_effect = lambda table: mock_dataframes[table]
+        mock_process.running_tool._get_table_dataframe.side_effect = lambda table: mock_dataframes[table]
         # Mock tool.tables._tables_to_save
         mock_tables_to_save = {'table3': Mock(), 'table4': Mock()}
         mock_process.running_tool.tables._tables_to_save = mock_tables_to_save

@@ -1,4 +1,5 @@
 import jinja2
+import pandas as pd
 import sqlalchemy
 from aiohttp import web
 
@@ -10,6 +11,7 @@ from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
 from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.approvals.table_deletion_approve_result import TableDeletionApproveResult
+from coolNewLanguage.src.approvals.table_schema_change_approve_result import TableSchemaChangeApproveResult
 from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
@@ -54,10 +56,10 @@ def get_user_approvals():
         approve_results.clear()
         # Create deletion results
         for table in tool.tables._tables_to_delete:
-            approve_results.append(TableDeletionApproveResult(table, tool.get_table_dataframe(table)))
+            approve_results.append(TableDeletionApproveResult(table, tool._get_table_dataframe(table)))
         # Create table approve results
         for table, df in tool.tables._tables_to_save.items():
-            approve_results.append(TableApproveResult(table, df))
+            approve_results.append(get_table_approve_object(table, df))
 
         Stage.approvals_template = template.render(
             approve_results=approve_results,
@@ -66,6 +68,35 @@ def get_user_approvals():
             form_enctype=form_enctype
         )
 
+def get_table_approve_object(table_name: str, df: pd.DataFrame) -> ApproveResult:
+    """
+    Depending on the difference between the passed df, and the associated prior version in the db, return the
+    appropriate type of ApproveResult. Used during approval page construction for tables cached to be stored in the db.
+    :param table_name: The name of the table being overwritten
+    :param df: The new dataframe to be stored in the db
+    :return: The appropriate subclass of ApproveResult
+    """
+    tool: Tool = process.running_tool
+    original_df = tool._get_table_dataframe(table_name)
+
+    if original_df is None:
+        # If the table is new, return a TableApproveResult
+        return TableApproveResult(table_name, df)
+
+    # Check if columns were added
+    were_columns_added = set(original_df.columns).issubset(df.columns)
+
+    # Check if rows were modified
+    unmodified_rows = pd.merge(original_df, df, how='inner', on=original_df.columns.tolist())
+    were_rows_modified = unmodified_rows.shape[0] != original_df.shape[0]
+
+    if were_columns_added and not were_rows_modified:
+        # Return a TableSchemaChangeApproveResult
+        cols_added = list(filter(lambda col: col not in original_df.columns, df.columns))
+        return TableSchemaChangeApproveResult(table_name, cols_added, df)
+
+    # Return default TableApproveResult
+    return TableApproveResult(table_name, df)
 
 async def approval_handler(request: web.Request) -> web.Response:
     """
@@ -88,10 +119,8 @@ async def approval_handler(request: web.Request) -> web.Response:
         match approve_result:
             case TableApproveResult():
                 handle_table_approve_result(approve_result)
-            case RowApproveResult():
-                handle_row_approve_result(approve_result)
-            case LinkApproveResult():
-                handle_link_approve_result(approve_result)
+            case TableSchemaChangeApproveResult():
+                handle_table_schema_change_approve_result(approve_result)
             case TableDeletionApproveResult():
                 handle_table_deletion_approve_result(approve_result)
             case _:
@@ -150,64 +179,91 @@ def handle_table_approve_result(table_approve_result: TableApproveResult):
     # Save the dataframe using tool.tables
     process.running_tool.tables._save_table(table_approve_result.table_name, df)
 
-def handle_row_approve_result(row_approve_result: RowApproveResult):
+def handle_table_schema_change_approve_result(table_schema_change_approve_result: TableSchemaChangeApproveResult):
     """
-    Handles a user-processed RowApproveResult
-    Checks to see if the row was approved by the user, and commits it if so.
-    :param row_approve_result:
+    Handles a user-processed TableSchemaChangeApproveResult
+    Filters rows that were approved by the user, and commits the new columns and data to the table if they were
+    approved. If no rows were approved, then the new columns are not committed.
+    :param table_schema_change_approve_result:
     :return:
     """
-    approve_result_name = f'approve_{row_approve_result.id}'
-    raw_approval_state = process.approval_post_body[approve_result_name]
-    approval_state = ApproveState.of_string(raw_approval_state)
+    df = table_schema_change_approve_result.dataframe
 
-    if approval_state != ApproveState.APPROVED:
+    # Compute the approved rows
+    approve_result_name = f'approve_{table_schema_change_approve_result.id}'
+
+    indices = df.index
+    approved_rows = [i for i in indices if ApproveState.of_string(process.approval_post_body[f'{approve_result_name}_{i}']) == ApproveState.APPROVED]
+
+    # If no rows were approved, then return early. No changes will be committed
+    if len(approved_rows) == 0:
         return
 
-    # Get the table associated with this row
-    tool: Tool = process.running_tool
-    table: sqlalchemy.Table = tool.get_table_from_table_name(row_approve_result.table_name)
+    # Keep values which were approved
+    for col in table_schema_change_approve_result.cols_added:
+        df[col] = df.apply(lambda x: x[col] if x.name in approved_rows else '', axis=1)
 
-    # If the approved row is a new one, create an insert statement
-    if row_approve_result.is_new_row:
-        stmt = sqlalchemy.insert(table).values(row_approve_result.row)
-    # Else, construct an update statement
-    else:
-        id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
-        row_id = row_approve_result.row[DB_INTERNAL_COLUMN_ID_NAME]
-        stmt = sqlalchemy.update(table).where(id_column == row_id).values(row_approve_result.row)
+    # Commit the final df
+    process.running_tool.tables._save_table(table_schema_change_approve_result.table_name, df)
 
-    # Execute the constructed statement
-    with tool.db_engine.connect() as conn:
-        conn.execute(stmt)
-        conn.commit()
-
-
-def handle_link_approve_result(link_approve_result: LinkApproveResult):
-    """
-    Handles a user-processed LinkApproveResult
-    Checks to see if the link was approved by the user, and commits it if so.
-    :param link_approve_result:
-    :return:
-    """
-    approve_result_name = f'approve_{link_approve_result.id}'
-    raw_approval_state = process.approval_post_body[approve_result_name]
-    approval_state = ApproveState.of_string(raw_approval_state)
-
-    if approval_state != ApproveState.APPROVED:
-        return
-
-    # Register the new link
-    tool: Tool = process.running_tool
-    link = link_approve_result.link
-    link_utils.register_new_link(
-        tool,
-        link.link_meta_id,
-        link.src_table_name,
-        link.src_row_id,
-        link.dst_table_name,
-        link.dst_row_id
-    )
+# def handle_row_approve_result(row_approve_result: RowApproveResult):
+#     """
+#     Handles a user-processed RowApproveResult
+#     Checks to see if the row was approved by the user, and commits it if so.
+#     :param row_approve_result:
+#     :return:
+#     """
+#     approve_result_name = f'approve_{row_approve_result.id}'
+#     raw_approval_state = process.approval_post_body[approve_result_name]
+#     approval_state = ApproveState.of_string(raw_approval_state)
+#
+#     if approval_state != ApproveState.APPROVED:
+#         return
+#
+#     # Get the table associated with this row
+#     tool: Tool = process.running_tool
+#     table: sqlalchemy.Table = tool.get_table_from_table_name(row_approve_result.table_name)
+#
+#     # If the approved row is a new one, create an insert statement
+#     if row_approve_result.is_new_row:
+#         stmt = sqlalchemy.insert(table).values(row_approve_result.row)
+#     # Else, construct an update statement
+#     else:
+#         id_column = table.c[DB_INTERNAL_COLUMN_ID_NAME]
+#         row_id = row_approve_result.row[DB_INTERNAL_COLUMN_ID_NAME]
+#         stmt = sqlalchemy.update(table).where(id_column == row_id).values(row_approve_result.row)
+#
+#     # Execute the constructed statement
+#     with tool.db_engine.connect() as conn:
+#         conn.execute(stmt)
+#         conn.commit()
+#
+#
+# def handle_link_approve_result(link_approve_result: LinkApproveResult):
+#     """
+#     Handles a user-processed LinkApproveResult
+#     Checks to see if the link was approved by the user, and commits it if so.
+#     :param link_approve_result:
+#     :return:
+#     """
+#     approve_result_name = f'approve_{link_approve_result.id}'
+#     raw_approval_state = process.approval_post_body[approve_result_name]
+#     approval_state = ApproveState.of_string(raw_approval_state)
+#
+#     if approval_state != ApproveState.APPROVED:
+#         return
+#
+#     # Register the new link
+#     tool: Tool = process.running_tool
+#     link = link_approve_result.link
+#     link_utils.register_new_link(
+#         tool,
+#         link.link_meta_id,
+#         link.src_table_name,
+#         link.src_row_id,
+#         link.dst_table_name,
+#         link.dst_row_id
+#     )
 
 def handle_table_deletion_approve_result(table_deletion_approve_result: TableDeletionApproveResult):
     """

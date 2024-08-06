@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 import coolNewLanguage.src as hilt
@@ -25,5 +26,17 @@ def approve_table_deletion():
         hilt.approvals.get_user_approvals()
 
 tool.add_stage('delete_table', approve_table_deletion)
+
+def approve_column_addition():
+    table = hilt.TableSelectorComponent(label="Select table to add column to")
+
+    if tool.user_input_received():
+        df = table.value
+        df = df.assign(NewColumn=np.random.randint(0, 100, df.shape[0]))
+        tool.tables[table.table_name] = df
+
+        hilt.approvals.get_user_approvals()
+
+tool.add_stage('add_column', approve_column_addition)
 
 tool.run()

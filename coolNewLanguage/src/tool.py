@@ -292,14 +292,14 @@ class Tool:
             links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, self.db_metadata_obj, *cols)
             links_registry_table.create(self.db_engine)
 
-    def get_table_dataframe(self, table_name: str) -> Optional[pd.DataFrame]:
+    def _get_table_dataframe(self, table_name: str) -> Optional[pd.DataFrame]:
         if not isinstance(table_name, str):
             raise TypeError("Expected table_name to be a string")
 
-        table = self.get_table_from_table_name(table_name)
+        insp: sqlalchemy.Inspector = sqlalchemy.inspect(self.db_engine)
 
-        if table is None:
+        if not insp.has_table(table_name):
             return None
 
         with self.db_engine.connect() as conn:
-            return pd.read_sql(sqlalchemy.select(table), conn)
+            return pd.read_sql_table(table_name, conn)

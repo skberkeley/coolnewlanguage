@@ -64,7 +64,7 @@ class Tables:
         if table_name not in self:
             raise KeyError(f"Table {table_name} not found")
 
-        df = self._tool.get_table_dataframe(table_name)
+        df = self._tool._get_table_dataframe(table_name)
         df.name = table_name
         return df
 

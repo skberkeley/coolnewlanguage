@@ -69,7 +69,7 @@ class TestTables:
 
         mock_dataframe = Mock()
         mock_get_table_dataframe = Mock(return_value=mock_dataframe)
-        tables._tool.get_table_dataframe = mock_get_table_dataframe
+        tables._tool._get_table_dataframe = mock_get_table_dataframe
 
         # Do
         dataframe = tables[TestTables.TABLE_NAME]
