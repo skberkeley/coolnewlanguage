@@ -17,4 +17,4 @@ class TextComponent(Component):
         Paint this TextComponent as a snippet of HTML
         :return:
         """
-        return f'<p>{self.text}</p>'
+        return f'<p class="component">{self.text}</p>'

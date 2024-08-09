@@ -6,14 +6,15 @@
     <script src="/static/approvals.js" async></script>
     <link rel="stylesheet" href="/styles/reset.css">
     <link rel="stylesheet" href="/styles/approval_page.css">
+    <link rel="stylesheet" href="/styles/table.css">
 </head>
 <body>
-    <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}">
+    <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}" class="approval_form">
     <input type="submit" value="Submit">
     {% if approve_results|length > 0 %}
     {% for approve_result in approve_results %}
     {% if approve_result.approve_result_type == ApproveResultType.TABLE_DELETION %}
-    <div>
+    <div class="approve_result">
         <h1>Approve deletion of table {{ approve_result.table_name }}?</h1>
         <table>
             <thead>
@@ -49,7 +50,7 @@
         {{ approve_result.dataframe_html }}
     </div>
     {% elif approve_result.approve_result_type == ApproveResultType.TABLE or approve_result.approve_result_type == ApproveResultType.TABLE_SCHEMA_CHANGE %}
-    <div>
+    <div class="approve_result">
         <h1>
             {% if approve_result.approve_result_type == ApproveResultType.TABLE %}
             Select rows to approve for {{ approve_result.table_name }}
@@ -123,7 +124,7 @@
     {% else %}
     <h1>No results to approve. Press submit to see all results.</h1>
     {% endif %}
-    <input type="submit" value="Submit">
+    <input type="submit" value="Submit" style="margin-top: 0.5rem">
     </form>
 </body>
 </html>

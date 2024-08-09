@@ -1,4 +1,10 @@
 .added_value {
   background-color: #d1fae5;
-    color: #059669;
+  color: #059669;
+}
+.approval_form {
+  padding: 0.5rem;
+}
+.approve_result * {
+  font-family: var(--default-font-family);
 }
