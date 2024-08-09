@@ -47,6 +47,10 @@ class TableSelectorComponent(InputComponent):
         )
 
         tool_tables = config.tool_under_construction.tables
+
+        if len(tool_tables.get_table_names()) == 0:
+            return "<p class='component'>There are currently no tables in the Tool's database</p>"
+
         tables = []
         for i, table_name in enumerate(tool_tables.get_table_names()):
             tables.append(
