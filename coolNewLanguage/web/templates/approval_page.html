@@ -60,20 +60,17 @@
         </h1>
         <h2> Batch operations: </h2>
         <h3>
-            <label>
+            <button type="button" onclick="approveAll()">
                 Approve all
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="approveAll" onchange="handleRadioControl()">
-            </label>
+            </button>
             <br>
-            <label>
+            <button type="button" onclick="rejectAll()">
                 Reject all
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="rejectAll" onchange="handleRadioControl()">
-            </label>
+            </button>
             <br>
-            <label>
+            <button type="button" onclick="pendAll()">
                 Set all to pending
-                <input type="radio" name="approve_{{ approve_result.id }}_batch" id="manualSelection" checked onchange="handleRadioControl()">
-            </label>
+            </button>
         </h3>
         <table>
             <thead>
