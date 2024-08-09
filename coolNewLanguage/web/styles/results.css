@@ -19,6 +19,7 @@
 .result {
     margin: 0;
     overflow: hidden;
+    overflow-x: auto;
 }
 .result h2 {
     font-family: var(--default-font-family);
