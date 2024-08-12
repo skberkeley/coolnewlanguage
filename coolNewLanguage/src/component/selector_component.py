@@ -22,7 +22,7 @@ class SelectorComponent(InputComponent):
 
         super().__init__(str)
 
-        if self.value is None:
+        if config.building_template:
             return
 
         try:

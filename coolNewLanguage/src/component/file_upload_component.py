@@ -36,7 +36,7 @@ class FileUploadComponent(InputComponent):
 
         super().__init__(pathlib.Path)
 
-        if self.value is not None:
+        if process.handling_post:
             if not isinstance(self.value, aiohttp.web_request.FileField):
                 raise TypeError("Expected value to be an aiohttp FileField")
             # Check file extension

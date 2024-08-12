@@ -21,7 +21,7 @@ class UserInputComponent(InputComponent):
 
         super().__init__(expected_type)
 
-        if self.value is None:
+        if config.building_template:
             return
 
         try:

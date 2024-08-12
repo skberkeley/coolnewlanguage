@@ -1,4 +1,5 @@
 from coolNewLanguage.src.component.component import Component
+from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.stage import process
 
 
@@ -24,8 +25,6 @@ class InputComponent(Component):
         if process.handling_post:
             values = process.post_body.getall(self.component_id)
             self.value = values if len(values) > 1 else values[0]
-        else:
-            self.value = None
 
     def paint(self):
         """
@@ -77,3 +76,8 @@ class InputComponent(Component):
         if isinstance(other, InputComponent):
             other = other.expected_type(other.value)
         return self.expected_type(self.value) == other
+
+    def __getattr__(self, item):
+        if item == "value":
+            raise CNLError("Looks you tried to access a Component's value before it was available. Did you check to see if tool.user_input_received()?")
+        raise AttributeError

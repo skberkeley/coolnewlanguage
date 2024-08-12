@@ -63,4 +63,20 @@ def column_viewer_with_table():
         hilt.results.show_results((table, "Selected table: "), (column_selector, "Selected column: "))
 tool.add_stage('column_viewer_with_table', column_viewer_with_table)
 
+
+def copy_bug():
+    table_name = hilt.UserInputComponent(str, label="Enter new table name: ")
+    table = hilt.TableSelectorComponent()
+    col = hilt.ColumnSelectorComponent()
+    file = hilt.FileUploadComponent('csv')
+    selector = hilt.SelectorComponent(['1', '2', '3'])
+    if tool.user_input_received():
+        print(table_name.value)
+        print(table.table_name)
+        print(col.table_name)
+        print(file.value)
+        print(selector.value)
+
+tool.add_stage('copy_bug', copy_bug)
+
 tool.run()

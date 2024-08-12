@@ -39,7 +39,7 @@ class ColumnSelectorComponent(InputComponent):
 
         super().__init__(expected_type=pd.DataFrame)
 
-        if self.value is not None:
+        if process.handling_post:
             self.table_name: str = self.value[0]
             self.column_names = self.value[1:]
             self.value: pd.DataFrame = process.running_tool.tables[self.table_name][self.value[1:]]
