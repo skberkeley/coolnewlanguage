@@ -8,7 +8,6 @@ import sqlalchemy
 from aiohttp import web
 
 import coolNewLanguage.src.tables as tables
-import coolNewLanguage.src.util.sql_alch_csv_utils as sql_alch_csv_utils
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \

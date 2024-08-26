@@ -1,3 +1,5 @@
+
+
 def get_component_id() -> str:
     """
     Get the id for the current component based on Component.num_components
@@ -23,11 +25,16 @@ class Component:
 
     def __init__(self):
         from coolNewLanguage.src.stage import config
+        from coolNewLanguage.src.stage import process
+        from coolNewLanguage.src.exceptions.CNLError import CNLError
         """
         Initialize this component by setting its component id, incrementing
         num_components, and if currently building the Config template, paint
         this component and add it to the list of templates
         """
+        if process.handling_post:
+            raise CNLError("A Component was instantiated after while user_input_received() was True! Have you made sure that all components are instantiated before user input is received, or creating another Stage?")
+
         self.component_id = get_component_id()
         Component.num_components += 1
         if config.building_template:
