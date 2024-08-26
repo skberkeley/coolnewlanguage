@@ -9,11 +9,18 @@ def approve_table_from_list_list():
     hilt.TextComponent("Creating and displaying a table to approve")
 
     if tool.user_input_received():
-        df = pd.DataFrame([["Oski", "Bear", 1000], ["Carol", "Christ", 2000]], columns=["First Name", "Last Name", "Age"])
-        tool.tables["Names"] = df
+        df = pd.DataFrame(
+            [
+                ["L", "Hamilton", 2025],
+                ["M", "Verstappen", 2016],
+                ["C", "Leclerc", 2019]
+            ],
+            columns=["First Name", "Last Name", "Year Joined"]
+        )
+        tool.tables["Ferrari Drivers"] = df
 
         hilt.approvals.get_user_approvals()
-        hilt.results.show_results((tool.tables["Names"], "Created table: "))
+        hilt.results.show_results((tool.tables["Ferrari Drivers"], "Created table: "))
 
 tool.add_stage('table_results', approve_table_from_list_list)
 
