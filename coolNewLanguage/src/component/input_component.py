@@ -23,7 +23,14 @@ class InputComponent(Component):
         self.expected_type = expected_type
 
         if process.handling_post:
-            values = process.post_body.getall(self.component_id)
+            try:
+                values = process.post_body.getall(self.component_id)
+            except KeyError:
+                raise CNLError(
+                    "A Component was instantiated after while user_input_received() was True! "
+                    "Have you made sure that all components are instantiated before user input is received, "
+                    "or creating another Stage?"
+                )
             self.value = values if len(values) > 1 else values[0]
 
     def paint(self):
