@@ -32,7 +32,9 @@ def simple_column_matcher():
     if tool.user_input_received():
         # The code in this function is run after users have submitted their inputs
         # This lets us do things like join the two DataFrames
-        matches = pd.merge(c1.value, c2.value, how='inner', left_on=c1.column_names, right_on=c2.column_names)
+        c1_full_table = tool.tables[c1.table_name]
+        c2_full_table = tool.tables[c2.table_name]
+        matches = pd.merge(c1_full_table, c2_full_table, how='inner', left_on=c1.column_names, right_on=c2.column_names)
 
         # If we didn't find any matches, return a string saying so
         if len(matches) == 0:
