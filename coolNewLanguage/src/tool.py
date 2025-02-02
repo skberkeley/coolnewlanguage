@@ -141,7 +141,8 @@ class Tool:
             template_name=LANDING_PAGE_TEMPLATE_FILENAME,
             request=request,
             context={
-                LANDING_PAGE_STAGES: self.stages
+                LANDING_PAGE_STAGES: self.stages,
+                'tool_name': self.tool_name
             }
         )
 

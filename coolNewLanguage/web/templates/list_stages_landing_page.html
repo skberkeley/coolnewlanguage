@@ -1,17 +1,24 @@
 <html lang="en">
-    <head>
-        <title>List of stages</title>
-        <script src="/static/support.js"></script>
-        <link rel="stylesheet" href="/styles/reset.css">
-        <link rel="stylesheet" href="/styles/landing_page.css">
-    </head>
-    <body>
-        {% for stage in stages %}
-            <p>
-                <a href="{{ stage.url }}">
-                    {{ stage.name }}
-                </a>
-            </p>
-        {% endfor %}
-    </body>
+	<head>
+		<title>List of stages</title>
+		<script src="/static/support.js"></script>
+		<link rel="stylesheet" href="/styles/landing_page.css" />
+	</head>
+	<body>
+		<h1>{{ tool_name }}</h1>
+		<h3>Pick a Stage to navigate to:</h3>
+		<div
+			style="
+				display: flex;
+				flex-direction: column;
+				justify-contents: space-evenly;
+				gap: 0.5rem;
+				align-items: flex-start;
+			"
+		>
+			{% for stage in stages %}
+			<a href="{{ stage.url }}">{{ stage.name }}</a>
+			{% endfor %}
+		</div>
+	</body>
 </html>
