@@ -1,35 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ results_title }}</title>
-    <link rel="stylesheet" href="/styles/table.css">
-    <link rel="stylesheet" href="/styles/results.css">
-    <link rel="stylesheet" href="/styles/reset.css">
-</head>
-<body>
-    <div class="results_container">
-        <form action="/" method="get">
-            <input type="submit" value="Go back to landing page">
-        </form>
-        <h1>{{ results_title }}</h1>
-        <div class="container">
-            {% for result in results %}
-            <div class="result">
-                {% if result.label != "" %}
-                <h2>
-                    {{ result.label }}
-                </h2>
-                {% endif %}
-                {% if result.html_value != "" %}
-                {{ result.html_value }}
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        <form action="/" method="get">
-            <input type="submit" value="Go back to landing page">
-        </form>
-    </div>
-</body>
+	<head>
+		<meta charset="UTF-8" />
+		<title>{{ results_title }}</title>
+		<link rel="stylesheet" href="/styles/table.css" />
+		<link rel="stylesheet" href="/styles/results.css" />
+		<link rel="stylesheet" href="/styles/reset.css" />
+		<link rel="stylesheet" href="/styles/button-a.css" />
+		<link rel="stylesheet" href="/styles/banner.css" />
+	</head>
+	<body>
+		<header>
+			<div class="banner">
+				<h2 class="banner-title">Results for: {{ stage_name }}</h2>
+				<a href="/">Main menu</a>
+			</div>
+		</header>
+		<div class="results_container">
+			<h1>{{ results_title }}</h1>
+			<div class="container">
+				{% for result in results %}
+				<div class="result">
+					{% if result.label != "" %}
+					<h2>{{ result.label }}</h2>
+					{% endif %} {% if result.html_value != "" %} {{ result.html_value }}
+					{% endif %}
+				</div>
+				{% endfor %}
+			</div>
+			<form action="/" method="get">
+				<input type="submit" value="Go back to landing page" />
+			</form>
+		</div>
+	</body>
 </html>

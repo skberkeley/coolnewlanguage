@@ -12,7 +12,7 @@ from coolNewLanguage.src.component.column_selector_component import ColumnSelect
 from coolNewLanguage.src.row import Row
 from coolNewLanguage.src.stage import process
 from coolNewLanguage.src.stage.stage import Stage
-from coolNewLanguage.src.util import html_utils, link_utils, db_utils
+from coolNewLanguage.src.util import html_utils, link_utils
 
 
 class Result:
@@ -93,7 +93,8 @@ def show_results(*results: Any, results_title: str = '') -> None:
     # render the template and set it on Stage
     Stage.results_template = template.render(
         results_title=results_title,
-        results=result_objects
+        results=result_objects,
+        stage_name=process.stage_name
     )
 
 

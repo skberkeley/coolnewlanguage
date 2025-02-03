@@ -9,4 +9,8 @@ button {
 }
 :root {
     --default-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-seriffont-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; font-monofont-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --header-bg: #e3f1fd;
+    --button-hover-bg: #cbd5e1;
+    --button-bg: #f1f5ff;
+    --button-border-color: #020d19;
 }

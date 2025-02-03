@@ -33,3 +33,4 @@ approval_post_body: dict = None
 cached_show_results: list['Result'] = []
 cached_show_results_title: str = ""
 handling_user_approvals: bool = False
+stage_name: str = ""

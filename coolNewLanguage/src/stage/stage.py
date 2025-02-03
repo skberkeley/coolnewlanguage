@@ -122,6 +122,7 @@ class Stage:
         process.handling_post = True
         Component.num_components = 0
         process.curr_stage_url = self.url
+        process.stage_name = self.name
         process.cached_show_results_title = ""
         process.cached_show_results = []
 

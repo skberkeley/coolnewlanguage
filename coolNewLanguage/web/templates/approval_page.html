@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="/styles/reset.css">
     <link rel="stylesheet" href="/styles/approval_page.css">
     <link rel="stylesheet" href="/styles/table.css">
+    <link rel="stylesheet" href="/styles/button-a.css" />
+    <link rel="stylesheet" href="/styles/banner.css" />
 </head>
 <body>
+    <header>
+        <div class="banner">
+            <h2 class="banner-title">Approvals for: {{ stage_name }}</h2>
+            <a href="/">Main menu</a>
+        </div>
+    </header>
     <form action="{{ form_action }}" method="{{ form_method }}" enctype="{{  form_enctype }}" class="approval_form">
     <input type="submit" value="Submit">
     {% if approve_results|length > 0 %}
