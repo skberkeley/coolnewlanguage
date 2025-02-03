@@ -12,6 +12,13 @@
 .approve_result * {
   font-family: var(--default-font-family);
 }
+div.approve_result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
 button {
   padding: .5rem;
   border-radius: 5px;
@@ -20,4 +27,12 @@ button {
 }
 button:hover {
     background-color: var(--th-bg);
+}
+div.batch-op-buttons {
+  display: flex;
+  flex-flow: row;
+  gap: 0.5rem;
+}
+div.approve_result > h2 {
+  margin: 0;
 }

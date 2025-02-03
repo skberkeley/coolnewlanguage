@@ -65,7 +65,8 @@ def get_user_approvals():
             approve_results=approve_results,
             form_action=approve_handler_url,
             form_method=form_method,
-            form_enctype=form_enctype
+            form_enctype=form_enctype,
+            stage_name=process.stage_name
         )
 
 def get_table_approve_object(table_name: str, df: pd.DataFrame) -> ApproveResult:
