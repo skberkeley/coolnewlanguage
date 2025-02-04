@@ -11,3 +11,9 @@ body {
     --button-bg: #f1f5ff;
     --button-border-color: #020d19;
 }
+div.links-descr-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: start;
+}

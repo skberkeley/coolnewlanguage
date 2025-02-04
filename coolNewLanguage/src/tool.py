@@ -25,12 +25,13 @@ class Tool:
 
     Attributes:
     tool_name : str
+    description: str - A description of the Tool, useful for providing instructions to the user
     stages : list[Stage]
     web_app : WebApp
     file_dir : Pathlib.Path - A path to the directory in which to store files uploaded to this Tool
     state : dict - A dictionary programmers can use to share state between Stages
     """
-    def __init__(self, tool_name: str, file_dir_path: str = ''):
+    def __init__(self, tool_name: str, file_dir_path: str = '', description: str = ''):
         """
         Initialize this tool
         Initializes the web_app which forms the back end of this tool
@@ -46,9 +47,12 @@ class Tool:
             raise ValueError("Tool name can only contain alphanumeric characters and underscores")
         if not isinstance(file_dir_path, str):
             raise TypeError("Expected file_dir_path to be a string")
+        if not isinstance(description, str):
+            raise TypeError("Expected description to be a string")
 
 
         self.tool_name = tool_name
+        self.description_lines = description.strip().splitlines()
 
         self.stages: List[Stage] = []
 
@@ -142,7 +146,8 @@ class Tool:
             request=request,
             context={
                 LANDING_PAGE_STAGES: self.stages,
-                'tool_name': self.tool_name
+                'tool_name': self.tool_name,
+                'description_lines': self.description_lines
             }
         )
 

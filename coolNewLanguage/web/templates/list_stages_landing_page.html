@@ -8,18 +8,24 @@
 	<body>
 		<h1>{{ tool_name }}</h1>
 		<h3>Pick a Stage to navigate to:</h3>
-		<div
-			style="
-				display: flex;
-				flex-direction: column;
-				justify-contents: space-evenly;
-				gap: 0.5rem;
-				align-items: flex-start;
-			"
-		>
-			{% for stage in stages %}
-			<a href="{{ stage.url }}">{{ stage.name }}</a>
-			{% endfor %}
+		<div class="links-descr-container">
+			<div
+				style="
+					display: flex;
+					flex-direction: column;
+					gap: 0.5rem;
+					align-items: flex-start;
+					width: 50%;
+				"
+			>
+				{% for stage in stages %}
+				<a href="{{ stage.url }}">{{ stage.name }}</a>
+				{% endfor %}
+			</div>
+			<p style="width: 50%; margin: 0">
+				{% for line in description_lines %} {{line}} <br />
+				{% endfor %}
+			</p>
 		</div>
 	</body>
 </html>
