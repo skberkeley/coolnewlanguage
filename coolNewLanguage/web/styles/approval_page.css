@@ -19,15 +19,6 @@ div.approve_result {
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
-button {
-  padding: .5rem;
-  border-radius: 5px;
-  border: 1px solid #cbd5e1;
-  background-color: #f1f5f9;
-}
-button:hover {
-    background-color: var(--th-bg);
-}
 div.batch-op-buttons {
   display: flex;
   flex-flow: row;

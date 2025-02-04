@@ -1,6 +1,6 @@
 a {
     font-family: var(--default-font-family);
-    width: 25%;
+    width: max-content;
     padding: .5rem;
     border-radius: 5px;
     border: 1px solid #020d19;

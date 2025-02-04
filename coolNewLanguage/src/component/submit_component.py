@@ -30,6 +30,6 @@ class SubmitComponent(Component):
         :return:
         """
         if self.submit_text != "":
-            return f'<input type="submit" value="{self.submit_text}">'
+            return f'<button type="submit">{self.submit_text}</button>'
         else:
-            return '<input type="submit">'
+            return '<button type="submit">Submit</button>'

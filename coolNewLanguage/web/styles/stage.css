@@ -1,11 +1,8 @@
-.component {
-    padding: 0.5rem;
-}
-
 input[type=submit] {
     margin: 0.5rem;
 }
 
 form {
     font-family: var(--default-font-family);
+    padding: 0.5rem;
 }
