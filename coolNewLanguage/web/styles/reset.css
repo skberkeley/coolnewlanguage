@@ -13,4 +13,6 @@ button {
     --button-hover-bg: #cbd5e1;
     --button-bg: #f1f5ff;
     --button-border-color: #020d19;
+    --input-border-color: #e4e4e7;
+    --input-text-color: rgb(9, 9, 11);
 }

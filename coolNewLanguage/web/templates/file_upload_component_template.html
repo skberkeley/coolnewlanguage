@@ -1,9 +1,11 @@
-<div class="component">
-    {% if label != "" %}
-    <label for="{{ component_id }}">
-        {{ label }}
-    </label>
-    <br>
-    {% endif %}
-    <input type="file" id="{{ component_id }}" name="{{ component_id }}" accept="{{ expected_ext }}">
+<div class="component file-upload-container">
+	{% if label != "" %}
+	<label for="{{ component_id }}"> {{ label }} </label>
+	{% endif %}
+	<input
+		type="file"
+		id="{{ component_id }}"
+		name="{{ component_id }}"
+		accept="{{ expected_ext }}"
+	/>
 </div>
