@@ -1,5 +1,13 @@
-input[type=submit] {
-    margin: 0.5rem;
+input[type=text] {
+    padding-top: .25rem;
+    padding-bottom: .25rem;
+    padding-left: .75rem;
+    padding-right: .75rem;
+    font-size: .875rem;
+    line-height: 1.25rem;
+    border: 1px solid var(--button-border-color);
+    background-color: transparent;
+    border-radius: 5px;
 }
 
 form {
