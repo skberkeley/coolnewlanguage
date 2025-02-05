@@ -20,12 +20,15 @@
 				<a href="/">Main menu</a>
 			</div>
 		</header>
-		<form
-			action="{{ form_action }}"
-			method="{{ form_method }}"
-			enctype="multipart/form-data"
-		>
-			{% for component in component_list %} {{ component }} {% endfor %}
-		</form>
+		<div class="stage-container">
+			<form
+				action="{{ form_action }}"
+				method="{{ form_method }}"
+				enctype="multipart/form-data"
+			>
+				{% for component in component_list %} {{ component }} {% endfor %}
+			</form>
+			<p style="width: 50%; margin: 0">{{ description }}</p>
+		</div>
 	</body>
 </html>

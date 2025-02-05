@@ -1,12 +1,16 @@
-input[type=text] {
-    padding: .25rem .75rem;
-}
-
-form {
+div.stage-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: start;
     font-family: var(--default-font-family);
     padding: 0.5rem;
 }
-
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
 input {
     font-size: .875rem;
     line-height: 1.25rem;
@@ -18,7 +22,6 @@ input {
     height: 2.5rem;
     box-sizing: border-box;
 }
-
 div.file-upload-container {
     display: grid;
     width: 100%;
@@ -26,11 +29,12 @@ div.file-upload-container {
     align-items: center;
     gap: 0.375rem;
 }
-
+input[type=text] {
+    padding: .25rem .75rem;
+}
 input[type=file] {
     padding: .5rem .75rem;
 }
-
 input[type=file]::-webkit-file-upload-button {
     background-color: transparent;
     border: 0px;

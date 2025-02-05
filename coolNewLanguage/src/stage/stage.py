@@ -28,7 +28,7 @@ class Stage:
     approvals_template: str = None
     results_template: str = None
 
-    def __init__(self, name: str, stage_func: Callable):
+    def __init__(self, name: str, stage_func: Callable, description: str = ""):
         """
         Initialize this stage. The stage url is generated from the passed name
         :param name: This stage's name. Cannot begin with an underscore
@@ -46,6 +46,11 @@ class Stage:
         self.stage_func = stage_func
 
         self.url = urllib.parse.quote(name)
+
+        if description == "" and stage_func.__doc__ is not None:
+            description = stage_func.__doc__
+
+        self.description = description
 
     async def handle(self, request: web.Request) -> web.Response:
         """
@@ -100,7 +105,8 @@ class Stage:
             stage_name=self.name,
             form_action=form_action,
             form_method=form_method,
-            component_list=painted_components
+            component_list=painted_components,
+            description=self.description
         )
 
     async def post_handler(self, request: web.Request) -> web.Response:
