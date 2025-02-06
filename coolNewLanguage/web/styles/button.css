@@ -5,6 +5,7 @@ button {
     background-color: #f1f5f9;
     max-width: 20rem;
     width: 100%;
+    cursor: pointer;
 }
 button:hover {
     background-color: var(--th-bg);

@@ -1,31 +1,42 @@
-<div class="table_select_full_table" id="table_select_full_table_{{ component_id }}_table_{{ table_transient_id }}">
-    <div class="table_select_full_table_header">
-        <span class="table_name">{{ table_name }}</span>
-        <button class="hide_full_table_button" type="button" onclick="table_sel_hide_full_table('{{ component_id }}', {{ table_transient_id }})">^</button>
-    </div>
-    <div class="table_div">
-        <table>
-            <thead>
-                <tr>
-                {% for col in col_names %}
-                    <th>{{ col }}</th>
-                {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-            {% for row in rows %}
-                <tr>
-                    {% for col in col_names %}
-                    <td>{{ row[col] }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <button class="confirm_table_choice" type="button" onclick="table_sel_confirm_table_choice('{{ table_name }}', '{{ component_id }}', {{ table_transient_id }})">
-            Confirm this table choice
-        </button>
-    </div>
+<div
+	class="table_select_full_table"
+	id="table_select_full_table_{{ component_id }}_table_{{ table_transient_id }}"
+>
+	<div class="table_select_full_table_header">
+		<h3>{{ table_name }}</h3>
+		<button
+			class="hide_full_table_button"
+			type="button"
+			onclick="table_sel_hide_full_table('{{ component_id }}', {{ table_transient_id }})"
+		>
+			Hide table
+		</button>
+	</div>
+	<div class="table_div">
+		<table>
+			<thead>
+				<tr>
+					{% for col in col_names %}
+					<th>{{ col }}</th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in rows %}
+				<tr>
+					{% for col in col_names %}
+					<td>{{ row[col] }}</td>
+					{% endfor %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<button
+		class="confirm_table_choice"
+		type="button"
+		onclick="table_sel_confirm_table_choice('{{ table_name }}', '{{ component_id }}', {{ table_transient_id }})"
+	>
+		Confirm this table choice
+	</button>
 </div>
