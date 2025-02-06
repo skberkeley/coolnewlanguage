@@ -258,4 +258,10 @@ def result_template_of_dataframe(df: pd.DataFrame) -> str:
     :param df:
     :return:
     """
-    return df.to_html()
+    dataframe_html = df.to_html(index=False, border=0, justify="left")
+
+    template: jinja2.Template = process.running_tool.jinja_environment.get_template(
+        name=consts.DATAFRAME_TABLE_TEMPLATE_FILENAME
+    )
+
+    return template.render(dataframe_html=dataframe_html)
