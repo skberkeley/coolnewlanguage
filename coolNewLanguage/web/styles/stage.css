@@ -4,12 +4,13 @@ div.stage-container {
     justify-content: space-between;
     align-items: start;
     font-family: var(--default-font-family);
-    padding: 0.5rem;
+    padding: 1rem;
 }
 form {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    width: 60%;
 }
 input {
     font-size: .875rem;
@@ -34,8 +35,11 @@ input[type=text] {
 }
 input[type=file] {
     padding: .5rem .75rem;
+    cursor: pointer;
 }
 input[type=file]::-webkit-file-upload-button {
     background-color: transparent;
     border: 0px;
+    visibility: hidden;
+    width: 0;
 }

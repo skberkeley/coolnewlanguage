@@ -4,7 +4,7 @@ header {
 }
 div.banner {
     font-family: var(--default-font-family);
-    padding: 0.5rem;
+    padding: 1rem;
     border-bottom: 1px solid var(--button-border-color);
     background-color: var(--header-bg);
     display: flex;
