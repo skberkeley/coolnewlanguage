@@ -20,7 +20,7 @@ async function table_sel_show_table(table_name, component_id, context, table_tra
 
 function table_sel_hide_full_table(component_id, table_transient_id) {
     const full_table_div = document.getElementById(`table_select_full_table_${component_id}_table_${table_transient_id}`);
-    full_table_div.remove();
+    full_table_div?.remove();
     // unstyle the preview of the table as selected
     const button = table_sel_get_table_select_button(component_id, table_transient_id);
     button.classList.remove("table_select_button_selected");
