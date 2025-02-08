@@ -13,27 +13,33 @@
 				<h2 class="banner-title">{{ tool_name }}</h2>
 			</div>
 		</header>
-		<div style="padding: 1rem">
-			<h3>Pick a Stage to navigate to:</h3>
-			<div class="links-descr-container">
-				<div
-					style="
-						display: flex;
-						flex-direction: column;
-						gap: 0.5rem;
-						align-items: flex-start;
-						width: 50%;
-					"
-				>
-					{% for stage in stages %}
-					<a href="{{ stage.url }}">{{ stage.name }}</a>
-					{% endfor %}
-				</div>
-				<p style="width: 50%; margin: 0">
-					{% for line in description_lines %} {{line}} <br />
-					{% endfor %}
-				</p>
+		<div
+			style="
+				padding: 1rem;
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+			"
+		>
+			<div
+				style="
+					display: flex;
+					flex-direction: column;
+					gap: 0.5rem;
+					align-items: flex-start;
+					width: 50%;
+				"
+			>
+				<h3 style="margin: 0">Pick a Stage to navigate to:</h3>
+
+				{% for stage in stages %}
+				<a href="{{ stage.url }}">{{ stage.name }}</a>
+				{% endfor %}
 			</div>
+			<p style="width: 50%; margin: 0">
+				{% for line in description_lines %} {{line}} <br />
+				{% endfor %}
+			</p>
 		</div>
 	</body>
 </html>
