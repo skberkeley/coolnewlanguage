@@ -1,14 +1,11 @@
 import jinja2
 import pandas as pd
-import sqlalchemy
 from aiohttp import web
 
 from coolNewLanguage.src import consts
 from coolNewLanguage.src.approvals.approve_result import ApproveResult
 from coolNewLanguage.src.approvals.approve_result_type import ApproveResultType
 from coolNewLanguage.src.approvals.approve_state import ApproveState
-from coolNewLanguage.src.approvals.link_approve_result import LinkApproveResult
-from coolNewLanguage.src.approvals.row_approve_result import RowApproveResult
 from coolNewLanguage.src.approvals.table_approve_result import TableApproveResult
 from coolNewLanguage.src.approvals.table_deletion_approve_result import TableDeletionApproveResult
 from coolNewLanguage.src.approvals.table_schema_change_approve_result import TableSchemaChangeApproveResult
@@ -16,7 +13,6 @@ from coolNewLanguage.src.exceptions.CNLError import CNLError
 from coolNewLanguage.src.stage import config, process, results
 from coolNewLanguage.src.stage.stage import Stage
 from coolNewLanguage.src.tool import Tool
-from coolNewLanguage.src.util import link_utils
 from coolNewLanguage.src.util.sql_alch_csv_utils import DB_INTERNAL_COLUMN_ID_NAME
 
 

@@ -7,7 +7,10 @@
   color: #059669;
 }
 .approval_form {
-  padding: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 .approve_result * {
   font-family: var(--default-font-family);
@@ -16,8 +19,6 @@ div.approve_result {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
 }
 div.batch-op-buttons {
   display: flex;

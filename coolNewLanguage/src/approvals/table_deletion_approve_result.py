@@ -14,7 +14,7 @@ class TableDeletionApproveResult(ApproveResult):
             raise TypeError("Expected dataframe to be a DataFrame")
 
         self.table_name = table_name
-        self.dataframe_html = dataframe.to_html()
+        self.dataframe_html = dataframe.to_html(index=False, border=0, justify="left")
 
         super().__init__()
         self.approve_result_type = ApproveResultType.TABLE_DELETION
