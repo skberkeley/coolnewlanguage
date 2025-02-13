@@ -3,6 +3,9 @@
     <input id="input_{{ component_id }}" hidden="hidden" name="{{ component_id }}">
     <p>{{ label }}</p>
     <div class="table_select stack-h" id="table_select_{{ component_id }}">
+        {% if tables|length == 0 %}
+            <p>No tables to choose from. Have you uploaded any tables</p>
+        {% endif %}
         {% for table in tables %}
         <div id="table_select_{{ component_id }}_table_{{ table["transient_id"] }}" class="table-checkbox-and-button">
             <div style="display: flex;">

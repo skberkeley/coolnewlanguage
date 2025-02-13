@@ -12,6 +12,7 @@
     align-self: flex-start;
 }
 div.table_div {
+    max-height: 50rem;
     overflow: auto;
     border: 1px solid rgb(228, 228, 231);
     border-radius: 5px;

@@ -5,6 +5,9 @@
     <p id="col_sel_selected_table_{{ component_id }}" hidden="hidden"></p>
     <p id="col_sel_selected_columns_{{ component_id }}" hidden="hidden"></p>
     <p style="color: 240 3.8% 46.1%; font-size: .8rem;">To pick columns, choose a table, and then click the desired columns to select them.</p>
+    {% if tables|length == 0 %}
+    <p>No tables to choose from. Have you uploaded any tables yet?</p>
+    {% else %}
     <div class="table_select stack-h" id="table_select_{{ component_id }}">
         {% for table in tables %}
         <div id="table_select_{{ component_id }}_table_{{ table["transient_id"] }}" class="table-checkbox-and-button">
@@ -34,4 +37,5 @@
         </div>
         {% endfor %}
     </div>
+    {% endif %}
 </div>

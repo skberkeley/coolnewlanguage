@@ -18,6 +18,7 @@ input[type=checkbox] {
 }
 .table_select_button {
     padding: 0.25rem;
+    max-width: none;
 }
 .table_select_button:hover {
     background-color: var(--th-bg);

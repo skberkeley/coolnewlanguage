@@ -128,7 +128,7 @@ def result_template_of_value(value) -> str:
         case pd.DataFrame():
             return result_template_of_dataframe(value)
         case _:
-            return str(value)
+            return str(f"<p>{value}</p>")
 
 
 def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:

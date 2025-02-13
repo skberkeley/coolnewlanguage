@@ -1,20 +1,20 @@
 :root {
     --default-font-family: "Avenir", "Helvetica Neue", Helvetica, Arial;
 }
-.results_container {
+div.results_container {
     height: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding: 1rem;  
+    gap: 1rem;
 }
 .container {
     display: block;
     overflow: auto;
-    padding: 0.5rem;
 }
 .results_container h1 {
     font-family: var(--default-font-family);
-    padding: 0.5rem;
 }
 .result {
     margin: 0;
@@ -23,14 +23,6 @@
 }
 .result h2 {
     font-family: var(--default-font-family);
-}
-input[type=submit] {
-    font-family: var(--default-font-family);
-    padding: .5rem;
-    margin: .5rem;
-    border-radius: 5px;
-    border: 1px solid #cbd5e1;
-    background-color: #f1f5f9;
 }
 .result_table {
     overflow: hidden;
