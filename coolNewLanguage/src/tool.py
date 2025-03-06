@@ -1,6 +1,7 @@
 import pathlib
 from typing import Callable, Optional
 
+import aiofiles
 import aiohttp_jinja2
 import jinja2
 import pandas as pd
@@ -120,7 +121,8 @@ class Tool:
 
         routes = [
             web.get('/', self.landing_page),
-            web.get(consts.GET_TABLE_ROUTE, self.get_table)
+            web.get(consts.GET_TABLE_ROUTE, self.get_table),
+            web.get('/pdf/{filename}', self.serve_pdf)
         ]
 
         for stage in self.stages:
@@ -290,3 +292,34 @@ class Tool:
 
         with self.db_engine.connect() as conn:
             return pd.read_sql_table(table_name, conn)
+
+    async def serve_pdf(self, request: web.Request) -> web.Response:
+        """
+        Serve a PDF file
+        :param request: The request object
+        :return: The response object containing the PDF file
+        """
+        filename = request.match_info['filename']
+        pdf_path = self.file_dir / filename
+
+        if not pdf_path.exists():
+            return web.Response(status=404, text="PDF file not found")
+
+        response = web.StreamResponse(
+            status=200,
+            reason='OK',
+            headers={
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'inline; filename="{filename}"'
+            }
+        )
+        await response.prepare(request)
+
+        async with aiofiles.open(pdf_path, 'rb') as f:
+            chunk = await f.read(8192)
+            while chunk:
+                await response.write(chunk)
+                chunk = await f.read(8192)
+
+        await response.write_eof()
+        return response
