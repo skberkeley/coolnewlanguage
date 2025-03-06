@@ -3,14 +3,16 @@ import pandas as pd
 # import coolNewLanguage.src as hilt
 from coolNewLanguage import src as hilt
 
-tool = hilt.Tool('basic_backend')
+DESCRIPTION = "This is a Tool for testing basic backend functionality. Users can upload and name tables as CSV files, and pick and view the tables and columns they've uploaded."
+
+
+tool = hilt.Tool('basic_backend', description=DESCRIPTION)
 
 def csv_upload_and_name():
     """
     Stage to upload a csv file and give the resulting table a name. To test, upload a csv file, giving it a name,
     and then upload a non-csv file and make sure an error is shown. Finally, upload the original file and test that
     an error is shown regarding uploading a file with the same name.
-    :return:
     """
     table_name = hilt.UserInputComponent(str, label="Enter table name:")
     csv_file = hilt.FileUploadComponent('.csv', label="Upload a csv file:")
@@ -21,16 +23,13 @@ def csv_upload_and_name():
 
         hilt.results.show_results((df, "Created table: "))
 
-
 tool.add_stage('csv_upload_and_name', csv_upload_and_name)
 
 def table_viewer():
     """
     Stage to select and view a table. To test, access this stage after uploading a csv, and view a table. Verify
     all uploaded tables are viewable, and no hidden ones are.
-    :return:
     """
-    hilt.TextComponent("Select a table: ")
     table = hilt.TableSelectorComponent()
     if tool.user_input_received():
         hilt.results.show_results((table, "Selected table: "))
