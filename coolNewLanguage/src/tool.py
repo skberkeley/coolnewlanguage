@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import Callable, Optional
 
@@ -6,6 +7,8 @@ import aiohttp_jinja2
 import jinja2
 import pandas as pd
 import sqlalchemy
+from sqlalchemy.orm import Session
+
 from aiohttp import web
 
 import coolNewLanguage.src.tables as tables
@@ -323,3 +326,29 @@ class Tool:
 
         await response.write_eof()
         return response
+
+    def save_content(self, content: models.UserContent):
+        """
+        Save content to the database
+        :param content_name: The name of the content
+        :param content_file_name: The name of the file containing the content
+        :param content_type: The type of the content
+        :return:
+        """
+        if not isinstance(content, models.UserContent):
+            raise TypeError("Expected content to be a UserContent object")
+
+        with Session(self.db_engine, expire_on_commit=False) as session:
+            stmt = sqlalchemy.select(models.UserContent).where(
+                models.UserContent.content_name == content.content_name)
+
+            content.content_file_name = os.path.basename(
+                content.content_file_name)
+
+            existing_content = session.execute(stmt).scalar_one_or_none()
+            if existing_content is None:
+                session.add(content)
+            else:
+                existing_content.content_file_name = content.content_file_name
+                existing_content.content_type = content.content_type
+            session.commit()
