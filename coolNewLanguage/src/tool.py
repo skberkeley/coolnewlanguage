@@ -343,12 +343,22 @@ class Tool:
                 models.UserContent.content_name == content.content_name)
 
             content.content_file_name = os.path.basename(
-                content.content_file_name)
+                content.content_file_path)
 
             existing_content = session.execute(stmt).scalar_one_or_none()
             if existing_content is None:
                 session.add(content)
             else:
                 existing_content.content_file_name = content.content_file_name
+                existing_content.content_file_path = content.content_file_path
                 existing_content.content_type = content.content_type
             session.commit()
+
+    def get_content(self):
+        """
+        Get content from the database
+        :return:
+        """
+        with Session(self.db_engine, expire_on_commit=False) as session:
+            stmt = sqlalchemy.select(models.UserContent)
+            return session.execute(stmt).scalars().all()

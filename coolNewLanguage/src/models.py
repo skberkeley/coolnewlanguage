@@ -19,4 +19,5 @@ class UserContent(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     content_name = Column(String, nullable=False, unique=True)
     content_file_name = Column(String, nullable=False)
+    content_file_path = Column(String, nullable=False)
     content_type = Column(Enum(ContentTypes), nullable=False)
