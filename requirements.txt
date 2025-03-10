@@ -4,3 +4,4 @@ aiohttp~=3.9.0
 aiohttp-jinja2
 pytest~=7.4.0
 pandas~=2.2.2
+aiofiles

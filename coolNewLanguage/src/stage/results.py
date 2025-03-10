@@ -4,7 +4,7 @@ import jinja2
 import pandas as pd
 import sqlalchemy
 
-from coolNewLanguage.src import consts
+from coolNewLanguage.src import consts, models
 from coolNewLanguage.src.cell import Cell
 from coolNewLanguage.src.cnl_type.link import Link
 from coolNewLanguage.src.component.input_component import InputComponent
@@ -127,6 +127,8 @@ def result_template_of_value(value) -> str:
                 return f"Table \"{table_name}\" not found, possibly because all its rows were rejected or left pending, resulting in the table not being created."
         case pd.DataFrame():
             return result_template_of_dataframe(value)
+        case models.UserContent(content_type=models.ContentTypes.PDF):
+            return result_template_of_pdf_content(value)
         case _:
             return str(f"<p>{value}</p>")
 
@@ -140,7 +142,8 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     """
     # Check to see if the table exists in the db
     process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
-    process.running_tool.db_metadata_obj.reflect(process.running_tool.db_engine)
+    process.running_tool.db_metadata_obj.reflect(
+        process.running_tool.db_engine)
     if table.name not in process.running_tool.db_metadata_obj.tables:
         return ""
 
@@ -160,7 +163,8 @@ def result_template_of_column_list(cols: ColumnSelectorComponent) -> str:
     if not isinstance(cols, ColumnSelectorComponent):
         raise TypeError("Expected cols to be a ColumnSelectorComponent")
 
-    table: sqlalchemy.Table = process.running_tool.get_table_from_table_name(cols.table_name)
+    table: sqlalchemy.Table = process.running_tool.get_table_from_table_name(
+        cols.table_name)
     sqlalchemy_cols = [table.c[col] for col in cols.value]
     stmt = sqlalchemy.select(*sqlalchemy_cols)
 
@@ -184,7 +188,8 @@ def result_template_of_cell_list(cells: List[Cell]) -> str:
 
     vals = []
     for cell in cells:
-        val = cell.expected_type(cell.val) if cell.expected_type is not None else cell.val
+        val = cell.expected_type(
+            cell.val) if cell.expected_type is not None else cell.val
         vals.append(str(val))
 
     # Get Jinja template
@@ -216,10 +221,12 @@ def result_template_of_list_list(rows: list[list]) -> str:
     if not all(map(lambda l: isinstance(l, list), rows)):
         raise TypeError("Expected each member of rows to be a list")
     if not all(map(lambda l: len(l) == len(rows[0]), rows[1:])):
-        raise ValueError("Expected each member of rows to have the same length")
+        raise ValueError(
+            "Expected each member of rows to have the same length")
 
     col_names = rows[0]
-    jinja_rows = [{col_name: str(row[i]) for i, col_name in enumerate(col_names)} for row in rows[1:]]
+    jinja_rows = [{col_name: str(row[i]) for i, col_name in enumerate(
+        col_names)} for row in rows[1:]]
 
     # Get Jinja template
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(
@@ -252,6 +259,7 @@ def result_template_of_link(link: Link) -> str:
 
     return html_utils.html_of_link(link)
 
+
 def result_template_of_dataframe(df: pd.DataFrame) -> str:
     """
     Construct an HTML snippet of a pandas DataFrame
@@ -265,3 +273,19 @@ def result_template_of_dataframe(df: pd.DataFrame) -> str:
     )
 
     return template.render(dataframe_html=dataframe_html)
+
+
+def result_template_of_pdf_content(pdf_content: models.UserContent) -> str:
+    """
+    Construct an HTML snippet of a PDF content
+    :param pdf_content: The PDF content to render
+    :return: A string containing an HTML snippet embedding the PDF content
+    """
+    if not isinstance(pdf_content, models.UserContent):
+        raise TypeError("Expected pdf_content to be a UserContent")
+    if pdf_content.content_type != models.ContentTypes.PDF:
+        raise ValueError("Expected pdf_content to be a PDF")
+
+    pdf_url = f'/pdf/{pdf_content.content_file_name}'
+
+    return f'<embed type="application/pdf" src="{ pdf_url }" width="100%" height="100%" />'

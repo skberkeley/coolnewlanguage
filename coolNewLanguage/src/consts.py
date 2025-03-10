@@ -73,3 +73,5 @@ COLUMN_SELECTOR_FULL_TABLE_TEMPLATE_FILENAME = "column_selector_full_table.html"
 METADATA_COLUMN_NAMES = set(["__hls_internal_id"])
 
 DATAFRAME_TABLE_TEMPLATE_FILENAME = "dataframe_table.html"
+
+CONTENT_REGISTRY_TABLE_NAME = "__hilt_content_registry"

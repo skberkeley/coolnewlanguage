@@ -216,3 +216,4 @@ participant_programs/
 pilots/
 
 package-lock.json
+coolNewLanguage/__pycache__/

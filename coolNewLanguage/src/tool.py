@@ -1,15 +1,19 @@
+import os
 import pathlib
 from typing import Callable, Optional
 
+import aiofiles
 import aiohttp_jinja2
 import jinja2
 import pandas as pd
 import sqlalchemy
+from sqlalchemy.orm import Session
+
 from aiohttp import web
 
 import coolNewLanguage.src.tables as tables
 
-from coolNewLanguage.src import consts
+from coolNewLanguage.src import consts, models
 from coolNewLanguage.src.consts import DATA_DIR, STATIC_ROUTE, STATIC_FILE_DIR, TEMPLATES_DIR, \
     LANDING_PAGE_TEMPLATE_FILENAME, LANDING_PAGE_STAGES, STYLES_ROUTE, STYLES_DIR
 from coolNewLanguage.src.stage import process
@@ -31,6 +35,7 @@ class Tool:
     file_dir : Pathlib.Path - A path to the directory in which to store files uploaded to this Tool
     state : dict - A dictionary programmers can use to share state between Stages
     """
+
     def __init__(self, tool_name: str, file_dir_path: str = '', description: str = ''):
         """
         Initialize this tool
@@ -44,12 +49,12 @@ class Tool:
             raise TypeError("Expected a string for Tool name")
         # This restriction on tool names allows them to be used as the URL paths
         if not check_has_only_alphanumerics_or_underscores(tool_name):
-            raise ValueError("Tool name can only contain alphanumeric characters and underscores")
+            raise ValueError(
+                "Tool name can only contain alphanumeric characters and underscores")
         if not isinstance(file_dir_path, str):
             raise TypeError("Expected file_dir_path to be a string")
         if not isinstance(description, str):
             raise TypeError("Expected description to be a string")
-
 
         self.tool_name = tool_name
         self.description_lines = description.strip().splitlines()
@@ -58,7 +63,8 @@ class Tool:
 
         self.web_app = WebApp()
         # add a handler for the web app's static files (like javascript stuff)
-        self.web_app.add_static_file_handler(STATIC_ROUTE, str(STATIC_FILE_DIR))
+        self.web_app.add_static_file_handler(
+            STATIC_ROUTE, str(STATIC_FILE_DIR))
         self.web_app.add_static_file_handler(STYLES_ROUTE, str(STYLES_DIR))
 
         loader = jinja2.FileSystemLoader(TEMPLATES_DIR)
@@ -71,7 +77,8 @@ class Tool:
 
         db_path = DATA_DIR.joinpath(f'{tool_name}.db')
         # create an engine with a sqlite database
-        self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(f'sqlite:///{str(db_path)}', echo=True)
+        self.db_engine: sqlalchemy.Engine = sqlalchemy.create_engine(
+            f'sqlite:///{str(db_path)}', echo=True)
         # Connect to the engine, so that the sqlite db file is created if it doesn't exist already
         self.db_engine.connect()
         self.db_metadata_obj: sqlalchemy.MetaData = sqlalchemy.MetaData()
@@ -117,13 +124,15 @@ class Tool:
 
         routes = [
             web.get('/', self.landing_page),
-            web.get(consts.GET_TABLE_ROUTE, self.get_table)
+            web.get(consts.GET_TABLE_ROUTE, self.get_table),
+            web.get('/pdf/{filename}', self.serve_pdf)
         ]
 
         for stage in self.stages:
             routes.append(web.get(f'/{stage.url}', stage.handle))
             routes.append(web.post(f'/{stage.url}/post', stage.post_handler))
-            routes.append(web.post(f'/{stage.url}/approve', approvals.approval_handler))
+            routes.append(
+                web.post(f'/{stage.url}/approve', approvals.approval_handler))
 
         self.web_app.app.add_routes(routes)
 
@@ -169,11 +178,13 @@ class Tool:
 
         for field_name, field_instance in cnl_type_fields.items():
             if isinstance(field_instance.data_type, LinkMetatype):
-                link_utils.register_link_metatype_on_tool(tool=self, link_meta_name=field_instance.data_type.meta_name)
+                link_utils.register_link_metatype_on_tool(
+                    tool=self, link_meta_name=field_instance.data_type.meta_name)
             else:
                 table_fields[field_name] = field_instance
 
-        db_utils.create_table_if_not_exists(tool=self, table_name=name, fields=table_fields)
+        db_utils.create_table_if_not_exists(
+            tool=self, table_name=name, fields=table_fields)
 
     def register_link_metatype(self, link_meta_name: str) -> "Link":
         """
@@ -188,7 +199,8 @@ class Tool:
         if not isinstance(link_meta_name, str):
             raise TypeError("Expected link_meta_name to be a string")
 
-        register_link_metatype_on_tool(tool=self, link_meta_name=link_meta_name)
+        register_link_metatype_on_tool(
+            tool=self, link_meta_name=link_meta_name)
 
         return LinkMetatype(name=link_meta_name)
 
@@ -198,7 +210,8 @@ class Tool:
         if not isinstance(request, web.Request):
             raise TypeError("Expected request to be an aiohttp web Request")
         if "table" not in request.query:
-            raise ValueError("Expected requested table name to be in request query")
+            raise ValueError(
+                "Expected requested table name to be in request query")
         table_name = request.query["table"]
         if "context" not in request.query:
             raise ValueError("Expected context to be in request query")
@@ -207,7 +220,8 @@ class Tool:
             raise ValueError("Expected component id to be in request query")
         component_id = request.query["component_id"]
         if "table_transient_id" not in request.query:
-            raise ValueError("Expected table transient id to be in request query")
+            raise ValueError(
+                "Expected table transient id to be in request query")
         table_transient_id = request.query["table_transient_id"]
 
         sqlalchemy_table = self.get_table_from_table_name(table_name)
@@ -264,38 +278,11 @@ class Tool:
 
     def db_awaken(self):
         """
-        Creates/gets necessary tables in backend, and is called when the tool is instantiated
-        Creates the LINKS_META table, which encodes the existing Link metatypes, and the LINKS table, which acts as a
-        registry of the individual links themselves.
+        Creates/gets necessary metadata tables in backend, and is called when the tool is instantiated
+        Uses models.Base to create the tables, since we use an ORM to manage the metadata
         :return:
         """
-        if self.get_table_from_table_name(consts.LINKS_METATYPES_TABLE_NAME) is None:
-            cols = [
-                sqlalchemy.Column(
-                    consts.LINKS_METATYPES_LINK_META_ID,
-                    sqlalchemy.Integer,
-                    sqlalchemy.Identity(),
-                    primary_key=True),
-                sqlalchemy.Column(consts.LINKS_METATYPES_LINK_META_NAME, sqlalchemy.String, nullable=False, unique=True)
-            ]
-            links_metatypes_table = sqlalchemy.Table(consts.LINKS_METATYPES_TABLE_NAME, self.db_metadata_obj, *cols)
-            links_metatypes_table.create(self.db_engine)
-
-        if self.get_table_from_table_name(consts.LINKS_REGISTRY_TABLE_NAME) is None:
-            cols = [
-                sqlalchemy.Column(
-                    consts.LINKS_REGISTRY_LINK_ID,
-                    sqlalchemy.Integer,
-                    sqlalchemy.Identity(),
-                    primary_key=True),
-                sqlalchemy.Column(consts.LINKS_REGISTRY_LINK_META_ID, sqlalchemy.Integer, nullable=False),
-                sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_TABLE_NAME, sqlalchemy.String, nullable=False),
-                sqlalchemy.Column(consts.LINKS_REGISTRY_SRC_ROW_ID, sqlalchemy.Integer, nullable=False),
-                sqlalchemy.Column(consts.LINKS_REGISTRY_DST_TABLE_NAME, sqlalchemy.String, nullable=False),
-                sqlalchemy.Column(consts.LINKS_REGISTRY_DST_ROW_ID, sqlalchemy.Integer, nullable=False)
-            ]
-            links_registry_table = sqlalchemy.Table(consts.LINKS_REGISTRY_TABLE_NAME, self.db_metadata_obj, *cols)
-            links_registry_table.create(self.db_engine)
+        models.Base.metadata.create_all(self.db_engine)
 
     def _get_table_dataframe(self, table_name: str) -> Optional[pd.DataFrame]:
         if not isinstance(table_name, str):
@@ -308,3 +295,70 @@ class Tool:
 
         with self.db_engine.connect() as conn:
             return pd.read_sql_table(table_name, conn)
+
+    async def serve_pdf(self, request: web.Request) -> web.Response:
+        """
+        Serve a PDF file
+        :param request: The request object
+        :return: The response object containing the PDF file
+        """
+        filename = request.match_info['filename']
+        pdf_path = self.file_dir / filename
+
+        if not pdf_path.exists():
+            return web.Response(status=404, text="PDF file not found")
+
+        response = web.StreamResponse(
+            status=200,
+            reason='OK',
+            headers={
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'inline; filename="{filename}"'
+            }
+        )
+        await response.prepare(request)
+
+        async with aiofiles.open(pdf_path, 'rb') as f:
+            chunk = await f.read(8192)
+            while chunk:
+                await response.write(chunk)
+                chunk = await f.read(8192)
+
+        await response.write_eof()
+        return response
+
+    def save_content(self, content: models.UserContent):
+        """
+        Save content to the database
+        :param content_name: The name of the content
+        :param content_file_name: The name of the file containing the content
+        :param content_type: The type of the content
+        :return:
+        """
+        if not isinstance(content, models.UserContent):
+            raise TypeError("Expected content to be a UserContent object")
+
+        with Session(self.db_engine, expire_on_commit=False) as session:
+            stmt = sqlalchemy.select(models.UserContent).where(
+                models.UserContent.content_name == content.content_name)
+
+            content.content_file_name = os.path.basename(
+                content.content_file_path)
+
+            existing_content = session.execute(stmt).scalar_one_or_none()
+            if existing_content is None:
+                session.add(content)
+            else:
+                existing_content.content_file_name = content.content_file_name
+                existing_content.content_file_path = content.content_file_path
+                existing_content.content_type = content.content_type
+            session.commit()
+
+    def get_content(self):
+        """
+        Get content from the database
+        :return:
+        """
+        with Session(self.db_engine, expire_on_commit=False) as session:
+            stmt = sqlalchemy.select(models.UserContent)
+            return session.execute(stmt).scalars().all()

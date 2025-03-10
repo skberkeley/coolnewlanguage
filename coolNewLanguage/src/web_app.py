@@ -9,8 +9,9 @@ class WebApp:
         app:
             The aiohttp web app instance being wrapped
     """
+
     def __init__(self) -> None:
-        self.app = web.Application()
+        self.app = web.Application(client_max_size=1024**3)
 
     def add_static_file_handler(self, route: str, fs_path: str) -> None:
         """

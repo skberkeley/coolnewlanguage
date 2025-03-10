@@ -58,7 +58,7 @@ class FileUploadComponent(InputComponent):
                 f.write(self.value.file.read())
             # set this value to be the relative path to that file
             self.value.file.close()
-            self.value = file_path
+            self.value = str(file_path)
 
     def paint(self) -> str:
         """
