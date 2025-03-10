@@ -51,4 +51,15 @@ def search_pdfs():
 tool.add_stage('Search PDFs', search_pdfs)
 
 
+def add_names():
+    name_inputs = hilt.UserInputComponent(
+        str, "Add a name: ", multiple_values=True)
+    if tool.user_input_received():
+        hilt.results.show_results(*[(name, "Name added:")
+                                    for name in name_inputs.value])
+
+
+tool.add_stage('Add Names', add_names)
+
+
 tool.run()

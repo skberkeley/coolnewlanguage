@@ -10,7 +10,8 @@ class UserInputComponent(InputComponent):
     """
     An input component which captures some input which the user types
     """
-    def __init__(self, expected_type: type, label: str = ""):
+
+    def __init__(self, expected_type: type, label: str = "", multiple_values: bool = False):
         if not isinstance(expected_type, type):
             raise TypeError("Expected expected_type to be a type")
         if not isinstance(label, str):
@@ -19,15 +20,19 @@ class UserInputComponent(InputComponent):
         self.label = label
         self.expected_type = expected_type
 
-        super().__init__(expected_type)
+        super().__init__(expected_type, multiple_values)
 
         if config.building_template:
             return
 
         try:
-            self.value = self.expected_type(self.value)
+            if self.multiple_values:
+                self.value = list(map(self.expected_type, self.value))
+            else:
+                self.value = self.expected_type(self.value)
         except Exception as e:
-            raise_type_casting_error(value=self.value, expected_type=self.expected_type, error=e)
+            raise_type_casting_error(
+                value=self.value, expected_type=self.expected_type, error=e)
 
     def paint(self) -> str:
         """
@@ -39,4 +44,4 @@ class UserInputComponent(InputComponent):
             name=consts.USER_INPUT_COMPONENT_TEMPLATE_FILENAME
         )
         # Render and return the template
-        return template.render(label=self.label, component_id=self.component_id)
+        return template.render(label=self.label, component_id=self.component_id, multiple_values=self.multiple_values)
