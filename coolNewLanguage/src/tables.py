@@ -3,6 +3,7 @@ import typing
 import pandas as pd
 import sqlalchemy
 
+from coolNewLanguage.src.stage import config, process
 import coolNewLanguage.src.tool as toolModule
 import coolNewLanguage.src.util.sql_alch_csv_utils as sql_alch_csv_utils
 
@@ -58,20 +59,22 @@ class Tables:
         # If the table was slated to be added/modified, return the cached version
         if table_name in self._tables_to_save:
             df = self._tables_to_save[table_name]
-            df.name = table_name
+            df._name = table_name
             return df
 
         if table_name not in self:
             raise KeyError(f"Table {table_name} not found")
 
         df = self._tool._get_table_dataframe(table_name)
-        df.name = table_name
+        df._name = table_name
+
         return df
 
     def __setitem__(self, table_name: str, value: pd.DataFrame):
         """
         Adds/updates a table in the tool. If the table was slated to be deleted, removes it from the deletion list. If
         the same table was slated to be added/modified, updates the cached version.
+        If this function is called outside of a Stage, then directly call _save_item to save the table to the database.
         :param table_name:
         :param value:
         :return:
@@ -80,6 +83,10 @@ class Tables:
             raise TypeError("Table name must be a string")
         if not isinstance(value, pd.DataFrame):
             raise TypeError("Value must be a pandas DataFrame")
+
+        if not config.building_template and not process.handling_post and not process.handling_user_approvals:
+            self._save_table(table_name, value)
+            return
 
         # If the table was slated to be deleted, remove it from the deletion list
         self._tables_to_delete.discard(table_name)
@@ -132,13 +139,16 @@ class Tables:
         if not isinstance(df, pd.DataFrame):
             raise TypeError("Expected df to be a pandas DataFrame")
         if conn is not None and not isinstance(conn, sqlalchemy.Connection):
-            raise TypeError("Expected conn to be a sqlalchemy Connection object or None")
+            raise TypeError(
+                "Expected conn to be a sqlalchemy Connection object or None")
 
         if conn:
-            df.to_sql(name=table_name, con=conn, if_exists='replace', index=False)
+            df.to_sql(name=table_name, con=conn,
+                      if_exists='replace', index=False)
         else:
             with self._tool.db_engine.connect() as conn:
-                df.to_sql(name=table_name, con=conn, if_exists='replace', index=False)
+                df.to_sql(name=table_name, con=conn,
+                          if_exists='replace', index=False)
 
         self._tables.add(table_name)
 

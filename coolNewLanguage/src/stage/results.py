@@ -120,7 +120,7 @@ def result_template_of_value(value) -> str:
             return result_template_of_link(value)
         case [*links] if all(isinstance(l, Link) for l in links):
             return "\n".join(result_template_of_link(l) for l in links)
-        case pd.DataFrame(name=table_name):
+        case pd.DataFrame(_name=table_name):
             try:
                 return result_template_of_dataframe(process.running_tool.tables[table_name])
             except:
@@ -144,7 +144,7 @@ def result_template_of_sql_alch_table(table: sqlalchemy.Table) -> str:
     process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
     process.running_tool.db_metadata_obj.reflect(
         process.running_tool.db_engine)
-    if table.name not in process.running_tool.db_metadata_obj.tables:
+    if table._name not in process.running_tool.db_metadata_obj.tables:
         return ""
 
     template: jinja2.Template = process.running_tool.jinja_environment.get_template(

@@ -129,6 +129,74 @@
             </table>
         </div>
     </div>
+    {% elif approve_result.approve_result_type == ApproveResultType.TABLE_ROW_ADDITION %}
+    <div class="approve_result">
+        <h3>Approve addition of rows to {{ approve_result.table_name }}?</h3>
+        <div class="batch-op-buttons">
+            <button type="button" onclick="approveAll()">
+                Approve all
+            </button>
+            <br>
+            <button type="button" onclick="rejectAll()">
+                Reject all
+            </button>
+            <br>
+            <button type="button" onclick="pendAll()">
+                Set all to pending
+            </button>
+        </div>
+        <div class="table_div">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Approve</th>
+                        <th>Reject</th>
+                        <th style="border-right: 1px dashed #64748b;">Pending</th>
+                        {% for column_name in approve_result.column_names %}
+                        <th>
+                            {{ column_name }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index, row in approve_result.dataframe.iterrows() %}
+                    <tr{% if index in approve_result.rows_added %} class="added_value"{% endif %}>
+                        {% if index in approve_result.rows_added %}
+                        <td>
+                            <label>
+                                ✓
+                                <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="approve">
+                            </label>
+                        </td>
+                        <td>
+                            <label>
+                                ✘
+                                <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="reject">
+                            </label>
+                        </td>
+                        <td style="border-right: 1px dashed #64748b;">
+                            <label>
+                                ?
+                                <input type="radio" name="approve_{{ approve_result.id }}_{{ index }}" class="input" value="pending" checked>
+                            </label>
+                        </td>
+                        {% else %}
+                        <td>-</td>
+                        <td>-</td>
+                        <td style="border-right: 1px dashed #64748b;">-</td>
+                        {% endif %}
+                        {% for column_name in approve_result.column_names %}
+                        <td>
+                            {{ row[column_name] }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% endif %}
     {% endfor %}
     {% else %}

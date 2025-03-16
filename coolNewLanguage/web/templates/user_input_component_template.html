@@ -1,8 +1,13 @@
-<div class="component">
+<div class="component user_input_component_container">
 	<input
 		type="text"
-		id="{{ component_id }}"
+		id="{{ component_id }}_0"
 		name="{{ component_id }}"
 		placeholder="{{ label }}"
 	/>
+	{% if multiple_values == True %}
+	<button type="button" onclick="cloneInputComponent('{{ component_id }}')">
+		Input another value
+	</button>
+	{% endif %}
 </div>

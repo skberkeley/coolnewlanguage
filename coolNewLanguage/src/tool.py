@@ -354,6 +354,8 @@ class Tool:
                 existing_content.content_type = content.content_type
             session.commit()
 
+            content.id = session.execute(stmt).scalar_one().id
+
     def get_content(self):
         """
         Get content from the database

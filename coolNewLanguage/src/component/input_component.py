@@ -8,12 +8,14 @@ class InputComponent(Component):
     A component which is expected to take some kind of user input
     """
 
-    def __init__(self, expected_type: type):
+    def __init__(self, expected_type: type, multiple_values=False):
         """
         Initialize this input component
         If currently handling a post request, get the input value from
         the POST request's body
         :param expected_type: The expected type of the eventual user input
+        :param multiple_values: Whether this input component is capable of accepting multiple values. If true, the value will be a list
+        Each subclass of InputComponent is responsible for allowing users to submit multiple inputs if multiple_values is True
         """
         if not isinstance(expected_type, type):
             raise TypeError("Expected expected_type to be a type")
@@ -21,6 +23,7 @@ class InputComponent(Component):
         super().__init__()
 
         self.expected_type = expected_type
+        self.multiple_values = multiple_values
 
         if process.handling_post:
             try:
@@ -31,7 +34,7 @@ class InputComponent(Component):
                     "Have you made sure that all components are instantiated before user input is received, "
                     "or creating another Stage?"
                 )
-            self.value = values if len(values) > 1 else values[0]
+            self.value = values if self.multiple_values else values[0]
 
     def paint(self):
         """
@@ -50,7 +53,7 @@ class InputComponent(Component):
             raise ValueError("value was None")
 
         return str(self.value)
-    
+
     def __int__(self):
         """
         Return this InputComponent's value by trying to cast it to an int
@@ -86,5 +89,6 @@ class InputComponent(Component):
 
     def __getattr__(self, item):
         if item == "value":
-            raise CNLError("Looks you tried to access a Component's value before it was available. Did you check to see if tool.user_input_received()?")
+            raise CNLError(
+                "Looks you tried to access a Component's value before it was available. Did you check to see if tool.user_input_received()?")
         raise AttributeError
