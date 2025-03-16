@@ -54,6 +54,7 @@ def template_from_select_statement(
         table_transient_id=table_transient_id
     )
 
+
 def html_of_table(
         table: sqlalchemy.Table,
         template: jinja2.Template,
@@ -80,12 +81,14 @@ def html_of_table(
 
     # Check to see if the table exists in the db
     process.running_tool.db_metadata_obj = sqlalchemy.MetaData()
-    process.running_tool.db_metadata_obj.reflect(process.running_tool.db_engine)
-    if table.name not in process.running_tool.db_metadata_obj.tables:
+    process.running_tool.db_metadata_obj.reflect(
+        process.running_tool.db_engine)
+    if table._name not in process.running_tool.db_metadata_obj.tables:
         return ""
 
     if no_metadata_cols:
-        col_names = filter(lambda c: c not in consts.METADATA_COLUMN_NAMES, table.c.keys())
+        col_names = filter(
+            lambda c: c not in consts.METADATA_COLUMN_NAMES, table.c.keys())
         stmt = sqlalchemy.select(table.c[tuple(col_names)])
     else:
         stmt = sqlalchemy.select(table)
@@ -94,11 +97,10 @@ def html_of_table(
         stmt,
         template,
         component_id=component_id,
-        table_name=table.name if include_table_name else "",
+        table_name=table._name if include_table_name else "",
         num_rows=num_rows,
         table_transient_id=table_transient_id
     )
-
 
 
 def html_of_row_list(rows: list[Row]) -> str:
@@ -141,11 +143,13 @@ def html_of_link(link: Link) -> str:
         raise TypeError("Expected link to be a Link")
 
     # Get src row
-    src_row = db_utils.get_row(process.running_tool, link.src_table_name, link.src_row_id)
+    src_row = db_utils.get_row(
+        process.running_tool, link.src_table_name, link.src_row_id)
     src_row_html = html_of_row_list([src_row])
 
     # Get dst row
-    dst_row = db_utils.get_row(process.running_tool, link.dst_table_name, link.dst_row_id)
+    dst_row = db_utils.get_row(
+        process.running_tool, link.dst_table_name, link.dst_row_id)
     dst_row_html = html_of_row_list([dst_row])
 
     # Get Jinja template
@@ -154,4 +158,3 @@ def html_of_link(link: Link) -> str:
     )
     # Render and return template
     return template.render(src_row_html=src_row_html, dst_row_html=dst_row_html)
-
