@@ -1,25 +1,25 @@
 <div class="result_table">
-    {% if table_name != "" %}
-    <span class="table_name">{{ table_name }}</span>
-    {% endif %}
-    <div class="table_div">
-        <table>
-            <thead>
-                <tr>
-                {% for col in col_names %}
-                    <th>{{ col }}</th>
-                {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-            {% for row in rows %}
-                <tr>
-                    {% for col in col_names %}
-                    <td>{{ row[col] }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+	{% if table_name != "" %}
+	<span class="table_name">{{ table_name }}</span>
+	{% endif %}
+	<div class="table_div">
+		<table>
+			<thead>
+				<tr>
+					{% for col in col_names %}
+					<th>{{ col }}</th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in rows %}
+				<tr>
+					{% for col in col_names %}
+					<td>{{ row[col] }}</td>
+					{% endfor %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
 </div>

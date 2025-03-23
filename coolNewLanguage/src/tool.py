@@ -274,6 +274,8 @@ class Tool:
         table = sqlalchemy.Table(table_name, self.db_metadata_obj)
         insp.reflect_table(table, None)
 
+        table._name = table_name
+
         return table
 
     def db_awaken(self):

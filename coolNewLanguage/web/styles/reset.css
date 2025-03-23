@@ -1,21 +1,22 @@
 body {
-    margin: 0;
-    position: absolute;
-    inset: 0;
+	margin: 0;
+	position: absolute;
+	inset: 0;
 }
 button {
-    background: none;
-    border: none;
+	background: none;
+	border: none;
 }
 p {
-    font-family: var(--default-font-family);
+	font-family: var(--default-font-family);
 }
 :root {
-    --default-font-family: "Avenir", "Helvetica Neue", Helvetica, Arial;
-    --header-bg: #e3f1fd;
-    --button-hover-bg: #cbd5e1;
-    --button-bg: #f1f5ff;
-    --button-border-color: #020d19;
-    --input-border-color: #e4e4e7;
-    --input-text-color: rgb(9, 9, 11);
+	--default-font-family: "Avenir", "Helvetica Neue", Helvetica, Arial;
+	--header-bg: #e3f1fd;
+	--button-hover-bg: #cbd5e1;
+	--button-bg: #f1f5ff;
+	--button-border-color: #020d19;
+	--input-border-color: #e4e4e7;
+	--input-text-color: rgb(9, 9, 11);
+	font-family: var(--default-font-family);
 }
