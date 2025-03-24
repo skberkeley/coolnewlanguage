@@ -28,6 +28,7 @@ class ColumnSelectorComponent(InputComponent):
         NUM_PREVIEW_COLS: How many columns to show in each table preview
         NUM_PREVIEW_ROWS: How many rows to show in each table preview
     """
+
     def __init__(self, label: str = "", num_columns: int = 1):
         if not isinstance(label, str):
             raise TypeError("Expected label to be a string")
@@ -37,7 +38,7 @@ class ColumnSelectorComponent(InputComponent):
         self.label = label if label else f"Select {num_columns} column{'s' if num_columns > 1 else ''}"
         self.num_columns = num_columns
 
-        super().__init__(expected_type=pd.DataFrame)
+        super().__init__(expected_type=pd.DataFrame, multiple_values=True)
 
         if process.handling_post:
             self.table_name: str = self.value[0]

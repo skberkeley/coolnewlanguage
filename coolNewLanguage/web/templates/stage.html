@@ -10,6 +10,10 @@
 		<link rel="stylesheet" href="/styles/button-a.css" />
 		<link rel="stylesheet" href="/styles/button.css" />
 		<link rel="stylesheet" href="/styles/banner.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css"
+		/>
 		<meta charset="UTF-8" />
 		<title>{{ stage_name }}</title>
 	</head>
@@ -17,6 +21,12 @@
 		<script src="/static/table_selector.js" async></script>
 		<script src="/static/column_selector.js" async></script>
 		<script src="/static/user_input_component.js" async></script>
+		<script
+			src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+			integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+			crossorigin="anonymous"
+		></script>
+		<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
 		<header>
 			<div class="banner">
 				<h2 class="banner-title">Stage: {{ stage_name }}</h2>
