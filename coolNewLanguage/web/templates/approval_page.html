@@ -10,8 +10,30 @@
     <link rel="stylesheet" href="/styles/button-a.css" />
     <link rel="stylesheet" href="/styles/button.css" />
     <link rel="stylesheet" href="/styles/banner.css" />
+    <link
+        rel="stylesheet"
+        href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css"
+    />
 </head>
 <body>
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+        integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+        crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("table").DataTable();
+        });
+        // Add display: flex and flex-direction: row to pagination elements
+        $(document).ready(function () {
+            $('nav[aria-label="pagination"]').css({
+                display: "flex",
+                "flex-direction": "row",
+            });
+        });
+    </script>
     <header>
         <div class="banner">
             <h2 class="banner-title">Approvals for: {{ stage_name }}</h2>
