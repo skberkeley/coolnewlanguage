@@ -33,10 +33,14 @@ def extend_roster():
         "Choose the column with grad years:")
     if tool.user_input_received():
         roster_name = roster_selector.value
-        names, emails, majors = name_col.value, email_col.value, grad_year_col.value
+        names, emails, grad_years = name_col.value, email_col.value, grad_year_col.value
+
+        new_rows = pd.DataFrame({'Name': names.to_numpy().flatten(),
+                                'Email': emails.to_numpy().flatten(),
+                                 'Grad Year': grad_years.to_numpy().flatten()})
 
         tool.tables[roster_name] = pd.concat(
-            [tool.tables[roster_name], pd.concat([names, emails, majors], axis=1)], ignore_index=True)
+            [tool.tables[roster_name], new_rows], ignore_index=True)
         hilt.approvals.get_user_approvals()
         hilt.results.show_results(
             (tool.tables[roster_name], "Extended roster: "))
@@ -48,8 +52,8 @@ tool.add_stage('Extend Roster', extend_roster)
 def compute_matches():
     hilt.SubmitComponent("Compute Matches")
     if tool.user_input_received():
-        year_email_matches = tool.tables['University Roster'].join(tool.tables['Union Roster'], on=[
-                                                                   'Email', 'Grad Year'], how='inner', lsuffix='_university', rsuffix='_union')
+        year_email_matches = tool.tables['University Roster'].merge(tool.tables['Union Roster'], on=[
+            'Email', 'Grad Year'], how='inner', suffixes=['_university', '_union'])
         tool.tables['Matches'] = year_email_matches
         hilt.approvals.get_user_approvals()
         hilt.results.show_results((tool.tables['Matches'], "Matches: "))
