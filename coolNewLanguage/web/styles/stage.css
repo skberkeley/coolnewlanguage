@@ -43,6 +43,10 @@ input[type="file"]::-webkit-file-upload-button {
 	visibility: hidden;
 	width: 0;
 }
+input[type="radio"] {
+	width: inherit;
+	height: inherit;
+}
 div.user_input_component_container {
 	display: flex;
 	flex-direction: column;
