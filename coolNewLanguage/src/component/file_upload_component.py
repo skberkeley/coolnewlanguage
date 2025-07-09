@@ -31,7 +31,10 @@ class FileUploadComponent(InputComponent):
         if not isinstance(replace_existing, bool):
             raise TypeError("Expected replace_existing to be a boolean")
 
-        self.expected_ext = expected_ext if expected_ext[0] != '.' else expected_ext[1:]
+        if len(expected_ext) > 0:
+            self.expected_ext = expected_ext if expected_ext[0] != '.' else expected_ext[1:]
+        else:
+            self.expected_ext = expected_ext
         self.label = label
 
         super().__init__(pathlib.Path)
@@ -41,7 +44,7 @@ class FileUploadComponent(InputComponent):
                 raise TypeError("Expected value to be an aiohttp FileField")
             # Check file extension
             extension = pathlib.Path(self.value.filename).suffix
-            if extension != ('.' + self.expected_ext):
+            if extension != (('.' + self.expected_ext) if self.expected_ext else ''):
                 raise ValueError(
                     f"The uploaded file's extension did not match the expected one. Expected a file with extension "
                     f"{self.expected_ext}, and instead got {extension}"
