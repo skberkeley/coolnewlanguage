@@ -28,6 +28,6 @@ class PDFViewerComponent(Component):
         return f'''
             <div>
                 <h3>{self.user_content.content_name}</h3>
-                <embed src="/pdf/{self.user_content.content_file_name}" type="application/pdf" width="100%" height="100%" />
+                <embed src="/pdf/{self.user_content.content_file_name}" type="{self.user_content.content_type.value}" width="100%" height="100%" />
             </div>
         '''

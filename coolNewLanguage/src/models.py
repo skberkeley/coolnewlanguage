@@ -10,7 +10,8 @@ class Base(DeclarativeBase):
 
 
 class ContentTypes(enum.Enum):
-    PDF = "pdf"
+    PDF = "application/pdf"
+    JPG = "image/jpg"
 
 
 class UserContent(Base):

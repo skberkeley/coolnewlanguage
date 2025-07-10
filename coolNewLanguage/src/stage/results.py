@@ -127,7 +127,7 @@ def result_template_of_value(value) -> str:
                 return f"Table \"{table_name}\" not found, possibly because all its rows were rejected or left pending, resulting in the table not being created."
         case pd.DataFrame():
             return result_template_of_dataframe(value)
-        case models.UserContent(content_type=models.ContentTypes.PDF):
+        case models.UserContent():
             return result_template_of_pdf_content(value)
         case _:
             return str(f"<p>{value}</p>")
@@ -283,9 +283,7 @@ def result_template_of_pdf_content(pdf_content: models.UserContent) -> str:
     """
     if not isinstance(pdf_content, models.UserContent):
         raise TypeError("Expected pdf_content to be a UserContent")
-    if pdf_content.content_type != models.ContentTypes.PDF:
-        raise ValueError("Expected pdf_content to be a PDF")
 
     pdf_url = f'/pdf/{pdf_content.content_file_name}'
 
-    return f'<embed type="application/pdf" src="{ pdf_url }" width="100%" height="100%" />'
+    return f'<embed type="{pdf_content.content_type.value}" src="{ pdf_url }" width="100%" height="100%" />'
