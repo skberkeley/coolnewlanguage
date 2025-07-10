@@ -307,6 +307,10 @@ class Tool:
         filename = request.match_info['filename']
         pdf_path = self.file_dir / filename
 
+        # TODO: GENERALIZE
+        if not pdf_path.exists():
+            pdf_path = pathlib.Path(filename)
+
         if not pdf_path.exists():
             return web.Response(status=404, text="PDF file not found")
 
